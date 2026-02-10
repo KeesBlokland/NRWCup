@@ -56,9 +56,9 @@ Created: 2025-01-20
                     <td class="py-1">
                         <div class="btn-group">
                             <a href="{{ url_for('figures.edit', id=task.type_id) }}" 
-                               class="btn btn-sm btn-outline-primary">Bearbeiten</a>
+                               class="btn btn-outline-primary">Bearbeiten</a>
                             <button type="button" 
-                                    class="btn btn-sm btn-outline-danger"
+                                    class="btn btn-outline-danger"
                                     onclick="confirmDelete('{{ task.type_id }}', '{{ task.name }}')">
                                 Löschen
                             </button>

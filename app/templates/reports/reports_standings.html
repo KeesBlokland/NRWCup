@@ -186,10 +186,10 @@ Description: Corrected raw score display and dropped rounds logic
                             <h5>Durchgang {{ round.round_number }}</h5>
                             <div class="btn-group">
                                 <a href="{{ url_for('scoring.score_list', round_id=round.round_id) }}" 
-                                   class="btn btn-sm btn-outline-secondary">
+                                   class="btn btn-outline-secondary">
                                     Detaillierte Wertungen
                                 </a>
-                                <button class="btn btn-sm btn-outline-success" onclick="printRoundData({{ round.round_id }})">
+                                <button class="btn btn-outline-success" onclick="printRoundData({{ round.round_id }})">
                                     <i class="bi bi-printer"></i> Drucken
                                 </button>
                             </div>

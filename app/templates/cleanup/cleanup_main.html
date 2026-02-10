@@ -92,7 +92,7 @@ Description: Template for the data cleanup page
                                             </td>
                                             <td>{{ teilnehmer.verein or '-' }}</td>
                                             <td>
-                                                <button type="button" class="btn btn-danger btn-sm"
+                                                <button type="button" class="btn btn-danger"
                                                         onclick="confirmDeleteTeilnehmer('{{ teilnehmer.teilnehmer_id }}', '{{ teilnehmer.name }}')">
                                                     Force Delete
                                                 </button>
@@ -148,7 +148,7 @@ Description: Template for the data cleanup page
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                <button type="button" class="btn btn-danger btn-sm"
+                                                <button type="button" class="btn btn-danger"
                                                         onclick="confirmDeleteFlugzeug('{{ flugzeug.flugzeug_id }}', '{{ flugzeug.name }}')">
                                                     Force Delete
                                                 </button>
@@ -204,7 +204,7 @@ Description: Template for the data cleanup page
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                <button type="button" class="btn btn-danger btn-sm"
+                                                <button type="button" class="btn btn-danger"
                                                         onclick="confirmDeleteTeam('{{ team.team_id }}', '{{ team.team_nummer }}')">
                                                     Force Delete
                                                 </button>

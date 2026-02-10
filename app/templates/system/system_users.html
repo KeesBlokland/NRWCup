@@ -42,13 +42,13 @@ Last Updated: 2024-12-04
                                     <td>{{ user.role }}</td>
                                     <td>
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                            <button type="button" class="btn btn-outline-primary"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#editUserModal{{ user.user_id }}">
                                                 Bearbeiten
                                             </button>
                                             {% if user.username != 'admin' %}
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                <button type="button" class="btn btn-outline-danger"
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#deleteUserModal{{ user.user_id }}">
                                                     Löschen

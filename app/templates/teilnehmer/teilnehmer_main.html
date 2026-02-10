@@ -94,11 +94,11 @@
                     <td>
                         <div class="btn-group">
                             <a href="{{ url_for('teilnehmer.edit', id=teilnehmer.teilnehmer_id) }}" 
-                               class="btn btn-sm btn-outline-primary">
+                               class="btn btn-outline-primary">
                                 Bearbeiten
                             </a>
                             <button type="button" 
-                                    class="btn btn-sm btn-outline-danger"
+                                    class="btn btn-outline-danger"
                                     onclick="confirmDelete('{{ teilnehmer.teilnehmer_id }}', '{{ teilnehmer.name }}')">
                                 Löschen
                             </button>

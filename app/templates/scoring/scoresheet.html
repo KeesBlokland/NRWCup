@@ -106,7 +106,7 @@
                                        id="{{ figure.code }}_{{ value }}" value="{{ value }}"
                                        data-figure-code="{{ figure.code }}"
                                        onchange="updateLandingPoints('{{ figure.code }}', this.value); updateTotalPoints()">
-                                <label class="btn btn-outline-primary btn-sm py-0" style="min-width: 35px;" for="{{ figure.code }}_{{ value }}">{{ value }}</label>
+                                <label class="btn btn-outline-primary py-0" style="min-width: 35px;" for="{{ figure.code }}_{{ value }}">{{ value }}</label>
                             </div>
                             {% endfor %}
                         </div>
@@ -127,8 +127,8 @@
                 </div>
 
                 <div class="text-center mt-3">
-                    <button type="submit" class="btn btn-primary btn-sm">Bewertung Speichern</button>
-                    <button type="reset" class="btn btn-secondary btn-sm ms-2" onclick="clearAllFields()">Zurücksetzen</button>
+                    <button type="submit" class="btn btn-primary">Bewertung Speichern</button>
+                    <button type="reset" class="btn btn-secondary ms-2" onclick="clearAllFields()">Zurücksetzen</button>
                 </div>
             </form>
         </div>

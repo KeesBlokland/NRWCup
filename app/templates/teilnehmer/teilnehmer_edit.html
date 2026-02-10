@@ -93,7 +93,7 @@ Last Updated: 2024-12-04
                                                     <td>{{ aircraft.owner.name if aircraft.owner else '-' }}</td>
                                                     <td>
                                                         <a href="{{ url_for('flugzeuge.edit', id=aircraft.flugzeug_id) }}" 
-                                                           class="btn btn-sm btn-outline-primary">
+                                                           class="btn btn-outline-primary">
                                                             Bearbeiten
                                                         </a>
                                                     </td>
@@ -136,7 +136,7 @@ Last Updated: 2024-12-04
                                                     <td>{{ aircraft.pilot.name if aircraft.pilot else '-' }}</td>
                                                     <td>
                                                         <a href="{{ url_for('flugzeuge.edit', id=aircraft.flugzeug_id) }}" 
-                                                           class="btn btn-sm btn-outline-primary">
+                                                           class="btn btn-outline-primary">
                                                             Bearbeiten
                                                         </a>
                                                     </td>
@@ -151,7 +151,7 @@ Last Updated: 2024-12-04
                                 
                                 <div class="mt-2">
                                     <a href="{{ url_for('flugzeuge.add', redirect_to=url_for('teilnehmer.edit', id=teilnehmer.teilnehmer_id)) }}" 
-                                       class="btn btn-sm btn-outline-secondary">
+                                       class="btn btn-outline-secondary">
                                         Neues Flugzeug anlegen
                                     </a>
                                 </div>

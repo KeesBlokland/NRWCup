@@ -40,15 +40,18 @@ Description: Consolidated CSS styles extracted from HTML templates
     margin-bottom: 1rem;
 }
 
-/* Button Styling - Using original colors from home_main.html */
+/* Button Styling - Consistent sizing */
+.btn {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    font-weight: 500;
+}
+
 .btn-primary {
     background-color: #c7ddeb;
     border-color: #b0d1e5;
-    color: #203243 !important; /* Higher contrast color for better visibility */
-    display: inline-block;
-    padding: 0.5rem 1rem;
+    color: #203243 !important;
     text-decoration: none;
-    font-weight: 500;
 }
 
 .btn-primary:hover {

@@ -236,7 +236,7 @@
                                                     <!-- Scoresheet exists -->
                                                     {% set score = completed_scores[key] %}
                                                     <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}" 
-                                                        class="btn {% if score.locked %}btn-warning{% else %}btn-success{% endif %} btn-sm judge-btn" 
+                                                        class="btn {% if score.locked %}btn-warning{% else %}btn-success{% endif %} judge-btn" 
                                                         title="Bewertung von {{ judge.name }} {% if score.locked %}(Gesperrt am {{ score.locked_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}">
                                                             {{ judge.name[:3] }}: 
                                                             <span class="raw-score">
@@ -252,7 +252,7 @@
                                                     {% set team_round_key = round_obj.round_id|string + '_' + team.team_id|string %}
                                                     {% set team_round_id = team_rounds[team_round_key].team_round_id if team_round_key in team_rounds else none %}
                                                     <a href="{{ url_for('scoring.scoresheet', round_id=round_obj.round_id, team_id=team.team_id, judge_id=judge.teilnehmer_id) }}" 
-                                                    class="btn btn-outline-secondary btn-sm" title="Neue Bewertung von {{ judge.name }}">
+                                                    class="btn btn-outline-secondary" title="Neue Bewertung von {{ judge.name }}">
                                                         {{ judge.name[:3] }}
                                                     </a>
                                                 {% endif %}

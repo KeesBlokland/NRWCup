@@ -77,7 +77,7 @@ Last Updated: 2024-12-04
                         </span>
                     </p>
                     <form method="POST" action="{{ url_for('system.toggle_logging') }}">
-                        <button type="submit" class="btn btn-sm {% if is_logging_enabled %}btn-warning{% else %}btn-success{% endif %}">
+                        <button type="submit" class="btn {% if is_logging_enabled %}btn-warning{% else %}btn-success{% endif %}">
                             {% if is_logging_enabled %}Deaktivieren{% else %}Aktivieren{% endif %}
                         </button>
                     </form>

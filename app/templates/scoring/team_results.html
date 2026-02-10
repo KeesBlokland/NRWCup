@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}TEST - Team Ergebnisse{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: calc(100% - 5cm); margin: 0 2.5cm;">
+    <!-- Selection -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <select class="form-select" name="event_id" onchange="this.form.submit()">
+                            {% for evt in events %}
+                                <option value="{{ evt.event_id }}" {% if selected_event_id == evt.event_id %}selected{% endif %}>
+                                    {{ evt.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="round_id" onchange="this.form.submit()">
+                            {% for round in rounds %}
+                                <option value="{{ round.round_id }}" {% if selected_round_id == round.round_id %}selected{% endif %}>
+                                    Durchgang {{ round.round_number }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="team_id" onchange="this.form.submit()">
+                            <option value="">Team wählen</option>
+                            {% for team in teams %}
+                                <option value="{{ team.team_id }}" {% if selected_team_id == team.team_id %}selected{% endif %}>
+                                    Team {{ team.team_nummer }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Team Scores -->
+    {% if team_data %}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    {% set current_event = events|selectattr('event_id', 'equalto', selected_event_id)|first %}
+                    {% set current_round = rounds|selectattr('round_id', 'equalto', selected_round_id)|first %}
+                    
+                    {% if current_event %}
+                        <h4>{{ current_event.name }}</h4>
+                    {% endif %}
+                    {% if current_round %}
+                        <h5>Durchgang {{ current_round.round_number }}</h5>
+                    {% endif %}
+                    <h5>Team {{ team_data.team.team_nummer }}</h5>
+                    <small class="text-dark" style="font-size: 22px;">
+                        {% if team_data.team.schlepper_pilot %}
+                            Schlepper: <strong>{{ team_data.team.schlepper_pilot.name }}</strong>
+                        {% endif %}
+                        {% if team_data.team.schlepper_pilot and team_data.team.segler_pilot %} | {% endif %}
+                        {% if team_data.team.segler_pilot %}
+                            Segler: <strong>{{ team_data.team.segler_pilot.name }}</strong>
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="no-print">
+                    
+                    
+                    <button class="btn btn-outline-secondary me-2" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Drucken
+                    </button>
+                    {% if selected_team_id and selected_round_id %}
+                        <a href="{{ url_for('scoring.team_scoresheet_pdf', team_id=selected_team_id, round_id=selected_round_id) }}" 
+                        class="btn btn-outline-info me-2" target="_blank">
+                            <i class="bi bi-file-pdf"></i> PDF
+                        </a>
+                    {% else %}
+                        <small style="color: red;">PDF button hidden: team_id={{ selected_team_id }}, round_id={{ selected_round_id }}</small>
+                    {% endif %}
+                    <button class="btn btn-outline-primary" onclick="emailResults()">
+                        <i class="bi bi-envelope"></i> Email
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Figur</th>
+                            <th>K-Faktor</th>
+                            {% for score in team_data.scores %}
+                                <th class="text-center">{{ score.judge.name if score.judge else 'Judge ' + score.judge_id|string }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for figure in team_data.figures %}
+                            <tr>
+                                <td>{{ figure.name_de }}</td>
+                                <td class="text-center">{{ figure.k_factor or 1 }}</td>
+                                {% for score in team_data.scores %}
+                                    <td class="text-center">
+                                        {% for score_value in score.values %}
+                                            {% if score_value.task_type and score_value.task_type.code == figure.code %}
+                                                {% if score_value.value is not none %}
+                                                    {% if score_value.task_type.code == 'SEGZEIT' %}
+                                                        {% set target_time = 200 %}
+                                                        {% set max_points = 300 %}
+                                                        {% set penalty_factor = 3 %}
+                                                        {% set time_diff = (target_time - score_value.value)|abs %}
+                                                        {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
+                                                        {% if score_value.value == 0 %}
+                                                            <span class="text-muted">{{ score_value.value }} ({{ segzeit_points|round(1) }})</span>
+                                                        {% else %}
+                                                            {{ score_value.value }} ({{ segzeit_points|round(1) }})
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {% set k_factor = score_value.task_type.k_factor or 1 %}
+                                                        {% if score_value.value == 0 %}
+                                                            <span class="text-muted">{{ score_value.value }} ({{ (score_value.value * k_factor)|round(1) }})</span>
+                                                        {% else %}
+                                                            {{ score_value.value }} ({{ (score_value.value * k_factor)|round(1) }})
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                        
+                        <!-- Totals row -->
+                        <tr class="table-warning fw-bold">
+                            <td>GESAMT</td>
+                            <td></td>
+                            {% for score in team_data.scores %}
+                                <td class="text-center">
+                                    {% set total = [] %}
+                                    {% for score_value in score.values %}
+                                        {% if score_value.value is not none %}
+                                            {% if score_value.task_type.code == 'SEGZEIT' %}
+                                                {% set target_time = 200 %}
+                                                {% set max_points = 300 %}
+                                                {% set penalty_factor = 3 %}
+                                                {% set time_diff = (target_time - score_value.value)|abs %}
+                                                {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
+                                                {% set _ = total.append(segzeit_points) %}
+                                            {% else %}
+                                                {% set k_factor = score_value.task_type.k_factor or 1 %}
+                                                {% set _ = total.append(score_value.value * k_factor) %}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ total|sum|round(1) }}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        
+                        <!-- Grand Total row -->
+                        <tr class="table-success fw-bold">
+                            <td>TOTAL</td>
+                            <td></td>
+                            <td class="text-center" colspan="{{ team_data.scores|length }}">
+                                {% set grand_total = [] %}
+                                {% for score in team_data.scores %}
+                                    {% for score_value in score.values %}
+                                        {% if score_value.value is not none %}
+                                            {% if score_value.task_type.code == 'SEGZEIT' %}
+                                                {% set target_time = 200 %}
+                                                {% set max_points = 300 %}
+                                                {% set penalty_factor = 3 %}
+                                                {% set time_diff = (target_time - score_value.value)|abs %}
+                                                {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
+                                                {% set _ = grand_total.append(segzeit_points) %}
+                                            {% else %}
+                                                {% set k_factor = score_value.task_type.k_factor or 1 %}
+                                                {% set _ = grand_total.append(score_value.value * k_factor) %}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                                {{ grand_total|sum|round(1) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Credit line -->
+    <div class="text-center mt-3">
+        <small class="text-muted">Ideen von Kees, Code von Claude</small>
+    </div>
+</div>
+
+<style>
+@page {
+    margin: 3cm 0 0 0;
+    size: A4;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card:first-child {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        background-color: transparent !important;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 10px !important;
+    }
+    
+    body {
+        font-size: 12pt;
+    }
+    
+    .table {
+        font-size: 11pt;
+    }
+    
+    .table th {
+        background-color: white !important;
+        color: black !important;
+        font-weight: bold !important;
+        border: 1px solid black !important;
+    }
+    
+    .table td {
+        border: 1px solid black !important;
+    }
+    
+    /* Ensure totals row is visible in print */
+    .table-warning {
+        background-color: #fff3cd !important;
+    }
+}
+</style>
+
+<script>
+function emailResults() {
+    const teamId = {{ selected_team_id if selected_team_id else 'null' }};
+    const roundId = {{ selected_round_id if selected_round_id else 'null' }};
+    const eventId = {{ selected_event_id if selected_event_id else 'null' }};
+    
+    if (!teamId || !roundId || !eventId) {
+        alert('Fehler: Team-, Durchgang- oder Event-ID fehlt');
+        return;
+    }
+    
+    fetch('/scoring/email_team_results', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            team_id: teamId,
+            round_id: roundId,
+            event_id: eventId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Email erfolgreich gesendet!');
+        } else {
+            alert('Fehler beim Senden: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Fehler: ' + error.message);
+    });
+}
+</script>
+{% endblock %}

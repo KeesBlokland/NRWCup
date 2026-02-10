@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Bewertungen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Bewertungen</h4>
+                    <a href="{{ url_for('scoring.scoresheet') }}" class="btn btn-primary">Neue Bewertung</a>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Form -->
+                    <form method="GET" class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="round_id" class="form-label">Durchgang</label>
+                                <select class="form-select" id="round_id" name="round_id">
+                                    <option value="">Alle Durchgänge</option>
+                                    {% for round in rounds %}
+                                        <option value="{{ round.round_id }}" {% if selected_round == round.round_id %}selected{% endif %}>
+                                            Durchgang {{ round.round_number }} ({{ round.status }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="judge_id" class="form-label">Punktwerter</label>
+                                <select class="form-select" id="judge_id" name="judge_id">
+                                    <option value="">Alle Punktwerter</option>
+                                    {% for judge in judges %}
+                                        <option value="{{ judge.teilnehmer_id }}" {% if selected_judge == judge.teilnehmer_id %}selected{% endif %}>
+                                            {{ judge.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-secondary">Filter anwenden</button>
+                                <a href="{{ url_for('scoring.score_list') }}" class="btn btn-outline-secondary ms-2">Zurücksetzen</a>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Scoresheets Table -->
+                    <div class="table-responsive">
+                        {% for round in rounds %}
+                            {% if not selected_round or selected_round == round.round_id %}
+                                <h5 class="mt-4 mb-2">Durchgang {{ round.round_number }} ({{ round.status }})</h5>
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>Schlepper</th>
+                                            <th>Segler</th>
+                                            <th class="text-center">Bewertungen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for team in teams %}
+                                            <tr>
+                                                <td>{{ team.team_nummer }}</td>
+                                                <td>{{ team.schlepper_pilot.name if team.schlepper_pilot else '-' }}</td>
+                                                <td>{{ team.segler_pilot.name if team.segler_pilot else '-' }}</td>
+                                                <td>
+                                                    <div class="row g-2 justify-content-center">
+                                                        {% for judge in judges %}
+                                                            {% if not selected_judge or selected_judge == judge.teilnehmer_id %}
+                                                                {% set key = round.round_id|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
+                                                                {% if key in completed_scores %}
+                                                                    <!-- Scoresheet exists -->
+                                                                    <div class="col-auto">
+                                                                        <a href="{{ url_for('scoring.view_score', score_id=completed_scores[key].score_id) }}" 
+                                                                           class="btn btn-success btn-sm judge-btn" 
+                                                                           title="Bewertung von {{ judge.name }} anzeigen"
+                                                                           data-score-id="{{ completed_scores[key].score_id }}">
+                                                                            {{ judge.name[:2] }}
+                                                                        </a>
+                                                                    </div>
+                                                                {% else %}
+                                                                    <!-- Scoresheet needs to be created -->
+                                                                    {% set team_round_key = round.round_id|string + '_' + team.team_id|string %}
+                                                                    {% set team_round_id = team_rounds[team_round_key].team_round_id if team_round_key in team_rounds else none %}
+                                                                    <div class="col-auto">
+                                                                        <a href="{{ url_for('scoring.scoresheet') }}?round_id={{ round.round_id }}&team_id={{ team.team_id }}&judge_id={{ judge.teilnehmer_id }}" 
+                                                                           class="btn btn-outline-secondary btn-sm" title="Neue Bewertung von {{ judge.name }}">
+                                                                            {{ judge.name[:2] }}
+                                                                        </a>
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if rounds|length == 0 or teams|length == 0 %}
+                            <div class="alert alert-info mt-3">
+                                <h5>Keine Daten verfügbar</h5>
+                                <p>Es wurden keine Durchgänge oder Teams gefunden. Bitte stellen Sie sicher, dass diese vorhanden sind.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Score Preview Modal -->
+<div class="modal fade" id="scoreModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bewertung</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center" id="loadingSpinner">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="scoreContent" class="d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                <a href="#" class="btn btn-primary" id="viewFullScoreBtn">Bearbeiten</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up score modal functionality
+    const scoreModal = new bootstrap.Modal(document.getElementById('scoreModal'));
+    const scoreContent = document.getElementById('scoreContent');
+    const viewFullScoreBtn = document.getElementById('viewFullScoreBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    
+    // Handle judge button clicks
+    document.querySelectorAll('.judge-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const scoreId = this.getAttribute('data-score-id');
+            
+            // Set the full view button URL directly
+            viewFullScoreBtn.href = `/scoring/view/${scoreId}`;
+            
+            // Clear previous content and show spinner
+            scoreContent.innerHTML = '';
+            scoreContent.classList.add('d-none');
+            loadingSpinner.classList.remove('d-none');
+            
+            // Show the modal
+            scoreModal.show();
+            
+            // Fetch score data
+            fetch(`/scoring/api/score/${scoreId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Hide spinner
+                    loadingSpinner.classList.add('d-none');
+                    
+                    // Build score content
+                    let html = `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between">
+                                    <span>Durchgang: ${data.round_number}</span>
+                                    <span>Team: ${data.team_number}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <span>Punktwerter: ${data.judge_name}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Figur</th>
+                                            <th>Punkte</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                    `;
+                    
+                    // Add score rows
+                    for (const figure of data.figures) {
+                        html += `
+                            <tr>
+                                <td>${figure.name}</td>
+                                <td>${figure.value !== null ? figure.value : '-'}</td>
+                            </tr>
+                        `;
+                    }
+                    
+                    html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Show the content
+                    scoreContent.innerHTML = html;
+                    scoreContent.classList.remove('d-none');
+                })
+                .catch(error => {
+                    loadingSpinner.classList.add('d-none');
+                    scoreContent.innerHTML = `<div class="alert alert-danger">Fehler beim Laden der Bewertung: ${error}</div>`;
+                    scoreContent.classList.remove('d-none');
+                });
+        });
+    });
+});
+</script>
+{% endblock %}

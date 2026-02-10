@@ -1,0 +1,712 @@
+{# File: app/templates/scoring/unified_scoring.html #}
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Wertung & Ergebnisse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Event and Round Selection -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Wertung & Ergebnisse</h4>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="mb-3" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="eventSelect" class="form-label">Veranstaltung</label>
+                        <select class="form-select" id="eventSelect" name="event_id" onchange="this.form.submit()">
+                            {% for evt in events %}
+                                <option value="{{ evt.event_id }}" {% if event and evt.event_id == event.event_id %}selected{% endif %}>
+                                    {{ evt.name }} {% if evt.event_date %}({{ evt.event_date.strftime('%d.%m.%Y') }}){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="roundSelect" class="form-label">Durchgang</label>
+                        <select class="form-select" id="roundSelect" name="round_id" onchange="checkForNextRoundGeneration(this)">
+                            <option value="">Alle Durchgänge</option>
+                            {% for round in rounds %}
+                                <option value="{{ round.round_id }}" {% if selected_round == round.round_id %}selected{% endif %}>
+                                    Durchgang {{ round.round_number }} ({{ round.status }})
+                                </option>
+                            {% endfor %}
+                            {% if can_generate_next_round %}
+                                <option value="generate_next" class="text-primary fw-bold">→ Durchgang {{ next_round_number }} erstellen</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="judgeSelect" class="form-label">Punktwerter</label>
+                        <select class="form-select" id="judgeSelect" name="judge_id" onchange="this.form.submit()">
+                            <option value="">Alle Punktwerter</option>
+                            {% for judge in judges %}
+                                <option value="{{ judge.teilnehmer_id }}" {% if selected_judge == judge.teilnehmer_id %}selected{% endif %}>
+                                    {{ judge.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Title and Action Buttons -->
+            <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+                <div>
+                    <h4 class="mb-0">{{ event.name if event else "Wählen Sie eine Veranstaltung" }}</h4>
+                    {% if event and event.event_date %}
+                        <p class="text-muted mb-0">{{ event.event_date.strftime('%d.%m.%Y') }}</p>
+                    {% endif %}
+                </div>
+                <div class="btn-group">
+                        
+                    
+                    
+                    {% if event %}
+                        {% set button_round_number = 1 %}
+                        {% set current_event_id = event.event_id if event else 0 %}
+
+                        {% for r in rounds %}
+                            {% if r.status == 'Active' and r.event_id == current_event_id %}
+                                {% if selected_round and r.round_id == selected_round %}
+                                    {% set button_round_number = r.round_number %}
+                                {% elif not selected_round or button_round_number == 1 %}
+                                    {% set button_round_number = r.round_number %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <form method="POST" action="{{ url_for('scoring.generate_scoresheets') }}">
+                            <input type="hidden" name="event_id" value="{{ event.event_id if event else '' }}">
+                            <input type="hidden" name="round_id" value="{{ selected_round if selected_round else '' }}">
+                            
+                            <!-- Get directly from the dropdown-->
+                            {% set dropdown_round = None %}
+                            {% set dropdown_round_number = 0 %}
+                            
+                            {% for r in rounds %}
+                                {% if r.round_id == selected_round %}
+                                    {% set dropdown_round = r %}
+                                    {% set dropdown_round_number = r.round_number %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <button type="submit" class="btn btn-warning">
+                                {% if rounds|length == 0 %}
+                                    Ersten Durchgang erstellen
+                                {% elif dropdown_round and dropdown_round.status == 'Active' %}
+                                    Durchgang {{ dropdown_round_number }} abschließen und Durchgang {{ dropdown_round_number + 1 }} erstellen
+                                {% else %}
+                                    Nächsten Durchgang erstellen
+                                {% endif %}
+                            </button>
+                        </form>
+<!--
+                        <a href="{{ url_for('scoring.team_results', event_id=event.event_id if event else '') }}" 
+                            class="btn btn-info">
+                                <i class="bi bi-person-badge"></i> Team Ergebnisse
+                        </a>
+                    -->
+
+                        {% if any_round_has_scores %}
+                            <button class="btn btn-info" id="generateNextRoundBtn">
+                                <i class="bi bi-arrow-right-circle"></i> Startfolge Nächste Durchgang
+                            </button>
+                        {% endif %}
+
+                        
+                        
+                        
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this section after the filter form and before the tabs -->
+    {% if event %}
+    <div class="card mb-3 bg-light">
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <small class="text-muted fw-bold">AKTIONEN:</small>
+                </div>
+                <div class="col">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <!-- Admin Login/Logout -->
+                        {% if session.get('is_admin') %}
+                            <a href="{{ url_for('scoring.admin_logout') }}" class="btn btn-outline-danger">
+                                <i class="bi bi-unlock"></i> Admin Logout
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('scoring.admin_login') }}" class="btn btn-outline-warning">
+                                <i class="bi bi-lock"></i> Admin Login
+                            </a>
+                        {% endif %}
+                        
+                        <!-- Print Results -->
+                        <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" 
+                        class="btn btn-outline-secondary">
+                            <i class="bi bi-printer"></i> Drucken
+                        </a>
+                        
+                        <!-- Email Results -->
+                        <form method="POST" action="{{ url_for('reports.email_results', event_id=event.event_id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-outline-primary" 
+                                    onclick="return confirm('Ergebnisse an Wettkampfleitung senden?')">
+                                <i class="bi bi-envelope"></i> Mailen
+                            </button>
+                        </form>
+                        
+                        <!-- Excel Export -->
+                        <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}" 
+                        class="btn btn-outline-success">
+                            <i class="bi bi-file-earmark-excel"></i> Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-3" id="scoringTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="scores-tab" data-bs-toggle="tab" data-bs-target="#scores" 
+                    type="button" role="tab" aria-controls="scores" aria-selected="true">
+                Bewertungen
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings" 
+                    type="button" role="tab" aria-controls="standings" aria-selected="false">
+                Wettkampfstände
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="scoringTabsContent">
+        <!-- Bewertungen Tab -->
+        <div class="tab-pane fade show active" id="scores" role="tabpanel" aria-labelledby="scores-tab">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Piloten</th>
+                            <th>Punktrichter Rohwerte</th>
+                            <th class="text-center">Punkte</th>
+                            <th class="text-center">Normalisiert</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in teams %}
+                            <tr>
+                                <td>{{ team.team_nummer }}</td>
+                                <!-- Updated Piloten column section from unified_scoring.html -->
+                                <td>
+                                    <a href="{{ url_for('scoring.team_results', event_id=event.event_id if event else '', round_id=selected_round if selected_round else '', team_id=team.team_id) }}" 
+                                    class="text-decoration-none text-dark" 
+                                    title="Team {{ team.team_nummer }} Ergebnisse anzeigen">
+                                        {% if team.schlepper_pilot and team.segler_pilot %}
+                                            {{ team.schlepper_pilot.name }}/{{ team.segler_pilot.name }}
+                                        {% elif team.schlepper_pilot %}
+                                            {{ team.schlepper_pilot.name }}
+                                        {% elif team.segler_pilot %}
+                                            {{ team.segler_pilot.name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </a>
+                                </td>
+                                <!-- End Piloten column section -->
+                               <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% set filtered_judges = judges if not selected_judge else judges|selectattr('teilnehmer_id', 'equalto', selected_judge)|list %}
+                                        {% for judge in filtered_judges %}
+                                            {% set round_obj = rounds|selectattr('round_id', 'equalto', selected_round)|first if selected_round else None %}
+                                            {% if round_obj %}
+                                                {% set key = round_obj.round_id|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
+                                                {% if key in completed_scores %}
+                                                    <!-- Scoresheet exists -->
+                                                    {% set score = completed_scores[key] %}
+                                                    <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}" 
+                                                        class="btn {% if score.locked %}btn-warning{% else %}btn-success{% endif %} btn-sm judge-btn" 
+                                                        title="Bewertung von {{ judge.name }} {% if score.locked %}(Gesperrt am {{ score.locked_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}">
+                                                            {{ judge.name[:3] }}: 
+                                                            <span class="raw-score">
+                                                                {% set raw_value = getRawScore(score) %}
+                                                                {{ "%.1f"|format(raw_value) if raw_value != None else "-" }}
+                                                            </span>
+                                                            {% if score.locked %}
+                                                                🔒
+                                                            {% endif %}
+                                                    </a>
+                                                {% else %}
+                                                    <!-- Scoresheet needs to be created - FIXED TO PASS PARAMETERS CORRECTLY -->
+                                                    {% set team_round_key = round_obj.round_id|string + '_' + team.team_id|string %}
+                                                    {% set team_round_id = team_rounds[team_round_key].team_round_id if team_round_key in team_rounds else none %}
+                                                    <a href="{{ url_for('scoring.scoresheet', round_id=round_obj.round_id, team_id=team.team_id, judge_id=judge.teilnehmer_id) }}" 
+                                                    class="btn btn-outline-secondary btn-sm" title="Neue Bewertung von {{ judge.name }}">
+                                                        {{ judge.name[:3] }}
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                               <td class="text-center">
+                                   {% if selected_round %}
+                                       {% set team_round_key = selected_round|string + '_' + team.team_id|string %}
+                                       {% if team_round_key in team_rounds %}
+                                           {% set team_round = team_rounds[team_round_key] %}
+                                           {% if team_round.raw_score is not none %}
+                                               {% set filtered_judges = judges if not selected_judge else judges|selectattr('teilnehmer_id', 'equalto', selected_judge)|list %}
+                                               {% set judge_count = 0 %}
+                                               {% set total_raw = 0 %}
+                                               
+                                               {% for judge in filtered_judges %}
+                                                   {% set key = selected_round|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
+                                                   {% if key in completed_scores %}
+                                                       {% set score = completed_scores[key] %}
+                                                       {% set raw_value = getRawScore(score) %}
+                                                       {% if raw_value is not none %}
+                                                           {% set total_raw = total_raw + raw_value %}
+                                                           {% set judge_count = judge_count + 1 %}
+                                                       {% endif %}
+                                                   {% endif %}
+                                               {% endfor %}
+                                               
+                                               <!--{% if judge_count > 0 %}
+                                                    <span class="badge bg-info fs-6">{{ "%.1f"|format(total_raw) }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-info fs-6">{{ "%.1f"|format(team_round.raw_score) }}</span>
+                                                {% endif %}  -->
+                                                <span class="badge bg-info fs-6">{{ "%.1f"|format(total_raw if judge_count > 0 else team_round.raw_score) }}</span>
+                                           {% else %}
+                                               -
+                                           {% endif %}
+                                       {% else %}
+                                           -
+                                       {% endif %}
+                                   {% else %}
+                                       <!-- Display total raw score across all rounds when no specific round is selected -->
+                                       {% set team_total_raw = 0 %}
+                                       {% set has_scores = false %}
+                                       {% for round_obj in rounds %}
+                                           {% set team_round_key = round_obj.round_id|string + '_' + team.team_id|string %}
+                                           {% if team_round_key in team_rounds %}
+                                               {% set team_round = team_rounds[team_round_key] %}
+                                               {% if team_round.raw_score is not none %}
+                                                   {% set team_total_raw = team_total_raw + team_round.raw_score %}
+                                                   {% set has_scores = true %}
+                                               {% endif %}
+                                           {% endif %}
+                                       {% endfor %}
+                                       {% if has_scores %}
+                                           <span class="badge bg-info fs-6">{{ "%.1f"|format(team_total_raw) }}</span>
+                                       {% else %}
+                                           -
+                                       {% endif %}
+                                   {% endif %}
+                               </td>
+                               <td class="text-center">
+                                   {% if selected_round %}
+                                       {% set team_round_key = selected_round|string + '_' + team.team_id|string %}
+                                       {% if team_round_key in team_rounds %}
+                                           {% set team_round = team_rounds[team_round_key] %}
+                                           {% if team_round.normalized_score is not none %}
+                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(team_round.normalized_score) }}</span>
+                                           {% else %}
+                                               -
+                                           {% endif %}
+                                       {% else %}
+                                           -
+                                       {% endif %}
+                                   {% else %}
+                                       <!-- Display total normalized score when no specific round is selected -->
+                                       {% set team_found = false %}
+                                       {% for standing in standings %}
+                                           {% if standing.team.team_id == team.team_id %}
+                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(standing.score) }}</span>
+                                               {% set team_found = true %}
+                                           {% endif %}
+                                       {% endfor %}
+                                       {% if not team_found %}
+                                           -
+                                       {% endif %}
+                                   {% endif %}
+                               </td>
+                           </tr>
+                       {% endfor %}
+                   </tbody>
+               </table>
+           </div>
+       </div>
+
+       <!-- Wettkampfstände Tab -->
+       <div class="tab-pane fade" id="standings" role="tabpanel" aria-labelledby="standings-tab">
+           {% if standings %}
+               <div class="table-responsive">
+                   <table class="table table-striped align-middle">
+                       <tr style="background-color: #343a40; color: white; font-weight: bold;">
+                           <th style="text-align: center; padding: 10px;">Rang</th>
+                           <th style="padding: 10px;">Team</th>
+                           <th style="padding: 10px;">Piloten</th>
+                           
+                           {% for round_obj in rounds %}
+                               <th style="text-align: center; padding: 10px;">D{{ round_obj.round_number }}</th>
+                           {% endfor %}
+                           
+                           <th style="text-align: center; padding: 10px;">Gesamt</th>
+                           <th style="text-align: center; padding: 10px;">Norm.</th>
+                       </tr>
+                       
+                       {% for standing in standings %}
+                           <tr>
+                               <td class="text-center fw-bold">{{ standing.rank }}</td>
+                               <td>Team {{ standing.team.team_nummer }}</td>
+                               <td>
+                                   <div>
+                                       {% if standing.team.schlepper_pilot %}
+                                           <div><small>{{ standing.team.schlepper_pilot.name }}</small></div>
+                                       {% endif %}
+                                       {% if standing.team.segler_pilot %}
+                                           <div><small>{{ standing.team.segler_pilot.name }}</small></div>
+                                       {% endif %}
+                                   </div>
+                               </td>
+                               
+                               {% for i in range(rounds|length) %}
+                                   <td class="text-center">
+                                       {% if i < standing.round_scores|length %}
+                                           {% set score = standing.round_scores[i] %}
+                                           {% if i in standing.dropped_indices %}
+                                               <span class="text-muted text-decoration-line-through">{{ "%.1f"|format(score) }}</span>
+                                           {% else %}
+                                               {{ "%.1f"|format(score) }}
+                                           {% endif %}
+                                       {% else %}
+                                           -
+                                       {% endif %}
+                                   </td>
+                               {% endfor %}
+                               
+                               <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }}</td>
+                               <td class="text-center fw-bold text-success">
+                                   {% if loop.first %}
+                                       1000.0
+                                   {% elif standings[0].score > 0 %}
+                                       {{ "%.1f"|format((standing.score / standings[0].score) * 1000) }}
+                                   {% else %}
+                                       0.0
+                                   {% endif %}
+                               </td>
+                           </tr>
+                       {% endfor %}
+                   </table>
+               </div>
+           {% else %}
+               <div class="alert alert-info">
+                   Noch keine Ergebnisse für diese Veranstaltung verfügbar.
+               </div>
+           {% endif %}
+       </div>
+   </div>
+</div>
+
+<!-- Next Round Modal -->
+<div class="modal fade" id="nextRoundModal" tabindex="-1">
+   <div class="modal-dialog modal-lg">
+       <div class="modal-content">
+           <div class="modal-header">
+               <h5 class="modal-title">Startfolge für nächsten Durchgang</h5>
+               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+           </div>
+           <div class="modal-body">
+               <div id="startListContent">
+                   <p>Laden...</p>
+               </div>
+           </div>
+           <div class="modal-footer">
+               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+               <button type="button" class="btn btn-success" id="emailNextRoundBtn">
+                   Email Startliste
+               </button>
+               <button type="button" class="btn btn-primary" id="printNextRoundBtn">Drucken</button>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Hidden form for next round generation -->
+<form id="nextRoundForm" method="POST" action="{{ url_for('scoring.generate_next_round') }}" style="display: none;">
+   <input type="hidden" name="event_id" id="nextRoundEventId">
+</form>
+
+<style>
+.judge-btn {
+   margin: 2px;
+   padding: 3px 8px;
+}
+
+@media print {
+   .no-print, .nav-tabs, .card-header, .btn-group, .form-select, .form-label, 
+   header, nav, footer, .container > .card:first-child {
+       display: none !important;
+   }
+   
+   .tab-pane {
+       display: block !important;
+       opacity: 1 !important;
+       visibility: visible !important;
+   }
+   
+   body {
+       font-size: 12pt;
+   }
+   
+   table {
+       width: 100%;
+       page-break-inside: avoid;
+   }
+   
+   th {
+       background-color: #f0f0f0 !important;
+       color: black !important;
+       font-weight: bold !important;
+   }
+}
+</style>
+
+
+<script>
+function checkForNextRoundGeneration(selectElement) {
+    if (selectElement.value === 'generate_next') {
+        if (confirm('Möchten Sie Durchgang {{ next_round_number }} erstellen und Bewertungsbögen generieren?')) {
+            const form = document.getElementById('nextRoundForm');
+            document.getElementById('nextRoundEventId').value = document.getElementById('eventSelect').value;
+            form.submit();
+        } else {
+            selectElement.value = '{{ selected_round or "" }}';
+        }
+    } else {
+        selectElement.form.submit();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Add tooltips to specific buttons
+    const adminButton = document.querySelector('a[href*="admin_login"], a[href*="admin_logout"]');
+    if (adminButton) {
+        adminButton.setAttribute('data-bs-toggle', 'tooltip');
+        adminButton.setAttribute('data-bs-placement', 'bottom');
+        adminButton.setAttribute('title', 'Administratorzugang für das Entsperren von gesperrten Bewertungen.');
+    }
+    
+    const scoreSheetsButton = document.querySelector('button[type="submit"].btn-warning');
+    if (scoreSheetsButton) {
+        scoreSheetsButton.setAttribute('data-bs-toggle', 'tooltip');
+        scoreSheetsButton.setAttribute('data-bs-placement', 'bottom');
+        scoreSheetsButton.setAttribute('title', 'Erstellt leere Bewertungsbögen für den nächsten Durchgang.');
+    }
+    
+    const printResultsButton = document.querySelector('.btn-secondary:has(i.bi-printer), a[href*="print_results"]');
+    if (printResultsButton) {
+        printResultsButton.setAttribute('data-bs-toggle', 'tooltip');
+        printResultsButton.setAttribute('data-bs-placement', 'bottom');
+        printResultsButton.setAttribute('title', 'Generiert eine PDF-Datei mit den aktuellen Ergebnissen.');
+    } else {
+        const allButtons = document.querySelectorAll('a.btn');
+        allButtons.forEach(btn => {
+            if (btn.textContent.includes('Ergebnisse drucken') || 
+                (btn.querySelector('i.bi-printer') && btn.classList.contains('btn-secondary'))) {
+                btn.setAttribute('data-bs-toggle', 'tooltip');
+                btn.setAttribute('data-bs-placement', 'bottom');
+                btn.setAttribute('title', 'Generiert eine PDF-Datei mit den aktuellen Ergebnissen.');
+            }
+        });
+    }
+    
+    const nextRoundButton = document.getElementById('generateNextRoundBtn');
+    if (nextRoundButton) {
+        nextRoundButton.setAttribute('data-bs-toggle', 'tooltip');
+        nextRoundButton.setAttribute('data-bs-placement', 'bottom');
+        nextRoundButton.setAttribute('title', 'Erstellt die Startliste für den nächsten Durchgang basierend auf den Ergebnissen des aktuellen Durchgangs.');
+    }
+    
+    // Handle next round display button functionality
+    if (nextRoundButton) {
+        nextRoundButton.addEventListener('click', function() {
+            const eventId = document.getElementById('eventSelect').value;
+            if (!eventId) {
+                alert('Bitte wählen Sie eine Veranstaltung aus');
+                return;
+            }
+            
+            // Show modal with loading indicator
+            const modal = new bootstrap.Modal(document.getElementById('nextRoundModal'));
+            modal.show();
+            
+            // Call the API to display next round order
+            fetch('/formular/api/next-round-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ event_id: eventId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Build start list table
+                    let html = `
+                        <div class="alert alert-success">
+                            <h6>Startfolge für nächsten Durchgang</h6>
+                            <p>Basierend auf den Ergebnissen von Durchgang ${data.source_round}</p>
+                        </div>
+                        <table class="table" id="nextRoundTable">
+                            <thead>
+                                <tr>
+                                    <th>Start Nr.</th>
+                                    <th>Team</th>
+                                    <th>Piloten</th>
+                                    <th>Vorherige Punktzahl</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                    
+                    // Add teams with scores first
+                    data.round_data.forEach((team, index) => {
+                        html += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>Team ${team.team_nummer}</td>
+                                <td>${team.schlepper_pilot} / ${team.segler_pilot}</td>
+                                <td>${team.raw_score ? team.raw_score.toFixed(1) : '-'}</td>
+                            </tr>`;
+                    });
+                    
+                    // Add teams without scores
+                    data.teams_without_scores.forEach((team, index) => {
+                        const position = data.round_data.length + index + 1;
+                        html += `
+                            <tr>
+                                <td>${position}</td>
+                                <td>Team ${team.team_nummer}</td>
+                                <td>${team.schlepper_pilot} / ${team.segler_pilot}</td>
+                                <td>-</td>
+                            </tr>`;
+                    });
+                    
+                    html += `</tbody></table>`;
+                    
+                    // Update modal content
+                    document.getElementById('startListContent').innerHTML = html;
+                    
+                    // Setup print button
+                    document.getElementById('printNextRoundBtn').onclick = function() {
+                        const printWin = window.open('', '_blank');
+                        printWin.document.write(`
+                            <html>
+                            <head>
+                                <title>Startliste nächster Durchgang</title>
+                                <style>
+                                    body { font-family: Arial, sans-serif; }
+                                    table { width: 100%; border-collapse: collapse; }
+                                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                                    th { background-color: #f2f2f2; }
+                                </style>
+                            </head>
+                            <body>
+                                <h2>NRW Cup 2025 - Startliste</h2>
+                                <h3>Nächster Durchgang</h3>
+                                ${document.getElementById('nextRoundTable').outerHTML}
+                            </body>
+                            </html>
+                        `);
+                        printWin.document.close();
+                        printWin.focus();
+                        printWin.print();
+                    };
+                    
+                    // Setup email button
+                    document.getElementById('emailNextRoundBtn').onclick = function() {
+                        console.log('Email button clicked');
+                        const eventId = document.getElementById('eventSelect').value;
+                        console.log('Event ID:', eventId);
+                        
+                        // Build team order array from displayed data
+                        const teamOrder = [];
+                        const nextRoundData = data.round_data.concat(data.teams_without_scores);
+                        nextRoundData.forEach(team => {
+                            teamOrder.push(team.team_nummer);
+                        });
+                        console.log('Team order:', teamOrder);
+                        
+                        fetch('/formular/email-startlist', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                event_id: parseInt(eventId),
+                                team_order: teamOrder,
+                                next_round: true
+                            })
+                        })
+                        .then(response => {
+                            console.log('Response:', response);
+                            return response.json();
+                        })
+                        .then(result => {
+                            console.log('Result:', result);
+                            if (result.success) {
+                                alert('Startliste für nächsten Durchgang erfolgreich per Email versendet');
+                            } else {
+                                alert('Fehler: ' + result.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.log('Error:', error);
+                            alert('Fehler beim Senden: ' + error.message);
+                        });
+                    };
+                } else {
+                    document.getElementById('startListContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.message || 'Error displaying next round order'}
+                        </div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error getting next round order:', error);
+                document.getElementById('startListContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message || 'Failed to get next round order'}
+                    </div>`;
+            });
+        });
+    }
+});
+
+function confirmNextRound() {
+    if (confirm('Möchten Sie den nächsten Durchgang erstellen?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("scoring.generate_next_round") }}';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

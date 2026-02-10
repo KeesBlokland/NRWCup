@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Regelwerk Bearbeiten{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Rule Set Information Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Regelwerk Info</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ rule_set.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Beschreibung</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3">{{ rule_set.description }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="is_active" name="is_active"
+                                       {% if rule_set.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Aktiv (als Standard verwenden)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Version</label>
+                            <input type="text" class="form-control" value="{{ rule_set.version }}" readonly>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 mb-4">
+                <a href="{{ url_for('rules.index') }}" class="btn btn-secondary">
+                    Zurück zur Übersicht
+                </a>
+                {% if not rule_set.is_active %}
+                    <form method="POST" action="{{ url_for('rules.activate_rule_set', rule_set_id=rule_set.rule_set_id) }}">
+                        <button type="submit" class="btn btn-success w-100">
+                            Als aktives Regelwerk festlegen
+                        </button>
+                    </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('rules.duplicate_rule_set', rule_set_id=rule_set.rule_set_id) }}">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        Regelwerk duplizieren
+                    </button>
+                </form>
+                <button type="button" class="btn btn-outline-danger" id="deleteRuleBtn">
+                    Regelwerk löschen
+                </button>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Rules Editor Card -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Regeln</h5>
+                    <button type="button" class="btn btn-primary btn-sm" id="addRuleBtn">
+                        Regel hinzufügen
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="rulesContainer">
+                        <!-- Rules will be loaded here dynamically -->
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-success" id="saveRulesBtn">
+                            Regeln speichern
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rule Type Template -->
+<template id="ruleTemplate">
+    <div class="rule-item card mb-3" data-rule-id="">
+        <div class="card-header d-flex justify-content-between align-items-center bg-light py-2">
+            <span class="rule-title fw-bold"></span>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-secondary move-up-btn">↑</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary move-down-btn">↓</button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-rule-btn">×</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="rule-params">
+                <!-- Parameters will be added dynamically -->
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Add Rule Modal -->
+<div class="modal fade" id="addRuleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Neue Regel hinzufügen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="ruleTypeSelect" class="form-label">Regeltyp</label>
+                    <select class="form-select" id="ruleTypeSelect">
+                        <option value="">- Regeltyp auswählen -</option>
+                        {% for rule_type, rule_info in rule_types.items() %}
+                            <option value="{{ rule_type }}">{{ rule_info.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="ruleDescriptionContainer" class="mb-3 d-none">
+                    <div class="alert alert-info">
+                        <h6 class="mb-1">Beschreibung</h6>
+                        <p class="mb-0 small" id="ruleDescription"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-primary" id="addRuleConfirmBtn">Hinzufügen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Regelwerk Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Möchten Sie das Regelwerk <span>{{ rule_set.name }}</span> wirklich löschen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteForm" method="POST" action="{{ url_for('rules.delete_rule_set', rule_set_id=rule_set.rule_set_id) }}">
+                    <button type="submit" class="btn btn-danger">Löschen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Ensure bootstrap is loaded before using it
+document.addEventListener('DOMContentLoaded', function() {
+    // Make sure Bootstrap JavaScript is loaded
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap JavaScript is not loaded!');
+        alert('Error: Bootstrap JavaScript library is missing. Please check browser console for details.');
+        return;
+    }
+    
+    // DOM Elements
+    const rulesContainer = document.getElementById('rulesContainer');
+    const addRuleBtn = document.getElementById('addRuleBtn');
+    const deleteRuleBtn = document.getElementById('deleteRuleBtn');
+    const saveRulesBtn = document.getElementById('saveRulesBtn');
+    const ruleTypeSelect = document.getElementById('ruleTypeSelect');
+    const ruleDescriptionContainer = document.getElementById('ruleDescriptionContainer');
+    const ruleDescription = document.getElementById('ruleDescription');
+    const addRuleConfirmBtn = document.getElementById('addRuleConfirmBtn');
+    
+    // Create modal instances
+    const addRuleModal = new bootstrap.Modal(document.getElementById('addRuleModal'));
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    
+    // Current Rules
+    let currentRules = [];
+    
+    // Rule Types Data
+    const ruleTypes = {
+        {% for rule_type, rule_info in rule_types.items() %}
+        "{{ rule_type }}": {
+            name: "{{ rule_info.name }}",
+            description: "{{ rule_info.description }}",
+            parameters: {{ rule_info.parameters|tojson }}
+        },
+        {% endfor %}
+    };
+    
+    // Load rules for the rule set
+    loadRules();
+    
+    // Event listeners
+    addRuleBtn.addEventListener('click', openAddRuleModal);
+    deleteRuleBtn.addEventListener('click', function() {
+        deleteModal.show();
+    });
+    ruleTypeSelect.addEventListener('change', showRuleDescription);
+    addRuleConfirmBtn.addEventListener('click', addNewRule);
+    saveRulesBtn.addEventListener('click', saveRules);
+    
+    // Event delegation for rule item buttons
+    rulesContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('move-up-btn')) {
+            moveRuleUp(e.target.closest('.rule-item'));
+        } else if (e.target.classList.contains('move-down-btn')) {
+            moveRuleDown(e.target.closest('.rule-item'));
+        } else if (e.target.classList.contains('remove-rule-btn')) {
+            removeRule(e.target.closest('.rule-item'));
+        }
+    });
+    
+    // Functions
+    function loadRules() {
+        console.log("Loading rules for rule set {{ rule_set.rule_set_id }}");
+        rulesContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Lade Regeln...</p>
+            </div>
+        `;
+    
+        fetch(`/rules/api/rules/{{ rule_set.rule_set_id }}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                console.log("Received response from server");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Parsed JSON data:", data);
+                
+                if (data && Array.isArray(data.rules)) {
+                    currentRules = data.rules;
+                } else {
+                    currentRules = [];
+                    console.warn('Received invalid rules data:', data);
+                }
+                renderRules();
+            })
+            .catch(error => {
+                console.error('Error loading rules:', error);
+                rulesContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>Fehler beim Laden der Regeln</h5>
+                        <p>${error.message || 'Unbekannter Fehler'}</p>
+                        <button type="button" class="btn btn-outline-danger mt-2" onclick="loadRules()">
+                            Erneut versuchen
+                        </button>
+                    </div>
+                `;
+            });
+    }
+    
+    function renderRules() {
+        console.log("Rendering rules:", currentRules);
+        rulesContainer.innerHTML = '';
+        
+        if (!currentRules || currentRules.length === 0) {
+            rulesContainer.innerHTML = `
+                <div class="alert alert-info">
+                    Keine Regeln definiert. Klicken Sie auf "Regel hinzufügen" um zu beginnen.
+                </div>
+            `;
+            return;
+        }
+        
+        currentRules.forEach((rule, index) => {
+            try {
+                const ruleEl = createRuleElement(rule, index);
+                rulesContainer.appendChild(ruleEl);
+            } catch (error) {
+                console.error(`Error rendering rule at index ${index}:`, error, rule);
+                const errorEl = document.createElement('div');
+                errorEl.className = 'alert alert-danger mb-3';
+                errorEl.textContent = `Fehler beim Anzeigen einer Regel: ${error.message}`;
+                rulesContainer.appendChild(errorEl);
+            }
+        });
+    }
+    
+    function createRuleElement(rule, index) {
+        if (!rule || typeof rule !== 'object') {
+            console.error("Invalid rule object:", rule);
+            throw new Error("Invalid rule object");
+        }
+        
+        if (!rule.rule_type) {
+            console.error("Rule is missing rule_type:", rule);
+            throw new Error("Rule is missing rule_type");
+        }
+        
+        const template = document.getElementById('ruleTemplate');
+        if (!template) {
+            console.error("Rule template not found");
+            throw new Error("Rule template not found");
+        }
+        
+        const ruleEl = template.content.cloneNode(true).querySelector('.rule-item');
+        
+        ruleEl.dataset.ruleId = rule.rule_id || `new-${index}`;
+        ruleEl.dataset.ruleType = rule.rule_type;
+        ruleEl.dataset.ruleOrder = index;
+        
+        const ruleInfo = ruleTypes[rule.rule_type];
+        if (ruleInfo) {
+            ruleEl.querySelector('.rule-title').textContent = ruleInfo.name;
+            
+            // Add parameters
+            const paramsContainer = ruleEl.querySelector('.rule-params');
+            paramsContainer.innerHTML = '';
+            
+            // Ensure parameters is an object
+            const parameters = rule.parameters || {};
+            
+            Object.entries(ruleInfo.parameters).forEach(([paramName, paramInfo]) => {
+                const paramValue = parameters[paramName] !== undefined ? 
+                    parameters[paramName] : 
+                    paramInfo.default;
+                
+                try {
+                    const paramEl = createParameterInput(paramName, paramInfo, paramValue);
+                    paramsContainer.appendChild(paramEl);
+                } catch (error) {
+                    console.error(`Error creating parameter input for ${paramName}:`, error);
+                    const errorEl = document.createElement('div');
+                    errorEl.className = 'alert alert-danger mb-2';
+                    errorEl.textContent = `Fehler bei Parameter "${paramName}": ${error.message}`;
+                    paramsContainer.appendChild(errorEl);
+                }
+            });
+        } else {
+            ruleEl.querySelector('.rule-title').textContent = `Unknown Rule Type: ${rule.rule_type}`;
+            
+            // Add warning for unknown rule type
+            const warningEl = document.createElement('div');
+            warningEl.className = 'alert alert-warning mb-0';
+            warningEl.textContent = `Unbekannter Regeltyp: ${rule.rule_type}`;
+            ruleEl.querySelector('.rule-params').appendChild(warningEl);
+        }
+        
+        return ruleEl;
+    }
+    
+    function createParameterInput(paramName, paramInfo, value) {
+        const paramContainer = document.createElement('div');
+        paramContainer.className = 'mb-2';
+        
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = paramInfo.description;
+        paramContainer.appendChild(label);
+        
+        let input;
+        
+        switch (paramInfo.type) {
+            case 'boolean':
+                input = document.createElement('div');
+                input.className = 'form-check';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'form-check-input';
+                checkbox.name = paramName;
+                checkbox.checked = !!value;
+                checkbox.dataset.paramName = paramName;
+                checkbox.dataset.paramType = 'boolean';
+                
+                const checkLabel = document.createElement('label');
+                checkLabel.className = 'form-check-label';
+                checkLabel.textContent = 'Aktiviert';
+                
+                input.appendChild(checkbox);
+                input.appendChild(checkLabel);
+                break;
+                
+            case 'select':
+                input = document.createElement('select');
+                input.className = 'form-select';
+                input.name = paramName;
+                input.dataset.paramName = paramName;
+                input.dataset.paramType = 'select';
+                
+                (paramInfo.options || []).forEach(option => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = option;
+                    optionEl.textContent = option;
+                    if (value === option) {
+                        optionEl.selected = true;
+                    }
+                    input.appendChild(optionEl);
+                });
+                break;
+                
+            case 'integer':
+            default:
+                input = document.createElement('input');
+                input.type = paramInfo.type === 'integer' ? 'number' : 'text';
+                input.className = 'form-control';
+                input.name = paramName;
+                input.value = value;
+                input.dataset.paramName = paramName;
+                input.dataset.paramType = paramInfo.type;
+                break;
+        }
+        
+        paramContainer.appendChild(input);
+        return paramContainer;
+    }
+    
+    function openAddRuleModal() {
+        ruleTypeSelect.value = '';
+        ruleDescriptionContainer.classList.add('d-none');
+        addRuleModal.show();
+    }
+    
+    function showRuleDescription() {
+        const ruleType = ruleTypeSelect.value;
+        
+        if (ruleType && ruleTypes[ruleType]) {
+            ruleDescription.textContent = ruleTypes[ruleType].description;
+            ruleDescriptionContainer.classList.remove('d-none');
+        } else {
+            ruleDescriptionContainer.classList.add('d-none');
+        }
+    }
+    
+    function addNewRule() {
+        const ruleType = ruleTypeSelect.value;
+        
+        if (!ruleType || !ruleTypes[ruleType]) {
+            return;
+        }
+        
+        // Create default parameters
+        const parameters = {};
+        Object.entries(ruleTypes[ruleType].parameters).forEach(([paramName, paramInfo]) => {
+            parameters[paramName] = paramInfo.default;
+        });
+        
+        // Add new rule
+        const newRule = {
+            rule_type: ruleType,
+            parameters: parameters
+        };
+        
+        currentRules.push(newRule);
+        renderRules();
+        addRuleModal.hide();
+    }
+    
+    function moveRuleUp(ruleEl) {
+        const index = parseInt(ruleEl.dataset.ruleOrder);
+        if (index > 0) {
+            // Swap with previous rule
+            [currentRules[index], currentRules[index - 1]] = [currentRules[index - 1], currentRules[index]];
+            renderRules();
+        }
+    }
+    
+    function moveRuleDown(ruleEl) {
+        const index = parseInt(ruleEl.dataset.ruleOrder);
+        if (index < currentRules.length - 1) {
+            // Swap with next rule
+            [currentRules[index], currentRules[index + 1]] = [currentRules[index + 1], currentRules[index]];
+            renderRules();
+        }
+    }
+    
+    function removeRule(ruleEl) {
+        const index = parseInt(ruleEl.dataset.ruleOrder);
+        currentRules.splice(index, 1);
+        renderRules();
+    }
+    
+    function saveRules() {
+        // Update parameters from form inputs
+        document.querySelectorAll('.rule-item').forEach((ruleEl, index) => {
+            const ruleType = ruleEl.dataset.ruleType;
+            const parameters = {};
+            
+            ruleEl.querySelectorAll('[data-param-name]').forEach(input => {
+                const paramName = input.dataset.paramName;
+                const paramType = input.dataset.paramType;
+                
+                let value;
+                switch (paramType) {
+                    case 'boolean':
+                        value = input.checked;
+                        break;
+                    case 'integer':
+                        value = parseInt(input.value, 10);
+                        break;
+                    case 'select':
+                    case 'string':
+                    default:
+                        value = input.value;
+                        break;
+                }
+                
+                parameters[paramName] = value;
+            });
+            
+            currentRules[index].parameters = parameters;
+        });
+        
+        // Ensure proper structure of rules for saving
+        const rulesToSave = currentRules.map((rule, index) => {
+            // Make sure parameters is a proper object, not undefined
+            if (!rule.parameters) {
+                rule.parameters = {};
+            }
+            
+            // Strip any properties we don't need for saving
+            return {
+                rule_id: rule.rule_id,
+                rule_type: rule.rule_type,
+                order: index,
+                parameters: rule.parameters
+            };
+        });
+        
+        // Send updated rules to server
+        saveRulesBtn.disabled = true;
+        saveRulesBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Speichern...';
+        
+        fetch(`/rules/api/rules/{{ rule_set.rule_set_id }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                rules: rulesToSave
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Reload rules to get new IDs
+                loadRules();
+                alert('Regeln erfolgreich gespeichert');
+            } else {
+                alert(`Fehler beim Speichern: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving rules:', error);
+            alert(`Fehler beim Speichern: ${error.message}`);
+        })
+        .finally(() => {
+            saveRulesBtn.disabled = false;
+            saveRulesBtn.textContent = 'Regeln speichern';
+        });
+    }
+});
+</script>
+{% endblock %}

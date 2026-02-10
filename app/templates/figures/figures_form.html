@@ -1,0 +1,109 @@
+<!--
+File: app/templates/figures/figures_form.html
+Version: 1.0.0
+Created: 2025-01-20
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - {{ 'Figur Bearbeiten' if task else 'Neue Figur' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">{{ 'Figur Bearbeiten' if task else 'Neue Figur' }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- All Fields in Two Rows -->
+                        <div class="mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="code" class="form-label">Code *</label>
+                                    <input type="text" class="form-control" id="code" name="code" 
+                                        value="{{ task.code if task else '' }}" required>
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie einen Code ein.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="name_de" class="form-label">Name (DE) *</label>
+                                    <input type="text" class="form-control" id="name_de" name="name_de" 
+                                        value="{{ task.name_de if task else '' }}" required>
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie einen deutschen Namen ein.
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="sort_order" class="form-label">Sortierung</label>
+                                    <input type="number" class="form-control" id="sort_order" name="sort_order"
+                                        value="{{ task.sort_order if task else '' }}">
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-3">
+                                    <label for="max_value" class="form-label">Maximalwert</label>
+                                    <input type="number" step="0.1" class="form-control" id="max_value" 
+                                           name="max_value" value="{{ task.max_value if task else '' }}">
+                                </div>
+ 
+                                <div class="col-md-3">
+                                    <label for="k_factor" class="form-label">K-Faktor</label>
+                                    <input type="number" class="form-control" id="k_factor" 
+                                           name="k_factor" value="{{ task.k_factor if task else '1' }}" min="1" required>
+                                </div>
+
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                               {% if not task or task.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">Figur aktiv</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label">Beschreibung</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3">{{ task.description if task else '' }}</textarea>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('figures.index') }}" class="btn btn-secondary">Abbrechen</a>
+                            <button type="submit" class="btn btn-primary">
+                                {{ 'Änderungen Speichern' if task else 'Figur Anlegen' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}

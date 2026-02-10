@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Wertung{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Wertung</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body">
+                                    <h4 class="card-title text-primary">Bewertungen</h4>
+                                    <p class="card-text">Alle vorhandenen Bewertungen anzeigen und neue Bewertungen eingeben.</p>
+                                    <a href="{{ url_for('scoring.score_list') }}" class="btn btn-primary w-100 mt-auto">Bewertungen verwalten</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100 bg-light">
+                                <div class="card-body">
+                                    <h4 class="card-title text-primary">Bewertungsbogen</h4>
+                                    <p class="card-text">Einen neuen Bewertungsbogen für ein Team erstellen.</p>
+                                    <a href="{{ url_for('scoring.scoresheet') }}" class="btn btn-primary w-100 mt-auto">Neue Bewertung</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if active_round %}
+                        <div class="col-md-12">
+                            <div class="alert alert-info mb-0">
+                                <h5>Aktiver Durchgang: Durchgang {{ active_round.round_number }}</h5>
+                                <p class="mb-0">Dieser Durchgang ist derzeit für die Bewertung aktiv.</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

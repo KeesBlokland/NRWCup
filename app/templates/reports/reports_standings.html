@@ -1,0 +1,337 @@
+<!--
+File: app/templates/reports/reports_standings.html
+Version: 2.2.0
+Created: 2025-04-21
+Description: Corrected raw score display and dropped rounds logic
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Wettkampfstände{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">{{ event.name }}</h2>
+            <p class="text-muted">
+                {% if event.event_date %}{{ event.event_date.strftime('%d.%m.%Y') }}{% endif %}
+                {% if event.location %}
+                    | {{ event.location.city }}
+                    {% if event.location.postal_code %}
+                        ({{ event.location.postal_code }})
+                    {% endif %}
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            
+            <div class="btn-group">
+                <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" 
+                class="btn btn-secondary">
+                    <i class="bi bi-printer"></i> Ergebnisse drucken
+                </a>
+                <!-- Email Results Button -->
+                <form method="POST" action="{{ url_for('reports.email_results', event_id=event.event_id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('Ergebnisse an Wettkampfleitung senden?')">
+                        <i class="bi bi-envelope"></i> Ergebnisse mailen
+                    </button>
+                </form>
+                <!-- New print button - added for direct printing -->
+                <button onclick="window.print()" class="btn btn-outline-secondary no-print">
+                    <i class="bi bi-printer"></i> Diese Seite drucken
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Selector -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('reports.standings') }}" class="row g-3">
+                <div class="col-md-6">
+                    <label for="eventSelect" class="form-label">Veranstaltung</label>
+                    <select class="form-select" id="eventSelect" name="event_id" onchange="this.form.submit()">
+                        {% for evt in events %}
+                            <option value="{{ evt.event_id }}" {% if evt.event_id == event.event_id %}selected{% endif %}>
+                                {{ evt.name }} {% if evt.event_date %}({{ evt.event_date.strftime('%d.%m.%Y') }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scoring Rules Information 
+    <div class="alert alert-info mb-4">
+        <h5 class="mb-2">Wertungsregeln</h5>
+        <p class="mb-0">
+            Zur Berechnung des Gesamtergebnisses wird ein Streichdurchgang (bei Durchführung von 3 oder mehr kompletten Durchgängen) abgezogen. 
+            Die verbleibenden Durchgänge werden miteinander addiert.
+        </p>
+    </div> -->
+
+    <!-- Final Standings -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Endgültige Stände</h4>
+            <span class="badge bg-primary">{{ standings|length }} Teams</span>
+        </div>
+        <div class="card-body">
+            {% if standings %}
+                <!-- Calculate normalized scores if not already available -->
+                {% if standings|length > 0 and standings[0].score is defined %}
+                    {% set max_score = 0 %}
+                    {% for standing in standings %}
+                        {% if standing.score > max_score %}
+                            {% set max_score = standing.score %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="table-responsive">
+                    <!-- Table with forced explicit header row -->
+                    <table class="table table-striped align-middle">
+                        <!-- Explicit header row with strong styling -->
+                        <tr style="background-color: #343a40; color: white; font-weight: bold;">
+                            <th style="text-align: center; padding: 10px;">Rang</th>
+                            <th style="padding: 10px;">Team</th>
+                            <th style="padding: 10px;">Piloten</th>
+                            
+                            <!-- Only display columns for rounds with actual data -->
+                            {% for i in range(rounds|length) %}
+                                <th style="text-align: center; padding: 10px;">D{{ rounds[i].round_number }}</th>
+                            {% endfor %}
+                            
+                            <th style="text-align: center; padding: 10px;">Gesamt</th>
+                            <th style="text-align: center; padding: 10px;">Norm.</th>
+                        </tr>
+                        
+                        <!-- Table body -->
+                        {% for standing in standings %}
+                            <tr>
+                                <td class="text-center fw-bold">{{ standing.rank }}</td>
+                                <td>Team {{ standing.team.team_nummer }}</td>
+                                <td>
+                                    <div>
+                                        {% if standing.team.schlepper_pilot %}
+                                            <div><small>{{ standing.team.schlepper_pilot.name }}</small></div>
+                                        {% endif %}
+                                        {% if standing.team.segler_pilot %}
+                                            <div><small>{{ standing.team.segler_pilot.name }}</small></div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                
+                                <!-- Only display the exact number of round scores -->
+                                {% for i in range(rounds|length) %}
+                                    <td class="text-center">
+                                        {% if i < standing.round_scores|length %}
+                                            {% set score = standing.round_scores[i] %}
+                                            <!-- Calculate raw total score for this round - not average -->
+                                            {% set round_obj = rounds[i] %}
+                                            
+                                            {% if i in standing.dropped_indices %}
+                                                <!-- Dropped round with only strikethrough, no text -->
+                                                <del class="text-muted">{{ "%.1f"|format(score) }}</del>
+                                            {% else %}
+                                                {{ "%.1f"|format(score) }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                
+                                <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }}</td>
+                                <td class="text-center fw-bold text-success">
+                                    {% if loop.first %}
+                                        <!-- First place team always gets 1000.0 -->
+                                        1000.0
+                                    {% elif standings[0].score > 0 %}
+                                        <!-- Other teams get proportional scores -->
+                                        {{ "%.1f"|format((standing.score / standings[0].score) * 1000) }}
+                                    {% else %}
+                                        0.0
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Noch keine Ergebnisse für diese Veranstaltung verfügbar.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Individual Round Results - Each shows start list format by default -->
+    <div class="accordion" id="roundsAccordion">
+        {% for round in rounds %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ round.round_id }}">
+                    <button class="accordion-button collapsed" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#collapse{{ round.round_id }}">
+                        Durchgang {{ round.round_number }} Ergebnisse
+                    </button>
+                </h2>
+                <div id="collapse{{ round.round_id }}" class="accordion-collapse collapse" 
+                     data-bs-parent="#roundsAccordion">
+                    <div class="accordion-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5>Durchgang {{ round.round_number }}</h5>
+                            <div class="btn-group">
+                                <a href="{{ url_for('scoring.score_list', round_id=round.round_id) }}" 
+                                   class="btn btn-sm btn-outline-secondary">
+                                    Detaillierte Wertungen
+                                </a>
+                                <button class="btn btn-sm btn-outline-success" onclick="printRoundData({{ round.round_id }})">
+                                    <i class="bi bi-printer"></i> Drucken
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Always show start list format with pilot names -->
+                        <div id="startlist-table-{{ round.round_id }}">
+                            {% if round.round_id in round_standings and round_standings[round.round_id] %}
+                                <div class="alert alert-success">
+                                    <strong>Startliste für Durchgang {{ round.round_number + 1 }}</strong> - 
+                                    Teams sind nach aufsteigenden Punkten sortiert (niedrigste Punkte zuerst)
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <!-- Forced explicit header styling -->
+                                        <tr style="background-color: #343a40; color: white; font-weight: bold;">
+                                            <th style="padding: 8px; text-align: center;">Start Nr.</th>
+                                            <th style="padding: 8px;">Team</th>
+                                            <th style="padding: 8px;">Piloten</th>
+                                            <th style="padding: 8px; text-align: center;">Punkte</th>
+                                        </tr>
+                                        <tbody>
+                                            {% set sorted_scores = (round_standings[round.round_id]|sort(attribute='score')) %}
+                                            {% for score in sorted_scores %}
+                                                <tr>
+                                                    <td style="text-align: center;">{{ loop.index }}</td>
+                                                    <td>Team {{ score.team.team_nummer }}</td>
+                                                    <td>
+                                                        <div>
+                                                            {% if score.team.schlepper_pilot %}
+                                                                {{ score.team.schlepper_pilot.name }}
+                                                            {% endif %}
+                                                            {% if score.team.schlepper_pilot and score.team.segler_pilot %}
+                                                                /
+                                                            {% endif %}
+                                                            {% if score.team.segler_pilot %}
+                                                                {{ score.team.segler_pilot.name }}
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                    <td style="text-align: center;">{{ "%.1f"|format(score.score) }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    Keine Wertungen für diesen Durchgang verfügbar.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Printable Start List - removed inaccurate dropping rules -->
+<div id="printable-start-list" style="display: none;">
+    <div class="print-container">
+        <!-- Single line title with smaller font size, no date -->
+        <h2 class="print-title">NRW Cup 2025 - Startliste für Durchgang <span id="print-round-number"></span></h2>
+        
+        <!-- Table with no outer border -->
+        <table id="print-table" class="print-table">
+            <thead>
+                <tr>
+                    <th class="print-th start-nr">Start Nr.</th>
+                    <th class="print-th team">Team</th>
+                    <th class="print-th piloten">Piloten</th>
+                    <th class="print-th punkte">Punkte</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modified printRoundData function without incorrect rules -->
+<script>
+function printRoundData(roundId) {
+    // Get round number from the header
+    const roundHeader = document.querySelector(`#heading${roundId} button`).textContent;
+    const roundNumber = roundHeader.match(/Durchgang (\d+)/)[1];
+    
+    // Set up the print content
+    const printRoundNumber = document.getElementById('print-round-number');
+    const printTable = document.getElementById('print-table').querySelector('tbody');
+    
+    // Clear previous content
+    printTable.innerHTML = '';
+    
+    // Set round number (next round)
+    printRoundNumber.textContent = parseInt(roundNumber) + 1;
+    
+    // Get rows from the displayed start list
+    const startListTable = document.getElementById(`startlist-table-${roundId}`);
+    const rows = startListTable.querySelectorAll('tbody tr');
+    
+    // Add rows to print table
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const newRow = document.createElement('tr');
+        newRow.className = 'print-row';
+        
+        // Create cells for the new row
+        for (let i = 0; i < cells.length; i++) {
+            const cell = document.createElement('td');
+            cell.className = 'print-cell';
+            
+            // Add text alignment classes
+            if (i === 0 || i === cells.length - 1) {
+                cell.classList.add('text-center');
+            }
+            
+            cell.innerHTML = cells[i].innerHTML;
+            newRow.appendChild(cell);
+        }
+        
+        printTable.appendChild(newRow);
+    });
+    
+    // Print
+    const printContent = document.getElementById('printable-start-list').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+    
+    // Need to reattach event handlers after restoring the content
+    setTimeout(() => {
+        document.querySelectorAll('[onclick^="printRoundData"]').forEach(button => {
+            const roundId = button.getAttribute('onclick').match(/\d+/)[0];
+            button.onclick = () => printRoundData(roundId);
+        });
+    }, 100);
+}
+</script>
+{% endblock %}

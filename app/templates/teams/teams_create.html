@@ -1,0 +1,151 @@
+<!--
+File: app/templates/teams/teams_create.html
+Version: 2.0.0
+Created: 2024-12-05
+Last Updated: 2025-04-19
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Neues Team{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Neues Team</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- Team Number Selection -->
+                        <div class="mb-4">
+                            <h4>Team Nummer</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="team_nummer" class="form-label">Wähle eine Team Nummer</label>
+                                    <select class="form-select" id="team_nummer" name="team_nummer">
+                                        {% for num in available_nums %}
+                                            <option value="{{ num }}" {% if form_data and form_data.team_nummer == num %}selected{% endif %}>
+                                                {{ num }}{% if loop.first %} (nächste verfügbare){% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Die Liste zeigt alle verfügbaren Teamnummern ohne Lücken.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schlepper Section -->
+                        <div class="mb-4">
+                            <h4>Schlepper</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="schlepper_pilot_id" class="form-label">Schlepper Pilot</label>
+                                    <select class="form-select" id="schlepper_pilot_id" name="schlepper_pilot_id">
+                                        <option value="">- Pilot auswählen -</option>
+                                        {% for pilot in schlepper_pilots %}
+                                            <option value="{{ pilot.teilnehmer_id }}" {% if form_data and form_data.schlepper_pilot_id == pilot.teilnehmer_id %}selected{% endif %}>
+                                                {{ pilot.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="schlepper_flugzeug_id" class="form-label">Schleppflugzeug</label>
+                                    <select class="form-select" id="schlepper_flugzeug_id" name="schlepper_flugzeug_id" disabled>
+                                        <option value="">- Erst Pilot auswählen -</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Segler Section -->
+                        <div class="mb-4">
+                            <h4>Segler</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="segler_pilot_id" class="form-label">Segler Pilot</label>
+                                    <select class="form-select" id="segler_pilot_id" name="segler_pilot_id">
+                                        <option value="">- Pilot auswählen -</option>
+                                        {% for pilot in segler_pilots %}
+                                            <option value="{{ pilot.teilnehmer_id }}" {% if form_data and form_data.segler_pilot_id == pilot.teilnehmer_id %}selected{% endif %}>
+                                                {{ pilot.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="segler_flugzeug_id" class="form-label">Segelflugzeug</label>
+                                    <select class="form-select" id="segler_flugzeug_id" name="segler_flugzeug_id" disabled>
+                                        <option value="">- Erst Pilot auswählen -</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('teams.index') }}" class="btn btn-secondary">Abbrechen</a>
+                            <button type="submit" class="btn btn-primary">Team Anlegen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// Handle pilot selection and aircraft loading
+function loadAircraft(pilotId, aircraftSelect, type) {
+    if (!pilotId) {
+        aircraftSelect.innerHTML = '<option value="">- Erst Pilot auswählen -</option>';
+        aircraftSelect.disabled = true;
+        return;
+    }
+
+    fetch(`/teams/get_aircraft/${pilotId}/${type}`)
+        .then(response => response.json())
+        .then(data => {
+            const aircraftSelect = document.getElementById(`${type}_flugzeug_id`);
+            aircraftSelect.innerHTML = '<option value="">- Flugzeug auswählen -</option>';
+            
+            data.forEach(aircraft => {
+                const option = document.createElement('option');
+                option.value = aircraft.flugzeug_id;
+                option.textContent = aircraft.name;
+                aircraftSelect.appendChild(option);
+            });
+            
+            aircraftSelect.disabled = false;
+        })
+        .catch(error => console.error('Error loading aircraft:', error));
+}
+
+// Set up event listeners for pilot selects
+document.getElementById('schlepper_pilot_id').addEventListener('change', function() {
+    loadAircraft(this.value, 'schlepper', 'schlepper');
+});
+
+document.getElementById('segler_pilot_id').addEventListener('change', function() {
+    loadAircraft(this.value, 'segler', 'segler');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+<!--
+File: app/templates/reports/reports_round_details.html
+Version: 1.1.0
+Created: 2025-03-24
+Updated: 2025-03-26
+Description: Template for displaying detailed round scores with raw scores
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Durchgang Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Durchgang {{ round.round_number }} Details</h2>
+            <p class="text-muted">
+                {{ event.name }}
+                {% if event.event_date %}
+                    | {{ event.event_date.strftime('%d.%m.%Y') }}
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <div class="btn-group">
+                <a href="{{ url_for('reports.standings', event_id=event.event_id) }}" 
+                   class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Zurück zur Rangliste
+                </a>
+                <a href="{{ url_for('reports.print_scoresheet', round_id=round.round_id) }}" 
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-printer"></i> Bewertungsbögen drucken
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Team Scores -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Team-Wertungen</h4>
+        </div>
+        <div class="card-body">
+            {% if team_scores %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Team</th>
+                                <th>Startreihenfolge</th>
+                                <th>Status</th>
+                                <th>Punktrichter-Wertungen</th>
+                                <th>Rohpunktzahl</th>
+                                <th>Normalisierte Punktzahl</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Update to use TeamRound.raw_score and TeamRound.normalized_score -->
+                            {% for team_id, data in team_scores.items() %}
+                            {% set team_round = data.team_round %}
+                            {% set scores = data.scores %}
+                            {% set team = team_round.team %}
+                            <tr>
+                                <td>
+                                    <strong>Team {{ team.team_nummer }}</strong>
+                                    <div>
+                                        {% if team.schlepper_pilot %}
+                                            <small>Schlepper: {{ team.schlepper_pilot.name }}</small><br>
+                                        {% endif %}
+                                        {% if team.segler_pilot %}
+                                            <small>Segler: {{ team.segler_pilot.name }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ team_round.start_order or '-' }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if team_round.status == 'Completed' else 'bg-warning' }}">
+                                        {{ team_round.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if scores %}
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for score in scores %}
+                                                <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}" 
+                                                class="badge bg-primary">
+                                                    {{ score.judge.name if score.judge else 'Punktrichter ' + score.judge_id|string }}
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">Noch keine Wertungen</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ "%.1f"|format(team_round.raw_score) if team_round.raw_score else '-' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        {{ "%.1f"|format(team_round.normalized_score) if team_round.normalized_score else '-' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Keine Team-Wertungen für diesen Durchgang verfügbar.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Scoring Rules Information -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Bewertungsregeln</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h5>Regeln zur Punkteberechnung</h5>
+                <ol>
+                    <li>Jeder Punktrichter bewertet die Leistung des Teams in mehreren Aufgaben</li>
+                    <li>Bei 4 oder mehr Punktrichtern wird die niedrigste Wertung für jedes Team gestrichen</li>
+                    <li>Die verbleibenden Wertungen werden gemittelt, um die Rohpunktzahl des Teams zu erhalten</li>
+                    <li>Die Punktzahlen werden auf einer 1000-Punkte-Skala normalisiert, basierend auf der höchsten Punktzahl in dem Durchgang</li>
+                    <li>Für die Endwertung wird bei 4 oder mehr Durchgängen die niedrigste Durchgangspunktzahl für jedes Team gestrichen. Bei 5 oder mehr Durchgängen werden sowohl die höchste als auch die niedrigste Punktzahl gestrichen.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Seite nicht gefunden - NRW Cup 2025{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 text-muted">404</h1>
+    <h2>Seite nicht gefunden</h2>
+    <p class="text-muted">Die angeforderte Seite existiert nicht.</p>
+    <a href="{{ url_for('home') }}" class="btn btn-primary mt-3">Zur Startseite</a>
+</div>
+{% endblock %}

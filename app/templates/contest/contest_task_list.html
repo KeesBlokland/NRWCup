@@ -1,0 +1,107 @@
+<!--
+File: app/templates/contest/contest_tasks_list.html
+Version: 1.0.0
+Created: 2024-12-05
+Last Updated: 2024-12-05
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Aufgabenverwaltung{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Aufgabenverwaltung</h2>
+        <a href="{{ url_for('contest.add_task') }}" class="btn btn-primary">
+            Neue Aufgabe
+        </a>
+    </div>
+
+    <!-- Tasks Table -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Deutscher Name</th>
+                    <th>Wertungstyp</th>
+                    <th>Wertebereich</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ task.code }}</td>
+                    <td>{{ task.name }}</td>
+                    <td>{{ task.name_de }}</td>
+                    <td>{{ task.score_type }}</td>
+                    <td>
+                        {% if task.min_value is not none and task.max_value is not none %}
+                            {{ task.min_value }} - {{ task.max_value }}
+                            {% if task.decimal_places %}
+                                ({{ task.decimal_places }} Dezimalstellen)
+                            {% endif %}
+                        {% elif task.allowed_values %}
+                            Erlaubte Werte: {{ task.allowed_values }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('contest.edit_task', id=task.type_id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                Bearbeiten
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="confirmDelete('{{ task.type_id }}', '{{ task.name }}')">
+                                Löschen
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Keine Aufgaben definiert</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aufgabe Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Möchten Sie die Aufgabe <span id="deleteName"></span> wirklich löschen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Löschen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(id, name) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    document.getElementById('deleteName').textContent = name;
+    document.getElementById('deleteForm').action = `{{ url_for('contest.delete_task', id=0) }}`.replace('0', id);
+    modal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,142 @@
+<!--
+File: app/templates/reports/reports_main.html
+Version: 1.2.0
+Created: 2025-03-24
+Updated: 2025-04-03
+Description: Main reports dashboard template with removal of start order functionality
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Berichte & Ergebnisse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Berichte & Ergebnisse</h2>
+    </div>
+
+    <!-- Reports Cards -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title">Wettkampfstände</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Aktuelle Stände und Ergebnisse für alle Wettkämpfe anzeigen.
+                    </p>
+                    {% if active_event %}
+                        <p class="text-muted mb-3">
+                            Aktuell aktive Veranstaltung: <strong>{{ active_event.name }}</strong>
+                            {% if active_event.event_date %}
+                                ({{ active_event.event_date.strftime('%d.%m.%Y') }})
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                    <a href="{{ url_for('reports.standings') }}" class="btn btn-primary">Stände anzeigen</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title">Export-Optionen</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Ergebnisse und Bewertungsbögen in verschiedenen Formaten exportieren.
+                    </p>
+                    <div class="mb-3">
+                        <label for="exportEvent" class="form-label">Veranstaltung auswählen</label>
+                        <select class="form-select" id="exportEvent">
+                            <option value="">-- Veranstaltung auswählen --</option>
+                            {% for event in events %}
+                                <option value="{{ event.event_id }}">
+                                    {{ event.name }} {% if event.event_date %}({{ event.event_date.strftime('%d.%m.%Y') }}){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" id="exportResultsBtn" disabled>
+                        Ergebnisse exportieren (PDF)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Events Section (if available) -->
+    {% if events %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4 class="card-title">Aktuelle Veranstaltungen</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Veranstaltung</th>
+                            <th>Datum</th>
+                            <th>Status</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events[:5] %}
+                        <tr>
+                            <td>{{ event.name }}</td>
+                            <td>{{ event.event_date.strftime('%d.%m.%Y') if event.event_date else '-' }}</td>
+                            <td>
+                                {% if event.status == 'Active' %}
+                                    <span class="badge bg-success">Aktiv</span>
+                                {% elif event.status == 'Completed' %}
+                                    <span class="badge bg-secondary">Abgeschlossen</span>
+                                {% elif event.status == 'Published' %}
+                                    <span class="badge bg-primary">Veröffentlicht</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ event.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('reports.standings', event_id=event.event_id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    Ergebnisse anzeigen
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportEventSelect = document.getElementById('exportEvent');
+        const exportResultsBtn = document.getElementById('exportResultsBtn');
+        
+        // Enable/disable export buttons based on event selection
+        exportEventSelect.addEventListener('change', function() {
+            const selectedEventId = this.value;
+            exportResultsBtn.disabled = !selectedEventId;
+        });
+        
+        // Set up export buttons
+        exportResultsBtn.addEventListener('click', function() {
+            const selectedEventId = exportEventSelect.value;
+            if (selectedEventId) {
+                window.location.href = "{{ url_for('reports.export', report_type='results') }}" + 
+                                       "?event_id=" + selectedEventId;
+            }
+        });
+    });
+</script>
+{% endblock %}

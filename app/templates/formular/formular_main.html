@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+{% block title %}NRW Cup 2025 - Startliste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-3">Startliste</h3>
+            
+            <div class="d-flex justify-content-center">
+                <div>
+                    <!-- First row -->
+                    <div class="mb-2 text-center">
+                        <button type="button" class="btn btn-secondary me-2" id="randomizeBtn" {% if is_locked %}disabled{% endif %}>Zufällige Reihenfolge</button>
+                        <select class="form-select d-inline-block me-2" id="eventSelect" style="width: auto;">
+                            <option value="">- Wettbewerb auswählen -</option>
+                            {% for event in events %}
+                            <option value="{{ event.event_id }}" {% if active_event and event.event_id == active_event.event_id %}selected{% endif %}>
+                                {{ event.name }} {% if event.event_date %}({{ event.event_date.strftime('%d.%m.%Y') }}){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn {% if is_locked %}btn-danger{% else %}btn-warning{% endif %} me-2" id="lockBtn">
+                            {% if is_locked %}Gesperrt{% else %}Entsperrt{% endif %}
+                        </button>
+                    </div>
+                    <!-- Second row -->
+                    <div class="text-center">
+                        <button type="button" class="btn btn-success me-2" id="emailStartListBtn" {% if not active_event %}disabled{% endif %} title="Startliste per Email versenden">
+                            <i class="bi bi-envelope"></i> Email Startliste
+                        </button>
+                        <button type="button" class="btn btn-primary me-2" id="printBtn" {% if not active_event %}disabled{% endif %}>PDF erstellen</button>
+                        <button type="button" class="btn btn-success me-2" id="exportLabelsBtn" {% if not active_event %}disabled{% endif %} title="Excel für Niimbot D11 Labels">
+                            <i class="bi bi-tags"></i> Labels Excel
+                        </button>
+                        <a href="{{ url_for('formular.print_scoresheets') }}" class="btn btn-info me-2" title="Leere Bewertungsbögen drucken">
+                            <i class="bi bi-printer"></i> Bewertungsbögen
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <table class="table" id="teamTable">
+                <thead>
+                    <tr class="bg-primary text-white">
+                        <th>Start Nr.</th>
+                        <th>Team</th>
+                        <th>Piloten</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in range(1, teams|length + 1) %}
+                    <tr draggable="{% if not is_locked %}true{% else %}false{% endif %}">
+                        <td>
+                            <input type="number" class="form-control form-control-sm w-75 position-number"
+                                value="{{ i }}" min="1" max="{{ teams|length }}" {% if is_locked %}disabled{% endif %}>
+                        </td>
+                        <td class="team-cell">Team {{ teams[i-1].team_nummer }}</td>
+                        <td class="pilot-cell">
+                            <span><small>{{ teams[i-1].schlepper_pilot.name }}</small></span>
+                            <span> - </span>
+                            <span><small>{{ teams[i-1].segler_pilot.name }}</small></span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Label Export Modal - NEW -->
+<div class="modal fade" id="labelExportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Labels für Niimbot D11 exportieren</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <h6>Label Format (40mm x 12mm):</h6>
+                    <div class="border p-2 mb-2" style="width: 200px; height: 50px; font-family: monospace; font-size: 11px; background-color: #f8f9fa;">
+                        <div><strong>Team 15: Durchgang: 2</strong></div>
+                        <div>Mueller / Schmidt</div>
+                    </div>
+                    <small>Zeile 1: Team + Durchgang | Zeile 2: Nachnamen der Piloten</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="maxRounds" class="form-label">Anzahl Durchgänge:</label>
+                    <select class="form-select" id="maxRounds">
+                        <option value="3" selected>3 Durchgänge</option>
+                        <option value="4">4 Durchgänge</option>
+                        <option value="5">5 Durchgänge</option>
+                        <option value="6">6 Durchgänge</option>
+                    </select>
+                </div>
+                
+                <div id="labelStats" class="card">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="h5 mb-0" id="statsTeams">{{ teams|length }}</div>
+                                <small class="text-muted">Teams</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h5 mb-0" id="statsRounds">3</div>
+                                <small class="text-muted">Durchgänge</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h5 mb-0" id="statsTotal">{{ teams|length * 3 }}</div>
+                                <small class="text-muted">Labels Total</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-success" id="downloadLabelsBtn">
+                    <i class="bi bi-download"></i> Excel Datei herunterladen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get initial lock state from server-side variable
+    let isLocked = {{ 'true' if is_locked else 'false' }};
+    const lockBtn = document.getElementById('lockBtn');
+    const randomizeBtn = document.getElementById('randomizeBtn');
+    const printBtn = document.getElementById('printBtn');
+    const eventSelect = document.getElementById('eventSelect');
+    const tbody = document.querySelector('tbody');
+    
+    // NEW: Label export elements
+    const exportLabelsBtn = document.getElementById('exportLabelsBtn');
+    const labelExportModal = new bootstrap.Modal(document.getElementById('labelExportModal'));
+    const maxRoundsSelect = document.getElementById('maxRounds');
+    const downloadLabelsBtn = document.getElementById('downloadLabelsBtn');
+    const emailStartListBtn = document.getElementById('emailStartListBtn');
+
+    // Function to update UI based on lock state
+    function updateLockState() {
+        // Update UI based on lock state
+        lockBtn.textContent = isLocked ? 'Gesperrt' : 'Entsperrt';
+        lockBtn.className = isLocked ? 'btn btn-danger me-2' : 'btn btn-warning me-2';
+        
+        // Toggle draggable and input states
+        const rows = tbody.getElementsByTagName('tr');
+        const inputs = tbody.getElementsByClassName('position-number');
+        
+        Array.from(rows).forEach(row => {
+            row.draggable = !isLocked;
+        });
+        
+        Array.from(inputs).forEach(input => {
+            input.disabled = isLocked;
+        });
+        
+        // Toggle other controls
+        randomizeBtn.disabled = isLocked;
+    }
+    
+    // Function to save the current team order
+    function saveTeamOrder() {
+        const order = Array.from(tbody.getElementsByTagName('tr')).map(row => 
+            parseInt(row.cells[1].textContent.replace('Team ', ''))
+        );
+        
+        fetch('/formular/save-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: order })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status !== 'success') {
+                console.error('Error saving team order');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving team order:', error);
+        });
+    }
+    
+    // NEW: Label export functionality
+    exportLabelsBtn.addEventListener('click', function() {
+        labelExportModal.show();
+    });
+    
+    // Update statistics when rounds change
+    maxRoundsSelect.addEventListener('change', function() {
+        const teams = {{ teams|length }};
+        const rounds = parseInt(this.value);
+        const total = teams * rounds;
+        
+        document.getElementById('statsRounds').textContent = rounds;
+        document.getElementById('statsTotal').textContent = total;
+    });
+    
+    // Download labels Excel file
+    downloadLabelsBtn.addEventListener('click', function() {
+        const eventId = eventSelect.value;
+        const maxRounds = maxRoundsSelect.value;
+        
+        if (!eventId) {
+            alert('Bitte wählen Sie zuerst eine Veranstaltung aus');
+            return;
+        }
+        
+        // Create download URL
+        const downloadUrl = `/formular/export-labels?event_id=${eventId}&max_rounds=${maxRounds}`;
+        
+        // Create temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Close modal after short delay
+        setTimeout(() => {
+            labelExportModal.hide();
+        }, 500);
+    });
+    
+    // Try to restore the saved order (if there was one)
+    {% if saved_order %}
+    try {
+        // Convert saved team numbers to actual rows for reordering
+        const savedOrder = {{ saved_order|tojson }};
+        const rows = Array.from(tbody.getElementsByTagName('tr'));
+        const teamMap = {};
+        
+        // Create a map of team numbers to row elements
+        rows.forEach(row => {
+            const teamNum = parseInt(row.cells[1].textContent.replace('Team ', ''));
+            teamMap[teamNum] = row;
+        });
+        
+        // Reorder the rows based on the saved order
+        savedOrder.forEach((teamNum, index) => {
+            if (teamMap[teamNum]) {
+                tbody.appendChild(teamMap[teamNum]);
+            }
+        });
+        
+        // Update position numbers
+        updatePositionNumbers();
+    } catch (error) {
+        console.error('Error restoring saved order:', error);
+    }
+    {% endif %}
+    
+    lockBtn.addEventListener('click', function() {
+        // If we're locking the order, save it first
+        if (!isLocked) {
+            saveTeamOrder();
+        }
+        
+        // Server-side toggle lock state
+        fetch('/formular/toggle-lock', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                isLocked = data.locked;
+                updateLockState();
+            } else {
+                console.error('Error toggling lock state');
+            }
+        });
+    });
+    
+    // Initialize drag and drop
+    let draggedItem = null;
+
+    tbody.addEventListener('dragstart', function(e) {
+        if (isLocked) {
+            e.preventDefault();
+            return;
+        }
+        draggedItem = e.target.closest('tr');
+        draggedItem.classList.add('dragging');
+    });
+
+    tbody.addEventListener('dragend', function(e) {
+        if (isLocked) {
+            e.preventDefault();
+            return;
+        }
+        draggedItem.classList.remove('dragging');
+        updatePositionNumbers();
+        
+        // Save the new order after manual dragging
+        saveTeamOrder();
+    });
+
+    tbody.addEventListener('dragover', function(e) {
+        if (isLocked) {
+            e.preventDefault();
+            return;
+        }
+        e.preventDefault();
+        const tr = e.target.closest('tr');
+        if (!tr || tr === draggedItem) return;
+        
+        const box = tr.getBoundingClientRect();
+        const offset = e.clientY - box.top - box.height / 2;
+        
+        if (offset < 0) {
+            tr.parentNode.insertBefore(draggedItem, tr);
+        } else {
+            tr.parentNode.insertBefore(draggedItem, tr.nextSibling);
+        }
+    });
+
+    // Handle manual position changes
+    tbody.addEventListener('change', function(e) {
+        if (isLocked) return;
+        
+        if (e.target.classList.contains('position-number')) {
+            const newPos = parseInt(e.target.value) - 1;
+            const row = e.target.closest('tr');
+            const currentPos = Array.from(tbody.children).indexOf(row);
+            
+            if (newPos !== currentPos && newPos >= 0 && newPos < tbody.children.length) {
+                const targetRow = tbody.children[newPos];
+                if (newPos < currentPos) {
+                    tbody.insertBefore(row, targetRow);
+                } else {
+                    tbody.insertBefore(row, targetRow.nextSibling);
+                }
+                updatePositionNumbers();
+                
+                // Save the new order after manual position change
+                saveTeamOrder();
+            } else {
+                e.target.value = currentPos + 1;
+            }
+        }
+    });
+
+    function updatePositionNumbers() {
+        Array.from(tbody.children).forEach((row, index) => {
+            row.querySelector('.position-number').value = index + 1;
+        });
+    }
+
+    eventSelect.addEventListener('change', function() {
+        printBtn.disabled = !this.value;
+        exportLabelsBtn.disabled = !this.value;
+        emailStartListBtn.disabled = !this.value;
+    });
+
+    randomizeBtn.addEventListener('click', function() {
+        if (isLocked) return;
+        
+        const rows = Array.from(tbody.getElementsByTagName('tr'));
+        const teamData = rows.map(row => ({
+            team: row.cells[1].textContent,
+            pilots: row.cells[2].innerHTML
+        }));
+        
+        for (let i = teamData.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [teamData[i], teamData[j]] = [teamData[j], teamData[i]];
+        }
+        
+        rows.forEach((row, index) => {
+            row.cells[1].textContent = teamData[index].team;
+            row.cells[2].innerHTML = teamData[index].pilots;
+        });
+        updatePositionNumbers();
+        
+        // Save the new order after randomization
+        saveTeamOrder();
+    });
+
+    printBtn.addEventListener('click', function() {
+        const eventId = eventSelect.value;
+        if (eventId) {
+            // The order has already been saved, so we can just redirect
+            const printUrl = `/formular/print/${eventId}`;
+            window.location.href = printUrl;
+        }
+    });
+    
+    emailStartListBtn.addEventListener('click', function() {
+        const eventId = eventSelect.value;
+        if (!eventId) {
+            alert('Bitte wählen Sie zuerst eine Veranstaltung aus');
+            return;
+        }
+        
+        // Get the current team order
+        const order = Array.from(tbody.getElementsByTagName('tr')).map(row => 
+            parseInt(row.cells[1].textContent.replace('Team ', ''))
+        );
+        
+        fetch('/formular/email-startlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                event_id: eventId,
+                team_order: order 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Startliste erfolgreich per Email versendet');
+            } else {
+                alert('Fehler: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Fehler beim Senden: ' + error.message);
+        });
+    });
+
+    // Apply initial lock state when page loads
+    updateLockState();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,159 @@
+{# File: app/templates/flugzeuge/flugzeuge_edit.html - Updated span label #}
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Flugzeug Bearbeiten{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Flugzeug Bearbeiten</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('flugzeuge.edit', id=aircraft.flugzeug_id) }}" class="needs-validation" novalidate>
+                        <!-- Hidden redirect field -->
+                        <input type="hidden" name="redirect_to" value="{{ redirect_to or url_for('flugzeuge.index') }}">
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h4>Grunddaten</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label">Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ aircraft.name }}" required>
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie einen Namen ein.
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="span" class="form-label">Spannweite/Scale</label>
+                                    <input type="number" step="0.01" class="form-control" id="span" name="span" 
+                                           value="{{ aircraft.span }}">
+                                    <div class="form-text">Werte über 4 = Meter, unter 4 = Scale</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="gewicht" class="form-label">Gewicht (kg)</label>
+                                    <input type="number" step="0.01" class="form-control" id="gewicht" name="gewicht" 
+                                           value="{{ aircraft.gewicht }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Type Selection -->
+                        <div class="mb-4">
+                            <h4>Flugzeugtyp</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_segler" name="is_segler"
+                                               {% if aircraft.is_segler %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_segler">Segelflugzeug</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_schlepper" name="is_schlepper"
+                                               {% if aircraft.is_schlepper %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_schlepper">Schleppflugzeug</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Details -->
+                        <div class="mb-4">
+                            <h4>Technische Details</h4>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="antrieb" class="form-label">Antrieb</label>
+                                    <input type="text" class="form-control" id="antrieb" name="antrieb" 
+                                           value="{{ aircraft.antrieb }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="prop" class="form-label">Propeller</label>
+                                    <input type="text" class="form-control" id="prop" name="prop" 
+                                           value="{{ aircraft.prop }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="fernsteuerung" class="form-label">Fernsteuerung</label>
+                                    <input type="text" class="form-control" id="fernsteuerung" name="fernsteuerung" 
+                                           value="{{ aircraft.fernsteuerung }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pilot and Owner Assignment -->
+                        <div class="mb-4">
+                            <h4>Zuordnung</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="pilot_id" class="form-label">Pilot</label>
+                                    <select class="form-select" id="pilot_id" name="pilot_id">
+                                        <option value="">- Kein Pilot -</option>
+                                        {% for pilot in pilots %}
+                                            <option value="{{ pilot.teilnehmer_id }}"
+                                                    {% if aircraft.pilot_id == pilot.teilnehmer_id %}selected{% endif %}>
+                                                {{ pilot.name }}
+                                                {% if pilot.is_segler_pilot and pilot.is_schlepper_pilot %}
+                                                    (Segler/Schlepper)
+                                                {% elif pilot.is_segler_pilot %}
+                                                    (Segler)
+                                                {% elif pilot.is_schlepper_pilot %}
+                                                    (Schlepper)
+                                                {% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="plane_owner_id" class="form-label">Besitzer</label>
+                                    <select class="form-select" id="plane_owner_id" name="plane_owner_id">
+                                        <option value="">- Kein Besitzer -</option>
+                                        {% for pilot in pilots %}
+                                            <option value="{{ pilot.teilnehmer_id }}"
+                                                    {% if aircraft.plane_owner_id == pilot.teilnehmer_id %}selected{% endif %}>
+                                                {{ pilot.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ redirect_to or url_for('flugzeuge.index') }}" class="btn btn-secondary">Abbrechen</a>
+                            <button type="submit" class="btn btn-primary">Änderungen Speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            console.log('Form submission attempted');
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+                console.log('Form validation failed');
+            } else {
+                console.log('Form validation passed');
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}

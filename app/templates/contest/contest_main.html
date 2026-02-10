@@ -1,0 +1,297 @@
+{# File: app/templates/contest/contest_main.html #}
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Wettbewerbe{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Add/Edit Form - Enlarged -->
+            <div class="card mb-4" id="eventForm" style="display: none;">
+                <div class="card-header">
+                    <h3 class="card-title mb-0" id="formTitle">Wettbewerb</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="eventForm" class="needs-validation" novalidate>
+                        <input type="hidden" id="event_id" name="event_id">
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name *</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Verein *</label>
+                                <input type="text" class="form-control" name="verein" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Straße</label>
+                                <input type="text" class="form-control" name="street">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ort</label>
+                                <input type="text" class="form-control" name="city">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">PLZ</label>
+                                <input type="text" class="form-control" name="postal_code" maxlength="5">
+                            </div>
+                        </div>
+                      
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-4">
+                                <label class="form-label">GPS Koordinaten</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="lat" placeholder="Breite (51.1234)">
+                                    <input type="text" class="form-control" name="lon" placeholder="Länge (6.7890)">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Datum</label>
+                                <input type="date" class="form-control" name="event_date">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Durchgänge</label>
+                                <input type="number" class="form-control" name="estimated_rounds" min="1" max="10" value="3">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="Pending">Geplant</option>
+                                    <option value="Active">Aktiv</option>
+                                    <option value="Completed">Abgeschlossen</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Notizen</label>
+                                <textarea class="form-control" name="notes" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-secondary" onclick="toggleForm(false)">Abbrechen</button>
+                            <button type="submit" class="btn btn-primary">Speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+ <!-- Events List -->
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Both form and list now use wider columns -->           
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">Wettbewerbe</h3>
+                <div>
+                    <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#clearScoresModal">
+                        Alle Bewertungen Löschen
+                    </button>
+                    <button class="btn btn-primary" onclick="toggleForm(true)">Neuer Wettbewerb</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Verein</th>
+                                <th>Ort</th>
+                                <th>Datum</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr>
+                                <td>{{ event.name }}</td>
+                                <td>{{ event.verein }}</td>
+                                <td>
+                                    {% if event.location %}
+                                        {{ event.location.city }}
+                                        {% if event.location.postal_code %}
+                                            ({{ event.location.postal_code }})
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>{{ event.event_date.strftime('%d.%m.%Y') if event.event_date }}</td>
+                                <td>
+                                    {% if event.status == 'Pending' %}
+                                        <span class="badge bg-warning">Geplant</span>
+                                    {% elif event.status == 'Active' %}
+                                        <span class="badge bg-success">Aktiv</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Abgeschlossen</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                onclick="editEvent({{ event.event_id }})">Bearbeiten</button>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="confirmDelete({{ event.event_id }})">Löschen</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">Keine Wettbewerbe gefunden</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Wettbewerb Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Möchten Sie diesen Wettbewerb wirklich löschen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">Löschen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Scores Confirmation Modal -->
+<div class="modal fade" id="clearScoresModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alle Bewertungen Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Achtung:</strong> Diese Aktion löscht <u>alle</u> Wertungsdaten aus der Datenbank!</p>
+                <p>Dieser Vorgang kann nicht rückgängig gemacht werden. Möchten Sie wirklich fortfahren?</p>
+                
+                <div class="form-group mb-3">
+                    <label for="clearScoresEventSelect" class="form-label">Welche Daten löschen?</label>
+                    <select class="form-select" id="clearScoresEventSelect" name="event_id">
+                        <option value="pending">Alle Wettbewerbe mit Status 'Geplant'</option>
+                        <option value="active">Alle Wettbewerbe mit Status 'Aktiv'</option>
+                        <option value="all">Alle Wertungen (auch abgeschlossene)</option>
+                        <hr>
+                        {% for event in events %}
+                            <option value="{{ event.event_id }}">
+                                Nur für: {{ event.name }} 
+                                {% if event.status == 'Pending' %}
+                                    (Geplant)
+                                {% elif event.status == 'Active' %}
+                                    (Aktiv)
+                                {% else %}
+                                    (Abgeschlossen)
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="clearRoundsToo" name="clear_rounds_too">
+                    <label class="form-check-label" for="clearRoundsToo">
+                        Auch alle Durchgänge löschen (nicht nur Wertungen)
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="clearScoresForm" method="POST" action="{{ url_for('contest.clear_scores') }}">
+                    <input type="hidden" id="clearEventId" name="event_id" value="all">
+                    <input type="hidden" id="clearRoundsTooHidden" name="clear_rounds_too" value="false">
+                    <button type="submit" class="btn btn-danger">Alle Bewertungen Löschen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleForm(show, title = 'Neuer Wettbewerb') {
+    const form = document.getElementById('eventForm');
+    document.getElementById('formTitle').textContent = title;
+    form.style.display = show ? 'block' : 'none';
+    if (!show) {
+        document.querySelector('form#eventForm').reset();
+        document.getElementById('event_id').value = '';
+    }
+}
+
+function editEvent(eventId) {
+    fetch(`/contest/get/${eventId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('event_id').value = data.event_id;
+            document.getElementsByName('name')[0].value = data.name;
+            document.getElementsByName('verein')[0].value = data.verein;
+            document.getElementsByName('city')[0].value = data.city;
+            document.getElementsByName('street')[0].value = data.street;
+            document.getElementsByName('postal_code')[0].value = data.postal_code;
+            document.getElementsByName('event_date')[0].value = data.event_date;
+            document.getElementsByName('lat')[0].value = data.lat;
+            document.getElementsByName('lon')[0].value = data.lon;
+            document.getElementsByName('status')[0].value = data.status;
+            document.getElementsByName('notes')[0].value = data.notes;
+            document.getElementsByName('estimated_rounds')[0].value = data.estimated_rounds;
+            
+            toggleForm(true, 'Wettbewerb Bearbeiten');
+        });
+}
+
+function confirmDelete(eventId) {
+    console.log('Delete triggered for event:', eventId);
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = `{{ url_for('contest.index') }}delete/${eventId}`;
+    console.log('Delete form action:', deleteForm.action);
+    modal.show();
+}
+
+// Handle Clear Scores event selection
+document.addEventListener('DOMContentLoaded', function() {
+    const clearScoresEventSelect = document.getElementById('clearScoresEventSelect');
+    const clearEventIdInput = document.getElementById('clearEventId');
+    const clearRoundsTooCheckbox = document.getElementById('clearRoundsToo');
+    const clearRoundsTooHidden = document.getElementById('clearRoundsTooHidden');
+    
+    if (clearScoresEventSelect && clearEventIdInput) {
+        clearScoresEventSelect.addEventListener('change', function() {
+            clearEventIdInput.value = this.value;
+        });
+    }
+    
+    if (clearRoundsTooCheckbox && clearRoundsTooHidden) {
+        clearRoundsTooCheckbox.addEventListener('change', function() {
+            clearRoundsTooHidden.value = this.checked ? 'true' : 'false';
+        });
+    }
+});
+</script>
+{% endblock %}

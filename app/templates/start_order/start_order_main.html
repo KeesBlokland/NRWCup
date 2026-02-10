@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Startfolgen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Startfolgen</h2>
+            {% if event %}
+                <p class="text-muted">
+                    {{ event.name }}
+                    {% if event.event_date %}
+                        | {{ event.event_date.strftime('%d.%m.%Y') }}
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Event Selector -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('start_order.index') }}" class="row g-3">
+                <div class="col-md-6">
+                    <label for="eventSelect" class="form-label">Veranstaltung</label>
+                    <select class="form-select" id="eventSelect" name="event_id" onchange="this.form.submit()">
+                        <option value="">-- Veranstaltung auswählen --</option>
+                        {% for evt in events %}
+                            <option value="{{ evt.event_id }}" {% if event and evt.event_id == event.event_id %}selected{% endif %}>
+                                {{ evt.name }} {% if evt.event_date %}({{ evt.event_date.strftime('%d.%m.%Y') }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if event %}
+        <!-- Round Selection and Generation -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Startfolge generieren</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('start_order.generate') }}" class="row g-3">
+                    <input type="hidden" name="event_id" value="{{ event.event_id }}">
+                    
+                    <div class="col-md-5">
+                        <label for="targetRoundSelect" class="form-label">Startfolge für Durchgang</label>
+                        <select class="form-select" id="targetRoundSelect" name="target_round_id" required>
+                            <option value="">- Durchgang auswählen -</option>
+                            {% for round in rounds %}
+                                {% if round.round_number > 1 %}
+                                    <option value="{{ round.round_id }}">Durchgang {{ round.round_number }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-7">
+                        <p class="text-muted mt-4">
+                            Die Startfolge wird automatisch basierend auf den Ergebnissen des vorherigen Durchgangs generiert.
+                            Teams mit den niedrigsten Punktzahlen starten zuerst.
+                        </p>
+                    </div>
+                    
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary" id="generateBtn">
+                            Startfolge generieren
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Round-by-Round Start Orders -->
+        <div class="row">
+            {% for round in rounds %}
+                <div class="col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">Durchgang {{ round.round_number }} Startfolge</h4>
+                            <div class="btn-group">
+                                {% if round.round_number == 1 %}
+                                    <form method="POST" action="{{ url_for('start_order.randomize', round_id=round.round_id) }}">
+                                        <button type="submit" class="btn btn-outline-secondary">
+                                            Zufällige Reihenfolge
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <a href="{{ url_for('start_order.print_start_order', round_id=round.round_id) }}" class="btn btn-outline-primary">
+                                    Drucken
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover start-order-table" data-round-id="{{ round.round_id }}">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 100px;">Start Nr.</th>
+                                            <th>Team</th>
+                                            <th>Schlepper</th>
+                                            <th>Segler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if round.round_id in round_start_orders and round_start_orders[round.round_id] %}
+                                            {% for entry in round_start_orders[round.round_id] %}
+                                                <tr data-team-id="{{ entry.team.team_id }}">
+                                                    <td>
+                                                        <input type="number" class="form-control form-control-sm position-number" 
+                                                               value="{{ entry.start_order }}" min="1" data-original-value="{{ entry.start_order }}">
+                                                    </td>
+                                                    <td>Team {{ entry.team.team_nummer }}</td>
+                                                    <td>{{ entry.team.schlepper_pilot.name if entry.team.schlepper_pilot else '-' }}</td>
+                                                    <td>{{ entry.team.segler_pilot.name if entry.team.segler_pilot else '-' }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="text-center">Keine Startfolge definiert</td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {% if round.round_id in round_start_orders and round_start_orders[round.round_id] %}
+                                <div class="text-end mt-3">
+                                    <button type="button" class="btn btn-primary save-order-btn" data-round-id="{{ round.round_id }}">
+                                        Änderungen speichern
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            Bitte wählen Sie eine Veranstaltung aus, um die Startfolgen zu verwalten.
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle manual position number changes
+    document.querySelectorAll('.position-number').forEach(input => {
+        input.addEventListener('change', function() {
+            const table = this.closest('.start-order-table');
+            
+            // Highlight changed inputs
+            if (this.value != this.dataset.originalValue) {
+                this.classList.add('is-changed');
+            } else {
+                this.classList.remove('is-changed');
+            }
+            
+            // Check for duplicates
+            const inputs = table.querySelectorAll('.position-number');
+            const values = Array.from(inputs).map(input => input.value);
+            const duplicates = values.filter((value, index) => values.indexOf(value) !== index);
+            
+            inputs.forEach(input => {
+                if (duplicates.includes(input.value)) {
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+            
+            // Enable/disable save button based on changes and duplicates
+            const saveBtn = document.querySelector(`.save-order-btn[data-round-id="${table.dataset.roundId}"]`);
+            if (saveBtn) {
+                const hasChanges = table.querySelectorAll('.is-changed').length > 0;
+                const hasErrors = table.querySelectorAll('.is-invalid').length > 0;
+                saveBtn.disabled = !hasChanges || hasErrors;
+            }
+        });
+    });
+    
+    // Handle save button clicks
+    document.querySelectorAll('.save-order-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const roundId = this.dataset.roundId;
+            const table = document.querySelector(`.start-order-table[data-round-id="${roundId}"]`);
+            
+            // Collect team orders
+            const teamOrders = [];
+            table.querySelectorAll('tbody tr[data-team-id]').forEach(row => {
+                const teamId = row.dataset.teamId;
+                const startOrder = row.querySelector('.position-number').value;
+                
+                teamOrders.push({
+                    team_id: teamId,
+                    start_order: startOrder
+                });
+            });
+            
+            // Save changes
+            this.disabled = true;
+            this.innerHTML = 'Speichern...';
+            
+            fetch(`{{ url_for('start_order.update', round_id=0) }}`.replace('0', roundId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ team_orders: teamOrders })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    table.querySelectorAll('.position-number').forEach(input => {
+                        input.dataset.originalValue = input.value;
+                        input.classList.remove('is-changed');
+                    });
+                    
+                    // Show success message
+                    alert(data.message);
+                } else {
+                    alert('Fehler: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving start order:', error);
+                alert('Fehler beim Speichern der Startfolge');
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = 'Änderungen speichern';
+            });
+        });
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Testdaten-Generierung{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Testdaten-Generierung</h2>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title">Wertungsgenerator-Tool</h3>
+        </div>
+        <div class="card-body">
+            <p>Mit diesem Tool können Sie realistische Testwertungen für das Bewertungssystem generieren. Sie können:</p>
+            <ul>
+                <li>Bestimmte Teams und Punktrichter für die Wertungsgenerierung auswählen</li>
+                <li>Entweder mehrere Durchgänge auf einmal oder einen bestimmten Durchgang generieren</li>
+                <li>Bei Bedarf vorhandene Wertungen löschen</li>
+                <li><strong>Tipp:</strong> Wählen Sie "0" Durchgänge um zur Wettbewerb-Seite zu gelangen, wo Sie alle Bewertungen löschen können</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Wertungen generieren</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('testdata.generate') }}">
+                <!-- Select Veranstaltung (Event) - REQUIRED -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="alert alert-warning">
+                            <strong>Veranstaltung:</strong> Die Testwertungen werden für den ausgewählten Wettbewerb generiert.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="event_id" class="form-label">Veranstaltung auswählen *</label>
+                        <select class="form-select" id="event_id" name="event_id" required>
+                            <option value="">- Wettbewerb auswählen -</option>
+                            {% for event in events %}
+                                <option value="{{ event.event_id }}" {% if active_event and event.event_id == active_event.event_id %}selected{% endif %}>
+                                    {{ event.name }} 
+                                    {% if event.event_date %}
+                                        ({{ event.event_date.strftime('%d.%m.%Y') }})
+                                    {% endif %}
+                                    {% if event.status == 'Active' %}
+                                        [Aktiv]
+                                    {% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Wählen Sie den Wettbewerb, für den die Testwertungen generiert werden sollen.</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Teams auswählen</h4>
+                        {% for team in teams %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="team_ids" 
+                                       value="{{ team.team_id }}" id="team_{{ team.team_id }}">
+                                <label class="form-check-label" for="team_{{ team.team_id }}">
+                                    Team {{ team.team_nummer }} 
+                                    ({{ team.schlepper_pilot.name if team.schlepper_pilot else '-' }} / 
+                                     {{ team.segler_pilot.name if team.segler_pilot else '-' }})
+                                </label>
+                            </div>
+                        {% endfor %}
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary select-all-teams">Alle auswählen</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary deselect-all-teams">Alle abwählen</button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h4>Punktrichter auswählen</h4>
+                        {% for judge in judges %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="judge_ids" 
+                                       value="{{ judge.teilnehmer_id }}" id="judge_{{ judge.teilnehmer_id }}">
+                                <label class="form-check-label" for="judge_{{ judge.teilnehmer_id }}">
+                                    {{ judge.name }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary select-all-judges">Alle auswählen</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary deselect-all-judges">Alle abwählen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <label for="num_rounds" class="form-label">Anzahl der Durchgänge</label>
+                        <input type="number" class="form-control" id="num_rounds" name="num_rounds" 
+                               min="0" max="10" value="1">
+                        <div class="form-text">Wie viele Durchgänge sollen erzeugt werden? (0 für Löschseite)</div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="specific_round" class="form-label">Spezifischer Durchgang</label>
+                        <input type="number" class="form-control" id="specific_round" name="specific_round" 
+                               min="0" max="10" value="0">
+                        <div class="form-text">Optional: Nur für einen bestimmten Durchgang generieren (0 = alle)</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="score_variability" class="form-label">Wertungsvariabilität (%)</label>
+                        <input type="range" class="form-range" id="score_variability" name="score_variability" 
+                               min="5" max="50" value="20" oninput="updateVariabilityValue(this.value)">
+                        <div class="form-text">Variabilität: <span id="variabilityValue">20</span>%</div>
+                    </div>
+                    
+                    <div class="col-md-12 mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="clear_existing" name="clear_existing">
+                            <label class="form-check-label" for="clear_existing">
+                                Vorhandene Wertungen für diese Veranstaltung löschen
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-primary">Testwertungen Generieren</button>
+                    <a href="{{ url_for('testdata.clear_all') }}" class="btn btn-danger">Zur Löschseite</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateVariabilityValue(value) {
+        document.getElementById('variabilityValue').textContent = value;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select/Deselect All Teams
+        document.querySelector('.select-all-teams').addEventListener('click', function() {
+            document.querySelectorAll('input[name="team_ids"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+        
+        document.querySelector('.deselect-all-teams').addEventListener('click', function() {
+            document.querySelectorAll('input[name="team_ids"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+        
+        // Select/Deselect All Judges
+        document.querySelector('.select-all-judges').addEventListener('click', function() {
+            document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+        
+        document.querySelector('.deselect-all-judges').addEventListener('click', function() {
+            document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Bewertungsbögen Drucken{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-print-none">
+        <h2>Bewertungsbögen Drucken</h2>
+        
+        
+        <div class="mb-4">
+            <button class="btn btn-primary" onclick="window.print()">Drucken / Als PDF speichern</button>
+            <a href="{{ url_for('static', filename='Figuren.pdf') }}" class="btn btn-info" target="_blank">Kürfiguren 2025</a>
+            <a href="{{ url_for('static', filename='Bewertungsbogen2025.pdf') }}" class="btn btn-info" target="_blank">Bewertungsbögen 2025</a>
+            <a href="{{ url_for('formular.index') }}" class="btn btn-secondary">Zurück</a>
+        </div>
+        
+        <div class="alert alert-info">
+            <p><strong>Hinweis:</strong> Die Bewertungsbögen werden im Format A5 (2 pro A4-Seite) gedruckt.</p>
+        </div>
+    </div>
+    
+    <!-- Scoresheet Pages - will be hidden except when printing -->
+    <div class="scoresheet-container">
+        {% for i in range(0, scoresheets|length, 2) %}
+            <div class="scoresheet-page">
+                <!-- First scoresheet on the page -->
+                <div class="scoresheet">
+                    <div class="scoresheet-header">
+                        <h3>NRW Cup 2025 - Bewertungsbogen</h3><br>
+                        <div class="scoresheet-meta">
+                            <div class="meta-row">
+                                <span class="meta-label">Durchgang:</span>
+                                <span class="meta-field"></span>
+                                <span class="meta-label">Start-Nr:</span>
+                                <span class="meta-field"></span>
+                                <span class="meta-label">Punktrichter:</span>
+                                <span class="meta-field-long"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <table class="scoresheet-table">
+                        <thead>
+                            <tr>
+                                <th class="figure-col">Figur</th>
+                                <th class="points-col">Punkte</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for figure in figures %}
+                                <tr>
+                                    <td class="figure-col">{{ figure.name_de }}</td>
+                                    <td class="score-box"></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    <div class="scoresheet-footer">
+                        <div class="signature-line">
+                            <span>Unterschrift:</span>
+                            <span class="signature-field"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Second scoresheet on the page (if available) -->
+                {% if i+1 < scoresheets|length %}
+                    <div class="scoresheet">
+                        <div class="scoresheet-header">
+                            <h3>NRW Cup 2025 - Bewertungsbogen</h3><br>
+                            <div class="scoresheet-meta">
+                                <div class="meta-row">
+                                    <span class="meta-label">Durchgang:</span>
+                                    <span class="meta-field"></span>
+                                    <span class="meta-label">Start-Nr:</span>
+                                    <span class="meta-field"></span>
+                                    <span class="meta-label">Punktrichter:</span>
+                                    <span class="meta-field-long"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <table class="scoresheet-table">
+                            <thead>
+                                <tr>
+                                    <th class="figure-col">Figur</th>
+                                    <th class="points-col">Punkte</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for figure in figures %}
+                                    <tr>
+                                        <td class="figure-col">{{ figure.name_de }}</td>
+                                        <td class="score-box"></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        <div class="scoresheet-footer">
+                            <div class="signature-line">
+                                <span>Unterschrift:</span>
+                                <span class="signature-field"></span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Page break after each pair of scoresheets -->
+            {% if not loop.last %}
+                <!-- Removed page break div -->
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+/* Print styles - Explicit landscape mode */
+@page {
+    size: A4 landscape;
+    margin: 0;
+}
+
+@media print {
+    html, body {
+        width: 297mm; /* A4 width in landscape */
+        height: 210mm; /* A4 height in landscape */
+        margin: 0;
+        padding: 0;
+        font-size: 10pt;
+        font-family: Arial, sans-serif;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .d-print-none {
+        display: none !important;
+    }
+    
+    .scoresheet-page {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .scoresheet {
+        width: 148.5mm; /* Half of A4 width (297mm/2) */
+        height: 210mm; /* A4 height */
+        padding: 5mm;
+        box-sizing: border-box;
+        border-right: 1px dashed #ccc;
+    }
+    
+    .scoresheet:last-child {
+        border-right: none;
+    }
+    
+    .scoresheet-header h3 {
+        font-size: 14pt;
+        font-weight: bold;
+        margin-top: 0;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .scoresheet-meta {
+        margin-bottom: 10px;
+    }
+    
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .meta-label {
+        margin-right: 3mm;
+        font-weight: normal;
+    }
+    
+    .meta-field {
+        border-bottom: 1px solid white;
+        width: 20mm;
+        display: inline-block;
+        margin-right: 5mm;
+    }
+    
+    .meta-field-long {
+        border-bottom: 1px solid white;
+        width: 50mm;
+        display: inline-block;
+    }
+    
+    .scoresheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        border: none;
+    }
+    
+    .scoresheet-table th, 
+    .scoresheet-table td {
+        border-bottom: 1px solid black;
+        padding: 2px 5px;
+        text-align: left;
+        font-size: 10pt;
+    }
+    
+    .scoresheet-table th {
+        background-color: white;
+        font-weight: bold;
+    }
+    
+    .scoresheet-table th.figure-col, 
+    .scoresheet-table td.figure-col {
+        width: 50%;
+        border-right: 1px solid black !important;
+    }
+    
+    .points-col {
+        width: 50%;
+    }
+    
+    .score-box {
+        text-align: center;
+        height: 14pt;
+    }
+    
+    .signature-line {
+        margin-top: 10mm;
+        display: flex;
+        align-items: center;
+    }
+    
+    .signature-field {
+        border-bottom: 1px solid black;
+        width: 80mm;
+        display: inline-block;
+        margin-left: 5mm;
+    }
+}
+
+/* Screen styles - only applies before printing */
+@media screen {
+    .scoresheet-container {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .scoresheet-page {
+        display: flex;
+        flex-direction: row;
+        border: none;
+        margin-bottom: 30px;
+        max-width: 297mm; /* A4 width in landscape */
+    }
+    
+    .scoresheet {
+        width: 148.5mm; /* Half of A4 width (297mm/2) */
+        padding: 15px;
+        box-sizing: border-box;
+        border-right: 1px dashed #ccc;
+        font-family: Arial, sans-serif;
+    }
+    
+    .scoresheet:last-child {
+        border-right: none;
+    }
+    
+    .scoresheet-header h3 {
+        margin-top: 0;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .meta-label {
+        margin-right: 5px;
+    }
+    
+    .meta-field {
+        border-bottom: 1px solid white;
+        width: 60px;
+        display: inline-block;
+        margin-right: 15px;
+    }
+    
+    .meta-field-long {
+        border-bottom: 1px solid white;
+        width: 180px;
+        display: inline-block;
+    }
+    
+    .scoresheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        border: none;
+    }
+    
+    .scoresheet-table th, 
+    .scoresheet-table td {
+        border-bottom: 1px solid black;
+        padding: 5px;
+        text-align: left;
+    }
+    
+    .scoresheet-table th {
+        background-color: white;
+        font-weight: bold;
+    }
+    
+    .scoresheet-table th.figure-col, 
+    .scoresheet-table td.figure-col {
+        width: 50%;
+        border-right: 1px solid black !important;
+    }
+    
+    .points-col {
+        width: 50%;
+    }
+    
+    .score-box {
+        text-align: center;
+        height: 25px;
+    }
+    
+    .signature-line {
+        margin-top: 25px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .signature-field {
+        border-bottom: 1px solid black;
+        width: 200px;
+        display: inline-block;
+        margin-left: 10px;
+    }
+}
+</style>
+{% endblock %}

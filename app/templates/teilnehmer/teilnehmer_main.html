@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Teilnehmer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Teilnehmer Verwaltung</h2>
+        <a href="{{ url_for('teilnehmer.add') }}" class="btn btn-primary">
+            Neuer Teilnehmer
+        </a>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form class="row g-3" method="GET">
+                <div class="col-md-4">
+                    <label for="roleFilter" class="form-label">Rolle</label>
+                    <select class="form-select" id="roleFilter" name="role">
+                        <option value="">Alle</option>
+                        <option value="segler" {% if selected_role == 'segler' %}selected{% endif %}>Segler Pilot</option>
+                        <option value="schlepper" {% if selected_role == 'schlepper' %}selected{% endif %}>Schlepper Pilot</option>
+                        <option value="punktwerter" {% if selected_role == 'punktwerter' %}selected{% endif %}>Punktwerter</option>
+                        <option value="leitung" {% if selected_role == 'leitung' %}selected{% endif %}>Wettkampfleitung</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="vereinFilter" class="form-label">Verein</label>
+                    <select class="form-select" id="vereinFilter" name="verein">
+                        <option value="">Alle</option>
+                        {% for verein in vereine %}
+                            <option value="{{ verein }}" {% if selected_verein == verein %}selected{% endif %}>{{ verein }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-secondary me-2">Filter Anwenden</button>
+                    <a href="{{ url_for('teilnehmer.index') }}" class="btn btn-outline-secondary">Filter Zurücksetzen</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Participants Table -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Rollen</th>
+                    <th>Verein</th>
+                    <th>Kontakt</th>
+                    <th>Status</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for teilnehmer in teilnehmers %}
+                <tr>
+                    <td>{{ teilnehmer.name }}</td>
+                    <td>
+                        {% if teilnehmer.is_segler_pilot %}
+                            <span class="badge bg-primary">Segler</span>
+                        {% endif %}
+                        {% if teilnehmer.is_schlepper_pilot %}
+                            <span class="badge bg-success">Schlepper</span>
+                        {% endif %}
+                        {% if teilnehmer.is_punktwerter %}
+                            <span class="badge bg-info">Punktwerter</span>
+                        {% endif %}
+                        {% if teilnehmer.is_wettkampfleitung %}
+                            <span class="badge bg-warning">Leitung</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ teilnehmer.verein or '-' }}</td>
+                    <td>
+                        {% if teilnehmer.email %}
+                            <small>{{ teilnehmer.email }}</small><br>
+                        {% endif %}
+                        {% if teilnehmer.handy %}
+                            <small>{{ teilnehmer.handy }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if teilnehmer.kenntnisnachweiss %}
+                            <span class="badge bg-success">Kenntnis ✓</span>
+                        {% endif %}
+                        {% if teilnehmer.laermpass %}
+                            <span class="badge bg-success">Lärm ✓</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('teilnehmer.edit', id=teilnehmer.teilnehmer_id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                Bearbeiten
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="confirmDelete('{{ teilnehmer.teilnehmer_id }}', '{{ teilnehmer.name }}')">
+                                Löschen
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Keine Teilnehmer gefunden</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Teilnehmer Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Möchten Sie den Teilnehmer <span id="deleteName"></span> wirklich löschen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Löschen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function confirmDelete(id, name) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    document.getElementById('deleteName').textContent = name;
+    document.getElementById('deleteForm').action = `{{ url_for('teilnehmer.delete', id=0) }}`.replace('0', id);
+    modal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+<!---
+File: app/templates/base.html
+Version: 1.3.0
+Created: 2024-12-04
+Last Updated: 2025-04-21
+Author: Claude
+Description: Base template with updated navigation and clickable logo
+-->
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NRW Cup 2025{% endblock %}</title>
+    
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/vendor/bootstrap.min.css') }}">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main_styles.css') }}">
+
+    <!-- CSRF token for forms and AJAX -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body>
+    <header class="bg-primary text-white py-3">
+        <div class="container">
+            <div class="d-flex align-items-center">
+                <a href="https://nrw-cup.de" target="_blank">
+                    <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" class="me-3" style="height: 80px;">
+                </a>
+                <div>
+                    <h1>NRW-Cup.de</h1>
+                    <p class="mb-0">F-Schlepp Wettbewerbsmanagement NRW-Cup.</p>
+                </div>
+                <!-- Hidden admin button -->
+                <a href="#" id="adminButton" class="ms-auto text-white" style="font-size: 0.6rem; opacity: 0.2;">•</a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('home') }}">Start</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('teilnehmer.index') }}">Teilnehmer</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('flugzeuge.index') }}">Flugzeuge</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('teams.index') }}">Teams</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('figures.index') }}">Figuren</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('contest.index') }}">Wettbewerb</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('formular.index') }}">Startliste</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('scoring.score_list') }}">Wertung & Ergebnisse</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-dark text-white py-3 mt-4">
+        <div class="container text-center">
+            <p>&copy; 2025 Kees Blokland. All rights reserved. Contact: kees@blokland.net | Rev. 2 Jun 2025</p>
+        </div>
+    </footer>
+
+    <!-- Admin Modal -->
+    <div class="modal fade" id="adminModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Admin-Bereich</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('cleanup.index') }}" class="btn btn-danger">Datenbereinigung</a>  
+                        <a href="{{ url_for('system.index') }}" class="btn btn-primary">Systemeinstellungen</a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="{{ url_for('static', filename='js/vendor/bootstrap.bundle.min.js') }}"></script>
+    
+    <!-- CSRF auto-injection for forms and fetch -->
+    <script>
+        (function() {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // Auto-inject hidden CSRF input into all POST forms
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('form').forEach(function(form) {
+                    if (form.querySelector('input[name="csrf_token"]')) return;
+                    const method = (form.getAttribute('method') || 'get').toUpperCase();
+                    if (method !== 'GET') {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'csrf_token';
+                        input.value = csrfToken;
+                        form.appendChild(input);
+                    }
+                });
+            });
+
+            // Override fetch to auto-include CSRF header for non-GET requests
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+                options = options || {};
+                const method = (options.method || 'GET').toUpperCase();
+                if (method !== 'GET' && method !== 'HEAD') {
+                    options.headers = options.headers || {};
+                    if (options.headers instanceof Headers) {
+                        if (!options.headers.has('X-CSRFToken')) {
+                            options.headers.set('X-CSRFToken', csrfToken);
+                        }
+                    } else {
+                        if (!options.headers['X-CSRFToken']) {
+                            options.headers['X-CSRFToken'] = csrfToken;
+                        }
+                    }
+                }
+                return originalFetch.call(this, url, options);
+            };
+        })();
+    </script>
+
+    <!-- Admin button script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const adminButton = document.getElementById('adminButton');
+
+            adminButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                const adminModal = new bootstrap.Modal(document.getElementById('adminModal'));
+                adminModal.show();
+            });
+        });
+    </script>
+</body>
+</html>

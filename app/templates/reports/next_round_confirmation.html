@@ -1,0 +1,76 @@
+<!--
+File: app/templates/reports/next_round_confirmation.html
+Version: 1.0.0
+Created: 2025-04-01
+Description: Confirmation template for generating next round start order
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Startliste für nächsten Durchgang{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Startliste für nächsten Durchgang generieren</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        Sie sind dabei, die Startliste für Durchgang {{ next_round_num }} zu generieren.
+                    </p>
+                    
+                    {% if current_round %}
+                        <div class="alert alert-info">
+                            <p>
+                                <strong>Wichtig:</strong> Die Startliste für Durchgang {{ next_round_num }} 
+                                wird basierend auf den Ergebnissen von Durchgang {{ current_round.round_number }} erstellt.
+                            </p>
+                            <p>
+                                Teams mit den <strong>niedrigsten Punktzahlen</strong> werden zuerst starten.
+                            </p>
+                        </div>
+                        
+                        <p>
+                            <strong>Veranstaltung:</strong> {{ event.name }}
+                            {% if event.event_date %}
+                                ({{ event.event_date.strftime('%d.%m.%Y') }})
+                            {% endif %}
+                        </p>
+                        
+                        <p>
+                            <strong>Aktueller Durchgang:</strong> {{ current_round.round_number }}
+                        </p>
+                        
+                        <p>
+                            <strong>Nächster Durchgang:</strong> {{ next_round_num }}
+                        </p>
+                        
+                        <form method="POST" class="mt-4">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('reports.standings', event_id=event.event_id) }}" 
+                                   class="btn btn-secondary">Abbrechen</a>
+                                <button type="submit" class="btn btn-primary">
+                                    Startliste generieren und drucken
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <p>Es sind noch keine Durchgänge für diese Veranstaltung vorhanden.</p>
+                            <p>Bitte erstellen Sie zuerst Durchgang 1.</p>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="{{ url_for('reports.standings', event_id=event.event_id) }}" 
+                               class="btn btn-secondary">Zurück</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

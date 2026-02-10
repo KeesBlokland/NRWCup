@@ -1,0 +1,175 @@
+<!--
+File: app/templates/teams/teams_edit.html
+Version: 2.0.0
+Created: 2025-04-18
+Updated: 2025-04-19
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Team Bearbeiten{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Team {{ team.team_nummer }} {% if team.status == 'disabled' %}(Inaktiv){% endif %}</h3>
+                    <form action="{{ url_for('teams.toggle_status', team_id=team.team_id) }}" method="POST">
+                        <button type="submit" class="btn {{ 'btn-success' if team.status == 'disabled' else 'btn-warning' }}">
+                            {{ 'Aktivieren' if team.status == 'disabled' else 'Deaktivieren' }}
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('teams.edit', team_id=team.team_id) }}" class="needs-validation" novalidate>
+                        <!-- Team Number -->
+                        <div class="mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="team_nummer" class="form-label">Team Nummer</label>
+                                    <input type="number" class="form-control" id="team_nummer"
+                                            name="team_nummer" required min="1"
+                                            value="{{ team.team_nummer }}">
+                                </div>
+                            </div>
+                        </div>
+
+                    <!-- Schlepper Section -->
+                    <div class="mb-4">
+                        <h4>Schlepper</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="schlepper_pilot_id" class="form-label">Pilot</label>
+                                <select class="form-select" id="schlepper_pilot_id" name="schlepper_pilot_id" onchange="loadSchlepperAircraft(this.value)">
+                                    <option value="">- Pilot auswählen -</option>
+                                    {% for pilot in schlepper_pilots %}
+                                        <option value="{{ pilot.teilnehmer_id }}"
+                                                {% if team.schlepper_pilot_id == pilot.teilnehmer_id %}selected{% endif %}>
+                                            {{ pilot.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="schlepper_flugzeug_id" class="form-label">Flugzeug</label>
+                                <select class="form-select" id="schlepper_flugzeug_id" name="schlepper_flugzeug_id">
+                                    <option value="">- Flugzeug auswählen -</option>
+                                    {% for aircraft in schlepper_aircraft %}
+                                        <option value="{{ aircraft.flugzeug_id }}"
+                                                {% if team.schlepper_flugzeug_id == aircraft.flugzeug_id %}selected{% endif %}>
+                                            {{ aircraft.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                        <!-- Segler Section -->
+                        <div class="mb-4">
+                            <h4>Segler</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="segler_pilot_id" class="form-label">Pilot</label>
+                                    <select class="form-select" id="segler_pilot_id" name="segler_pilot_id" onchange="loadSeglerAircraft(this.value)">
+                                        <option value="">- Pilot auswählen -</option>
+                                        {% for pilot in segler_pilots %}
+                                            <option value="{{ pilot.teilnehmer_id }}"
+                                                    {% if team.segler_pilot_id == pilot.teilnehmer_id %}selected{% endif %}>
+                                                {{ pilot.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="segler_flugzeug_id" class="form-label">Flugzeug</label>
+                                    <select class="form-select" id="segler_flugzeug_id" name="segler_flugzeug_id">
+                                        <option value="">- Flugzeug auswählen -</option>
+                                        {% for aircraft in segler_aircraft %}
+                                            <option value="{{ aircraft.flugzeug_id }}"
+                                                    {% if team.segler_flugzeug_id == aircraft.flugzeug_id %}selected{% endif %}>
+                                                {{ aircraft.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('teams.index') }}" class="btn btn-secondary">Abbrechen</a>
+                            <button type="submit" class="btn btn-primary">Änderungen Speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load aircraft for the selected pilot
+function loadSchlepperAircraft(pilotId) {
+    if (!pilotId) {
+        document.getElementById('schlepper_flugzeug_id').innerHTML = '<option value="">- Erst Pilot auswählen -</option>';
+        return;
+    }
+
+    fetch(`/teams/get_aircraft/${pilotId}/schlepper`)
+        .then(response => response.json())
+        .then(data => {
+            const aircraftSelect = document.getElementById('schlepper_flugzeug_id');
+            aircraftSelect.innerHTML = '<option value="">- Flugzeug auswählen -</option>';
+            
+            data.forEach(aircraft => {
+                const option = document.createElement('option');
+                option.value = aircraft.flugzeug_id;
+                option.textContent = aircraft.name;
+                aircraftSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading aircraft:', error));
+}
+
+// Load aircraft for the selected pilot
+function loadSeglerAircraft(pilotId) {
+    if (!pilotId) {
+        document.getElementById('segler_flugzeug_id').innerHTML = '<option value="">- Erst Pilot auswählen -</option>';
+        return;
+    }
+
+    fetch(`/teams/get_aircraft/${pilotId}/segler`)
+        .then(response => response.json())
+        .then(data => {
+            const aircraftSelect = document.getElementById('segler_flugzeug_id');
+            aircraftSelect.innerHTML = '<option value="">- Flugzeug auswählen -</option>';
+            
+            data.forEach(aircraft => {
+                const option = document.createElement('option');
+                option.value = aircraft.flugzeug_id;
+                option.textContent = aircraft.name;
+                aircraftSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading aircraft:', error));
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

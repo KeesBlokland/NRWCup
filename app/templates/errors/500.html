@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Serverfehler - NRW Cup 2025{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 text-muted">500</h1>
+    <h2>Interner Serverfehler</h2>
+    <p class="text-muted">Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.</p>
+    <a href="{{ url_for('home') }}" class="btn btn-primary mt-3">Zur Startseite</a>
+</div>
+{% endblock %}

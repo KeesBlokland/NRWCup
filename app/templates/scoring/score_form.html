@@ -1,0 +1,686 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Bewertungsbogen{% endblock %}
+
+{% block content %}
+<div class="container-sm" style="max-width: 600px;">
+    <div class="card">
+        <div class="card-header py-1">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    {% if event %}
+                        {{ event.name }} - Bewertungsbogen
+                    {% elif active_event %}
+                        {{ active_event.name }} - Bewertungsbogen
+                    {% else %}
+                        NRW Cup 2025 - Bewertungsbogen
+                    {% endif %}
+                </h5>
+                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" style="height: 40px;">
+            </div>
+        </div>
+        <div class="card-body p-3">
+            {% if score %}
+                <!-- Editing existing score -->
+                <form method="POST" action="{{ url_for('scoring.update_score', score_id=score.score_id) }}" class="needs-validation" novalidate>
+                    <!-- Hidden input for score_id -->
+                    <input type="hidden" name="score_id" value="{{ score.score_id }}">
+            {% else %}
+                <!-- Creating new score -->
+                <form method="POST" action="{{ url_for('scoring.enter_score') }}" class="needs-validation" novalidate>
+                    <!-- Hidden inputs for team_round_id if provided -->
+                    <input type="hidden" name="team_round_id" value="{{ team_round_id or '' }}">
+            {% endif %}
+                
+                <!-- Scoresheet Header with adjusted widths -->
+                <div class="row g-2 mb-3">
+                    <div class="col-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Durchgang</span>
+                            {% if score %}
+                                <!-- Editing existing score -->
+                                {% set team_round = score_team_round %}
+                                {% set round_obj = team_round_round %}
+                                {% set team = team_round_team %}
+                                <input type="text" class="form-control" value="{{ round_obj.round_number if round_obj else '-' }}" readonly>
+                            {% else %}
+                                <!-- New score -->
+                                {% if selected_round %}
+                                    <!-- When round_id is provided and mapped to a Round object -->
+                                    <input type="text" class="form-control" name="round_number" value="{{ selected_round.round_number }}" required>
+                                {% elif pre_selected_round %}
+                                    <!-- When only pre_selected_round number is available -->
+                                    <input type="text" class="form-control" name="round_number" value="{{ pre_selected_round }}" required>
+                                {% else %}
+                                    <!-- No round information available -->
+                                    <input type="text" class="form-control" name="round_number" placeholder="..." required>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Team</span>
+                            {% if score %}
+                                <!-- Editing existing score -->
+                                <input type="text" class="form-control" value="{{ team.team_nummer if team else '-' }}" readonly>
+                            {% else %}
+                                <!-- New score -->
+                                {% if selected_team %}
+                                    <!-- When team_id is provided and mapped to a Team object -->
+                                    <input type="text" class="form-control" name="start_number" value="{{ selected_team.team_nummer }}" required>
+                                {% elif pre_selected_team %}
+                                    <!-- When only pre_selected_team number is available -->
+                                    <input type="text" class="form-control" name="start_number" value="{{ pre_selected_team }}" required>
+                                {% else %}
+                                    <!-- No team information available -->
+                                    <input type="text" class="form-control" name="start_number" placeholder="..." required>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-7">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Punktwerter</span>
+                            {% if score %}
+                                <!-- Editing existing score -->
+                                <input type="text" class="form-control" value="{{ score.judge.name if score.judge else '-' }}" readonly>
+                            {% else %}
+                                <!-- New score -->
+                                <select class="form-select form-select-sm" name="judge_id" required>
+                                    <option value="">...</option>
+                                    {% for judge in judges %}
+                                    <option value="{{ judge.teilnehmer_id }}" 
+                                            {% if pre_selected_judge and pre_selected_judge == judge.teilnehmer_id %}selected{% endif %}
+                                            {% if selected_judge and selected_judge.teilnehmer_id == judge.teilnehmer_id %}selected{% endif %}>{{ judge.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score Values Table -->
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Figur</th>
+                            <th>Score</th>
+                            <th>K-Faktor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for figure in figures %}
+                            {% if score %}
+                                {% set value = value_map.get(figure.code) %}
+                            {% else %}
+                                {% set value = None %}
+                            {% endif %}
+                            <tr>
+                                <td>{{ figure.name_de }}
+                                    <!-- Store figure code and limits for validation -->
+                                    <input type="hidden" name="figure_code_{{ loop.index }}" value="{{ figure.code }}">
+                                    <input type="hidden" class="figure-max" id="max_{{ figure.code }}" value="{{ figure.max_value if figure.max_value is not none else 10 }}">
+                                </td>
+                                <td>
+                                    {% if figure.code in ['LANDGM', 'LANS', 'SEILZ'] %}
+                                        <!-- Landing zones with radio buttons -->
+                                        <select class="form-select form-select-sm landing-score" 
+                                               name="score_{{ figure.code }}"
+                                               onchange="updateLandingPoints('{{ figure.code }}', this.value); updateTotalPoints()"
+                                               {% if score and score.locked and not session.get('is_admin') %}disabled{% endif %}>
+                                            <option value="">-</option>
+                                            {% for val in [0, 5, 10, 20, 30] %}
+                                                <option value="{{ val }}" {% if value == val %}selected{% endif %}>{{ val }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <input type="hidden" class="landing-points-hidden" id="{{ figure.code }}_points_hidden" data-kfactor="1" value="{{ value }}">
+                                    {% elif figure.code == 'SEGZEIT' %}
+                                        <!-- Segler Flugzeit -->
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score" 
+                                               name="score_{{ figure.code }}" value="{{ value }}" 
+                                               min="0" max="300" step="1"
+                                               data-figure-code="{{ figure.code }}"
+                                               oninput="calculateSeglerzeit(this.value); updateTotalPoints()"
+                                               {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
+                                    {% elif 'Platzrunde' in figure.name_de %}
+                                        <!-- Platzrunde variants (mutually exclusive) -->
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score" 
+                                               name="score_{{ figure.code }}" value="{{ value }}" 
+                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}" 
+                                               step="0.5"
+                                               data-figure-code="{{ figure.code }}"
+                                               data-group="platzrunde"
+                                               oninput="handleMutualExclusion(this, 'platzrunde'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
+                                               {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
+                                    {% elif 'berflug' in figure.name_de %}
+                                        <!-- Platzüberflug variants (mutually exclusive) -->
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score" 
+                                               name="score_{{ figure.code }}" value="{{ value }}" 
+                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}" 
+                                               step="0.5"
+                                               data-figure-code="{{ figure.code }}"
+                                               data-group="platzueberflug"
+                                               oninput="handleMutualExclusion(this, 'platzueberflug'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
+                                               {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
+                                    {% else %}
+                                        <!-- Standard figures -->
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score" 
+                                               name="score_{{ figure.code }}" value="{{ value }}" 
+                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}" 
+                                               step="0.5"
+                                               data-figure-code="{{ figure.code }}"
+                                               oninput="updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
+                                               {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm text-start points-display" 
+                                           id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}" 
+                                           value="{{ (value * (figure.k_factor or 1)) if value else '' }}" readonly>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Total Points Row -->
+                <div class="row mt-3 pt-2 border-top">
+                    <div class="col-7 text-end">
+                        <strong>Gesamtpunktzahl:</strong>
+                    </div>
+                    <div class="col-2">
+                        <input type="text" class="form-control form-control-sm text-end fw-bold" 
+                               id="total_points" readonly>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="mt-3">
+                    <h6>Anmerkungen:</h6>
+                    <textarea class="form-control" name="notes" rows="3"
+                              {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>{{ score.notes if score else '' }}</textarea>
+                </div>
+
+                <!-- Timestamp (only displayed for existing scores) 
+                {% if score and score.entered_at %}
+                
+                <div class="text-muted small mt-3">
+                    Eingegeben: {{ score.entered_at.strftime('%d.%m.%Y %H:%M') }}
+                </div>
+                {% endif %}
+                                -->
+
+                                
+                <!-- Lock Information (displayed for locked scores) -->
+                {% if score and score.locked %}
+                <div class="alert alert-warning mt-3">
+                    Bewertungsbogen wurde gesperrt.
+                </div>
+                {% endif %}
+
+                <!-- Form Actions -->
+                <!-- Form Actions -->
+                <div class="text-center mt-3">
+                    {% if score and not score.locked %}
+                        <button type="submit" class="btn btn-primary">
+                            Speichern
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="fillAllZeros()">
+                            Werte auf 0 setzen
+                        </button>
+                        <form action="{{ url_for('scoring.lock_score', score_id=score.score_id) }}" method="POST" style="display: inline;">
+                            <input type="hidden" name="redirect" value="{{ url_for('scoring.view_score', score_id=score.score_id) }}">
+                            <button type="button" class="btn btn-warning" onclick="lockScore({{ score.score_id }})" style="display: inline;">
+                                Sperren
+                            </button>
+                        </form>
+                    {% elif score and score.locked and session.get('is_admin') %}
+                        <button type="submit" class="btn btn-primary">
+                            Speichern (Admin)
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="fillAllZeros()">
+                            Werte auf 0 setzen
+                        </button>
+                        <form action="{{ url_for('scoring.unlock_score', score_id=score.score_id) }}" method="POST" style="display: inline;">
+                            <button type="button" class="btn btn-danger" onclick="unlockScore({{ score.score_id }})">
+                                Entsperren (Admin)
+                            </button>
+                        </form>
+                    {% elif score and score.locked %}
+                        <!-- Display for locked scores (non-admin users) - ONLY ONE BACK BUTTON HERE -->
+                        <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück zur Liste</a>
+                    {% else %}
+                        <button type="submit" class="btn btn-primary">
+                            Bewertung Speichern
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="fillAllZeros()">
+                            Alle Werte auf 0 setzen
+                        </button>
+                        <button type="reset" class="btn btn-secondary ms-2" onclick="clearAllFields()">Zurücksetzen</button>
+                    {% endif %}
+                    
+                    {% if score and not score.locked %}
+                        {% if referer_params %}
+                            <a href="{{ url_for('scoring.score_list', event_id=referer_params.get('event_id'), round_id=referer_params.get('round_id'), judge_id=referer_params.get('judge_id')) }}" class="btn btn-secondary">Zurück zur Liste</a>
+                        {% else %}
+                            <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück zur Liste</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* JavaScript functions remain the same */
+    function clearAllFields() {
+        // Clear all points displays
+        document.querySelectorAll('[id$="_points"]').forEach(el => el.value = '');
+        
+        // Clear hidden fields for landing zones
+        document.querySelectorAll('[id$="_points_hidden"]').forEach(el => el.value = '');
+        
+        // Clear total points
+        document.getElementById('total_points').value = '';
+        
+        // Uncheck all radio buttons
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            radio.checked = false;
+        });
+        
+        // Reset all dropdowns
+        document.querySelectorAll('select.landing-score').forEach(select => {
+            select.value = '';
+        });
+    }
+    
+    function fillAllZeros() {
+        // Set all numeric inputs to zero
+        document.querySelectorAll('input.figure-score').forEach(input => {
+            if (!input.readOnly) {
+                input.value = '0';
+                
+                // Update corresponding points display
+                const figureCode = input.getAttribute('data-figure-code');
+                const kFactor = document.querySelector(`#${figureCode}_points`).getAttribute('data-kfactor') || 1;
+                
+                // Special case for Seglerzeit
+                if (figureCode === 'SEGZEIT') {
+                    calculateSeglerzeit(0);
+                } else {
+                    updatePoints(input, kFactor, `${figureCode}_points`);
+                }
+            }
+        });
+        
+        // Set all landing zone dropdowns to zero
+        document.querySelectorAll('select.landing-score').forEach(select => {
+            if (!select.disabled) {
+                select.value = '0';
+                
+                // Update corresponding points
+                const figureCode = select.name.replace('score_', '');
+                updateLandingPoints(figureCode, 0);
+            }
+        });
+        
+        // For mutual exclusion groups, ensure only one in each group has a value
+        // For Platzrunde group
+        const platzrundeInputs = document.querySelectorAll('input[data-group="platzrunde"]');
+        if (platzrundeInputs.length > 0) {
+            // Set the first one to 0, clear the others
+            platzrundeInputs[0].value = '0';
+            const figureCode = platzrundeInputs[0].getAttribute('data-figure-code');
+            const kFactor = document.querySelector(`#${figureCode}_points`).getAttribute('data-kfactor') || 1;
+            updatePoints(platzrundeInputs[0], kFactor, `${figureCode}_points`);
+            
+            // Clear the others
+            for (let i = 1; i < platzrundeInputs.length; i++) {
+                platzrundeInputs[i].value = '';
+                const fc = platzrundeInputs[i].getAttribute('data-figure-code');
+                document.querySelector(`#${fc}_points`).value = '';
+            }
+        }
+        
+        // For Platzüberflug group
+        const platzuInputs = document.querySelectorAll('input[data-group="platzueberflug"]');
+        if (platzuInputs.length > 0) {
+            // Set the first one to 0, clear the others
+            platzuInputs[0].value = '0';
+            const figureCode = platzuInputs[0].getAttribute('data-figure-code');
+            const kFactor = document.querySelector(`#${figureCode}_points`).getAttribute('data-kfactor') || 1;
+            updatePoints(platzuInputs[0], kFactor, `${figureCode}_points`);
+            
+            // Clear the others
+            for (let i = 1; i < platzuInputs.length; i++) {
+                platzuInputs[i].value = '';
+                const fc = platzuInputs[i].getAttribute('data-figure-code');
+                document.querySelector(`#${fc}_points`).value = '';
+            }
+        }
+        
+        // Update total after setting all to zero
+        updateTotalPoints();
+        
+        // Highlight that this is an all-zero scoresheet
+        document.getElementById('total_points').style.backgroundColor = '#ffeeee';
+        
+        // Show confirmation
+        alert('Alle Werte wurden auf 0 gesetzt.');
+    }
+    
+    function calculateSeglerzeit(actualTime) {
+        // Calculate points for glider time
+        const targetTime = 200;
+        const maxPoints = 300;
+        const penaltyFactor = 3;
+        
+        if (!actualTime && actualTime !== 0) {
+            // If the input is empty, clear the points display
+            document.getElementById('SEGZEIT_points').value = '';
+            updateTotalPoints(); // Ensure we update total when clearing
+            return;
+        }
+        
+        const points = Math.max(0, maxPoints - (Math.abs(targetTime - parseFloat(actualTime)) * penaltyFactor));
+        document.getElementById('SEGZEIT_points').value = points.toFixed(0);
+        
+        // Always update total points after calculation
+        updateTotalPoints();
+    }
+
+    function updatePoints(input, kFactor, pointsId) {
+        // Support both input element and direct value
+        let value;
+        if (typeof input === 'object') {
+            value = parseFloat(input.value) || 0;
+        } else {
+            value = parseFloat(input) || 0;
+        }
+        
+        const points = value * kFactor;
+        document.getElementById(pointsId).value = (points === 0 || points) ? points.toFixed(1) : '';
+    }
+    
+    function updateLandingPoints(figureCode, value) {
+        // Update the hidden field with _hidden suffix
+        const hiddenId = figureCode + '_points_hidden';
+        const hiddenElement = document.getElementById(hiddenId);
+        if (hiddenElement) {
+            hiddenElement.value = (value === 0 || value) ? value : '';
+        }
+        
+        // Update the visible points display field
+        const displayId = figureCode + '_points';
+        const displayElement = document.getElementById(displayId);
+        if (displayElement) {
+            displayElement.value = (value === 0 || value) ? value : '';
+        }
+    }
+    
+    function updateTotalPoints() {
+        let total = 0;
+        
+        // ONLY sum the visible points displays
+        document.querySelectorAll('.points-display').forEach(el => {
+            if (el.value !== '') {
+                total += parseFloat(el.value) || 0;
+            }
+        });
+        
+        // Update total points display - handle zero total correctly
+        document.getElementById('total_points').value = (total === 0 || total > 0) ? total.toFixed(1) : '';
+    }
+    
+    // Function to handle mutual exclusion between fields in the same group
+    function handleMutualExclusion(input, group) {
+        // If the current input has a value
+        if (input.value && input.value.trim() !== '') {
+            // Find all inputs in the same group
+            document.querySelectorAll(`input[data-group="${group}"]`).forEach(otherInput => {
+                // Clear all other inputs in the same group
+                if (otherInput !== input) {
+                    otherInput.value = '';
+                    
+                    // Also clear the points display
+                    const pointsId = otherInput.getAttribute('data-figure-code') + '_points';
+                    const pointsElement = document.getElementById(pointsId);
+                    if (pointsElement) {
+                        pointsElement.value = '';
+                    }
+                }
+            });
+        }
+    }
+    
+    // Add validation for score values using the max values from figure definitions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Seglerzeit field if it has a value
+        const segzeitInput = document.querySelector('input[name="score_SEGZEIT"]');
+        if (segzeitInput && segzeitInput.value) {
+            calculateSeglerzeit(segzeitInput.value);
+        }
+    
+        // Initialize total points on page load
+        updateTotalPoints();
+        
+        // Make sure all number fields use decimal point
+        document.querySelectorAll('input[type="number"]').forEach(function(input) {
+            input.addEventListener('input', function(e) {
+                // Replace commas with dots for any input values
+                if (this.value.includes(',')) {
+                    this.value = this.value.replace(',', '.');
+                }
+            });
+        });
+        
+        // For landing zone selects, initialize values and add change listeners
+        document.querySelectorAll('select.landing-score').forEach(select => {
+            // Trigger update on page load if value exists
+            if (select.value) {
+                const figureCode = select.getAttribute('name').replace('score_', '');
+                updateLandingPoints(figureCode, select.value);
+            }
+            
+            // Ensure proper update on change
+            select.addEventListener('change', function() {
+                const figureCode = this.getAttribute('name').replace('score_', '');
+                updateLandingPoints(figureCode, this.value);
+                updateTotalPoints();
+            });
+        });
+        
+        // Add validation for form submission
+        document.querySelector('form').addEventListener('submit', function(event) {
+            // Only validate if the form isn't locked or user is admin
+            const scoreIsLocked = document.querySelector('.alert-warning') !== null;
+            const isAdmin = {{ 'true' if session.get('is_admin') else 'false' }};
+            
+            if (scoreIsLocked && !isAdmin) {
+                // Skip validation for locked scores (non-admin)
+                return true;
+            }
+            
+            let hasErrors = false;
+            
+            // Count filled Platzrunde variants (including zero values)
+            let platzrundeCount = 0;
+            let allPlatzrundeZero = true; // Track if all Platzrunde values are zero
+            document.querySelectorAll('input[data-group="platzrunde"]').forEach(input => {
+                if (input.value !== '') {
+                    const value = parseFloat(input.value);
+                    // Count any non-empty value
+                    if (value > 0) {
+                        platzrundeCount++;
+                        allPlatzrundeZero = false;
+                    }
+                }
+            });
+            
+            // Count filled Platzüberflug variants (including zero values)
+            let platzueberflugCount = 0;
+            let allPlatzueberflugZero = true; // Track if all Platzüberflug values are zero
+            document.querySelectorAll('input[data-group="platzueberflug"]').forEach(input => {
+                if (input.value !== '') {
+                    const value = parseFloat(input.value);
+                    // Count any non-empty value
+                    if (value > 0) {
+                        platzueberflugCount++;
+                        allPlatzueberflugZero = false;
+                    }
+                }
+            });
+            
+            // Check for multiple variants with scores > 0
+            if (platzrundeCount > 1) {
+                alert('Bitte nur eine Platzrunde-Variante bewerten!');
+                event.preventDefault();
+                return false;
+            }
+            
+            if (platzueberflugCount > 1) {
+                alert('Bitte nur eine Platzüberflug-Variante bewerten!');
+                event.preventDefault();
+                return false;
+            }
+            
+            // Continue with other validations - check each figure score input
+            document.querySelectorAll('input.figure-score').forEach(input => {
+                if (input.value !== '') {
+                    const value = parseFloat(input.value);
+                    const figureCode = input.getAttribute('data-figure-code');
+                    const maxValueElement = document.getElementById(`max_${figureCode}`);
+                    const maxValue = maxValueElement ? parseFloat(maxValueElement.value) : 10;
+                    
+                    if (value < 0 || value > maxValue) {
+                        input.setCustomValidity(`Bewertung muss zwischen 0 und ${maxValue} sein`);
+                        input.reportValidity();
+                        hasErrors = true;
+                    } else {
+                        input.setCustomValidity('');
+                    }
+                }
+            });
+            
+            // Check if it's an all-zero submission
+            const isAllZeros = parseFloat(document.getElementById('total_points').value) === 0;
+            
+            // If it's an all-zero submission, verify with user
+            if (isAllZeros && !confirm('Sie sind dabei, eine Bewertung mit allen Werten auf 0 zu speichern. Fortfahren?')) {
+                event.preventDefault();
+                return false;
+            }
+            
+            if (hasErrors) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+        
+        // Add live validation as user types
+        document.querySelectorAll('input.figure-score').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.name !== 'score_SEGZEIT') {
+                    const value = parseFloat(this.value);
+                    const figureCode = this.getAttribute('data-figure-code');
+                    const maxValueElement = document.getElementById(`max_${figureCode}`);
+                    const maxValue = maxValueElement ? parseFloat(maxValueElement.value) : 10;
+                    
+                    if ((this.value !== '' && isNaN(value)) || value < 0 || value > maxValue) {
+                        this.setCustomValidity(`Bewertung muss zwischen 0 und ${maxValue} sein`);
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                    this.reportValidity();
+                }
+            });
+        });
+        
+        // Add a way to check if all values are zero
+        window.checkAllZeros = function() {
+            let allZero = true;
+            let hasValues = false;
+            
+            // Check all figure inputs
+            document.querySelectorAll('input.figure-score').forEach(input => {
+                if (input.value !== '') {
+                    hasValues = true;
+                    if (parseFloat(input.value) !== 0) {
+                        allZero = false;
+                    }
+                }
+            });
+            
+            // Check all landing zone selects
+            document.querySelectorAll('select.landing-score').forEach(select => {
+                if (select.value !== '') {
+                    hasValues = true;
+                    if (parseFloat(select.value) !== 0) {
+                        allZero = false;
+                    }
+                }
+            });
+            
+            return hasValues && allZero;
+        };
+    });
+
+    // Calculate initial total points when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate initial total points
+        updateTotalPoints();
+        
+        // Check if this is an all-zeros score sheet on load
+        if (checkAllZeros()) {
+            // Highlight to the user that this is an all-zero scoresheet
+            document.getElementById('total_points').style.backgroundColor = '#ffeeee';
+        }
+    });
+
+function lockScore(scoreId) {
+    if (confirm('Bewertung wirklich sperren?')) {
+        fetch('/scoring/lock/' + scoreId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/scoring/view/' + scoreId;
+            } else {
+                alert("Fehler beim Sperren");
+            }
+        })
+        .catch(error => {
+            console.error("Lock error:", error);
+            alert("Fehler: " + error.message);
+        });
+    }
+}
+
+function unlockScore(scoreId) {
+    if (confirm('Bewertung wirklich entsperren?')) {
+        fetch('/scoring/unlock/' + scoreId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/scoring/view/' + scoreId;
+            } else {
+                alert("Fehler beim Entsperren");
+            }
+        })
+        .catch(error => {
+            console.error("Unlock error:", error);
+            alert("Fehler: " + error.message);
+        });
+    }
+}
+</script>
+{% endblock %}

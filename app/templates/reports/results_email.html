@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ event.name }} - Ergebnisse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #343a40;
+            color: white;
+            font-weight: bold;
+        }
+        .rank-col {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .total-col {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        .norm-col {
+            background-color: #d1e7dd;
+            font-weight: bold;
+        }
+        .dropped {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        .event-info {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .credit {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .rules {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NRW Cup 2025 - Ergebnisse</h1>
+            <h2>{{ event.name }}</h2>
+            {% if event.event_date %}
+                <p>{{ event.event_date.strftime('%d.%m.%Y') }}</p>
+            {% endif %}
+        </div>
+
+        
+
+        {% if standings %}
+            <h3>Endgültige Stände ({{ standings|length }} Teams)</h3>
+            
+            <table>
+                <tr>
+                    <th>Rang</th>
+                    <th>Team</th>
+                    <th>Piloten</th>
+                    
+                    {% for round_obj in rounds %}
+                        <th>D{{ round_obj.round_number }}</th>
+                    {% endfor %}
+                    
+                    <th>Gesamt</th>
+                    <th>Norm.</th>
+                </tr>
+                
+                {% for standing in standings %}
+                    <tr>
+                        <td class="rank-col">{{ standing.rank }}</td>
+                        <td>Team {{ standing.team.team_nummer }}</td>
+                        <td>
+                            {% if standing.team.schlepper_pilot %}
+                                {{ standing.team.schlepper_pilot.name }}<br>
+                            {% endif %}
+                            {% if standing.team.segler_pilot %}
+                                {{ standing.team.segler_pilot.name }}
+                            {% endif %}
+                        </td>
+                        
+                        {% for i in range(rounds|length) %}
+                            <td>
+                                {% if i < standing.round_scores|length %}
+                                    {% set score = standing.round_scores[i] %}
+                                    {% if i in standing.dropped_indices %}
+                                        <span class="dropped">{{ "%.1f"|format(score) }}</span>
+                                    {% else %}
+                                        {{ "%.1f"|format(score) }}
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        
+                        <td class="total-col">{{ "%.1f"|format(standing.score) }}</td>
+                        <td class="norm-col">
+                            {% if loop.first %}
+                                1000.0
+                            {% elif standings[0].score > 0 %}
+                                {{ "%.1f"|format((standing.score / standings[0].score) * 1000) }}
+                            {% else %}
+                                0.0
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <div style="text-align: center; padding: 20px; background-color: #fff3cd; border-radius: 5px;">
+                Noch keine Ergebnisse für diese Veranstaltung verfügbar.
+            </div>
+        {% endif %}
+
+        <div class="credit">
+            Ideen von Kees, Code von Claude
+        </div>
+    </div>
+</body>
+</html>

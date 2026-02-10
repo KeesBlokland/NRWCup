@@ -1,0 +1,159 @@
+{# File: app/templates/flugzeuge/flugzeuge_main.html - Updated with smart display logic #}
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Flugzeuge{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Flugzeug Verwaltung</h2>
+        <a href="{{ url_for('flugzeuge.add') }}" class="btn btn-primary">
+            Neues Flugzeug
+        </a>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form class="row g-3" method="GET">
+                <div class="col-md-4">
+                    <label for="typeFilter" class="form-label">Typ</label>
+                    <select class="form-select" id="typeFilter" name="type">
+                        <option value="">Alle</option>
+                        <option value="segler" {% if selected_type == 'segler' %}selected{% endif %}>Segler</option>
+                        <option value="schlepper" {% if selected_type == 'schlepper' %}selected{% endif %}>Schlepper</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-secondary me-2">Filter Anwenden</button>
+                    <a href="{{ url_for('flugzeuge.index') }}" class="btn btn-outline-secondary">Filter Zurücksetzen</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aircraft Table -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Typ</th>
+                    <th>Spannweite/Scale</th>
+                    <th>Gewicht</th>
+                    <th>Antrieb/Props</th>
+                    <th>Pilot/Besitzer</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plane in aircraft %}
+                <tr>
+                    <td>{{ plane.name }}</td>
+                    <td>
+                        {% if plane.is_segler %}
+                            <span class="badge bg-primary">Segler</span>
+                        {% endif %}
+                        {% if plane.is_schlepper %}
+                            <span class="badge bg-success">Schlepper</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if plane.span %}
+                            {% if plane.span >= 4 %}
+                                {{ "%.2f"|format(plane.span) }} m
+                            {% else %}
+                                1:{{ "%.2f"|format(plane.span) }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ "%.2f"|format(plane.gewicht) if plane.gewicht else '-' }} kg</td>
+                    <td>
+                        {% if plane.antrieb %}
+                            <small>Motor: {{ plane.antrieb }}</small><br>
+                        {% endif %}
+                        {% if plane.prop %}
+                            <small>Prop: {{ plane.prop }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if plane.pilot %}
+                            <small>Pilot: {{ plane.pilot.name }}</small><br>
+                        {% endif %}
+                        {% if plane.owner %}
+                            <small>Besitzer: {{ plane.owner.name }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('flugzeuge.edit', id=plane.flugzeug_id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                Bearbeiten
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="confirmDelete('{{ plane.flugzeug_id }}', '{{ plane.name }}')">
+                                Löschen
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">Keine Flugzeuge gefunden</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Flugzeug Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Möchten Sie das Flugzeug <span id="deleteName"></span> wirklich löschen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Löschen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(id, name) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    document.getElementById('deleteName').textContent = name;
+    document.getElementById('deleteForm').action = `{{ url_for('flugzeuge.delete', id=0) }}`.replace('0', id);
+    modal.show();
+}
+
+// Ensure all decimal display uses dots instead of commas
+document.addEventListener('DOMContentLoaded', function() {
+    // Convert any comma-formatted numbers in the table to dot format
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+        const cells = table.querySelectorAll('td');
+        cells.forEach(cell => {
+            // Only process cells that contain numbers with commas
+            if (cell.textContent.match(/\d+,\d+/)) {
+                cell.textContent = cell.textContent.replace(/(\d+),(\d+)/g, '$1.$2');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

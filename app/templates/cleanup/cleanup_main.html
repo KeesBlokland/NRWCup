@@ -1,0 +1,321 @@
+<!--
+File: app/templates/cleanup/cleanup_main.html
+Version: 1.0.0
+Created: 2025-04-01
+Description: Template for the data cleanup page
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Datenbereinigung{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Datenbereinigung</h2>
+    </div>
+
+    <!-- Warning Alert -->
+        <!-- Warning Card instead of Alert to avoid potential styling issues -->
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Warnung!</h4>
+            </div>
+            <div class="card-body text-danger">
+                <p style="color: #dc3545 !important; font-weight: bold;">Diese Seite ermöglicht das Löschen von Datensätzen, auch wenn sie referenziert werden. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+                <p style="color: #dc3545 !important;"><strong>Beim Löschen werden:</strong></p>
+                <ul style="color: #dc3545 !important;">
+                    <li><strong>Teilnehmer:</strong> Auch zugehörige Teams, Flugzeuge und Bewertungen gelöscht</li>
+                    <li><strong>Flugzeuge:</strong> References in Teams werden entfernt</li>
+                    <li><strong>Teams:</strong> Auch zugehörige Durchgänge und Bewertungen gelöscht</li>
+                </ul>
+            </div>
+        </div>
+
+    <!-- Nav tabs for different entity types -->
+    <ul class="nav nav-tabs mb-4" id="cleanupTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="teilnehmer-tab" data-bs-toggle="tab" href="#teilnehmer" role="tab">
+                Teilnehmer
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="flugzeuge-tab" data-bs-toggle="tab" href="#flugzeuge" role="tab">
+                Flugzeuge
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="teams-tab" data-bs-toggle="tab" href="#teams" role="tab">
+                Teams
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tab content -->
+    <div class="tab-content">
+        <!-- Teilnehmer Tab -->
+        <div class="tab-pane fade show active" id="teilnehmer" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Teilnehmer zum Löschen</h4>
+                </div>
+                <div class="card-body">
+                    {% if teilnehmers %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Rollen</th>
+                                        <th>Verein</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for teilnehmer in teilnehmers %}
+                                        <tr>
+                                            <td>{{ teilnehmer.name }}</td>
+                                            <td>
+                                                {% if teilnehmer.is_segler_pilot %}
+                                                    <span class="badge bg-primary">Segler</span>
+                                                {% endif %}
+                                                {% if teilnehmer.is_schlepper_pilot %}
+                                                    <span class="badge bg-success">Schlepper</span>
+                                                {% endif %}
+                                                {% if teilnehmer.is_punktwerter %}
+                                                    <span class="badge bg-info">Punktwerter</span>
+                                                {% endif %}
+                                                {% if teilnehmer.is_wettkampfleitung %}
+                                                    <span class="badge bg-warning">Leitung</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ teilnehmer.verein or '-' }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                        onclick="confirmDeleteTeilnehmer('{{ teilnehmer.teilnehmer_id }}', '{{ teilnehmer.name }}')">
+                                                    Force Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Keine Teilnehmer gefunden</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Flugzeuge Tab -->
+        <div class="tab-pane fade" id="flugzeuge" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Flugzeuge zum Löschen</h4>
+                </div>
+                <div class="card-body">
+                    {% if flugzeuge %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Typ</th>
+                                        <th>Pilot/Besitzer</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for flugzeug in flugzeuge %}
+                                        <tr>
+                                            <td>{{ flugzeug.name }}</td>
+                                            <td>
+                                                {% if flugzeug.is_segler %}
+                                                    <span class="badge bg-primary">Segler</span>
+                                                {% endif %}
+                                                {% if flugzeug.is_schlepper %}
+                                                    <span class="badge bg-success">Schlepper</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if flugzeug.pilot %}
+                                                    <small>Pilot: {{ flugzeug.pilot.name }}</small><br>
+                                                {% endif %}
+                                                {% if flugzeug.owner %}
+                                                    <small>Besitzer: {{ flugzeug.owner.name }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                        onclick="confirmDeleteFlugzeug('{{ flugzeug.flugzeug_id }}', '{{ flugzeug.name }}')">
+                                                    Force Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Keine Flugzeuge gefunden</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Teams Tab -->
+        <div class="tab-pane fade" id="teams" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Teams zum Löschen</h4>
+                </div>
+                <div class="card-body">
+                    {% if teams %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Team Nr.</th>
+                                        <th>Piloten</th>
+                                        <th>Flugzeuge</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for team in teams %}
+                                        <tr>
+                                            <td>{{ team.team_nummer }}</td>
+                                            <td>
+                                                {% if team.schlepper_pilot %}
+                                                    <div><small>Schlepper: {{ team.schlepper_pilot.name }}</small></div>
+                                                {% endif %}
+                                                {% if team.segler_pilot %}
+                                                    <div><small>Segler: {{ team.segler_pilot.name }}</small></div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if team.schlepper_flugzeug %}
+                                                    <div><small>Schlepper: {{ team.schlepper_flugzeug.name }}</small></div>
+                                                {% endif %}
+                                                {% if team.segler_flugzeug %}
+                                                    <div><small>Segler: {{ team.segler_flugzeug.name }}</small></div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                        onclick="confirmDeleteTeam('{{ team.team_id }}', '{{ team.team_nummer }}')">
+                                                    Force Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Keine Teams gefunden</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modals -->
+<!-- Teilnehmer Modal -->
+<div class="modal fade" id="deleteTeilnehmerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Teilnehmer Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sind Sie sicher, dass Sie den Teilnehmer <strong id="teilnehmerName"></strong> löschen möchten?</p>
+                <p class="text-danger">
+                    <strong>Achtung:</strong> Dies wird auch alle zugehörigen Teams, Flugzeuge und Bewertungen löschen!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteTeilnehmerForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Force Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flugzeug Modal -->
+<div class="modal fade" id="deleteFlugzeugModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Flugzeug Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sind Sie sicher, dass Sie das Flugzeug <strong id="flugzeugName"></strong> löschen möchten?</p>
+                <p class="text-danger">
+                    <strong>Achtung:</strong> Referenzen in Teams werden auf null gesetzt.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteFlugzeugForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Force Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Modal -->
+<div class="modal fade" id="deleteTeamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Team Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sind Sie sicher, dass Sie das Team <strong id="teamNumber"></strong> löschen möchten?</p>
+                <p class="text-danger">
+                    <strong>Achtung:</strong> Dies wird auch alle zugehörigen Durchgänge und Bewertungen löschen!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteTeamForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Force Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDeleteTeilnehmer(id, name) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteTeilnehmerModal'));
+    document.getElementById('teilnehmerName').textContent = name;
+    document.getElementById('deleteTeilnehmerForm').action = `/cleanup/teilnehmer/${id}`;
+    modal.show();
+}
+
+function confirmDeleteFlugzeug(id, name) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteFlugzeugModal'));
+    document.getElementById('flugzeugName').textContent = name;
+    document.getElementById('deleteFlugzeugForm').action = `/cleanup/flugzeug/${id}`;
+    modal.show();
+}
+
+function confirmDeleteTeam(id, number) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteTeamModal'));
+    document.getElementById('teamNumber').textContent = `Team ${number}`;
+    document.getElementById('deleteTeamForm').action = `/cleanup/team/${id}`;
+    modal.show();
+}
+</script>
+{% endblock %}

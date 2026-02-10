@@ -1,0 +1,135 @@
+<!--
+File: app/templates/teilnehmer/teilnehmer_add.html
+Version: 1.0.0
+Created: 2024-12-04
+Last Updated: 2024-12-04
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Neuer Teilnehmer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Neuer Teilnehmer</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- Personal Information -->
+                        <div class="mb-4">
+                            <h4>Persönliche Daten</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label">Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie einen Namen ein.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="handy" class="form-label">Handy</label>
+                                    <input type="tel" class="form-control" id="handy" name="handy">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Organization Information -->
+                        <div class="mb-4">
+                            <h4>Vereinsdaten</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="verband" class="form-label">Verband</label>
+                                    <input type="text" class="form-control" id="verband" name="verband">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="verein" class="form-label">Verein</label>
+                                    <input type="text" class="form-control" id="verein" name="verein">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Certifications -->
+                        <div class="mb-4">
+                            <h4>Nachweise</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="versicherung_nummer" class="form-label">Versicherungsnummer</label>
+                                    <input type="text" class="form-control" id="versicherung_nummer" name="versicherung_nummer">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="kenntnisnachweiss" class="form-label">Kenntnisnachweis</label>
+                                    <input type="text" class="form-control" id="kenntnisnachweiss" name="kenntnisnachweiss">
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="laermpass" name="laermpass">
+                                        <label class="form-check-label" for="laermpass">Lärmpass vorhanden</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Roles -->
+                        <div class="mb-4">
+                            <h4>Rollen</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_segler_pilot" name="is_segler_pilot">
+                                        <label class="form-check-label" for="is_segler_pilot">Segler Pilot</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_schlepper_pilot" name="is_schlepper_pilot">
+                                        <label class="form-check-label" for="is_schlepper_pilot">Schlepper Pilot</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_punktwerter" name="is_punktwerter">
+                                        <label class="form-check-label" for="is_punktwerter">Punktwerter</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_wettkampfleitung" name="is_wettkampfleitung">
+                                        <label class="form-check-label" for="is_wettkampfleitung">Wettkampfleitung</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('teilnehmer.index') }}" class="btn btn-secondary">Abbrechen</a>
+                            <button type="submit" class="btn btn-primary">Teilnehmer Anlegen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}

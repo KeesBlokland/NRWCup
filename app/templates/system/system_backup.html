@@ -1,0 +1,89 @@
+<!--
+File: app/templates/system/system_backup.html
+Version: 1.0.0
+Created: 2024-12-04
+Last Updated: 2024-12-04
+-->
+
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Backup-Verwaltung{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Backup-Verwaltung</h2>
+        <form method="POST" class="d-inline">
+            <button type="submit" class="btn btn-primary">
+                Neues Backup erstellen
+            </button>
+        </form>
+    </div>
+
+    <!-- Backup List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Vorhandene Backups</h5>
+        </div>
+        <div class="card-body">
+            {% if backups %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Dateiname</th>
+                                <th>Größe</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for backup in backups %}
+                                <tr>
+                                    <td>{{ backup.date.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                                    <td>{{ backup.name }}</td>
+                                    <td>{{ "%.2f"|format(backup.size / 1024 / 1024) }} MB</td>
+                                    <td>
+                                        <a href="{{ url_for('system.download_backup', filename=backup.name) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            Download
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center mb-0">Keine Backups vorhanden</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Backup Information -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Backup-Informationen</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-unstyled mb-0">
+                <li class="mb-2">
+                    <strong>Backup-Inhalt:</strong>
+                    <ul>
+                        <li>Datenbank (instance/NRWCup2025.db)</li>
+                        <li>Anwendungsdateien (app/)</li>
+                        <li>Konfigurationsdateien</li>
+                    </ul>
+                </li>
+                <li class="mb-2">
+                    <strong>Speicherort:</strong> backups/
+                </li>
+                <li>
+                    <strong>Format:</strong> ZIP-Archiv
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

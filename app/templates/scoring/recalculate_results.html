@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Recalculation Results{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Score Recalculation Complete</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <h5>✅ Recalculation Successful</h5>
+                        <p>Updated {{ updated_count }} team scores across {{ rounds_processed }} rounds.</p>
+                    </div>
+                    
+                    {% if significant_changes %}
+                        <h5>Significant Changes (>50 points)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Round</th>
+                                        <th>Old Score</th>
+                                        <th>New Score</th>
+                                        <th>Difference</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for change in significant_changes %}
+                                        <tr>
+                                            <td>Team {{ change.team_number }}</td>
+                                            <td>{{ change.round_number }}</td>
+                                            <td>{{ "%.1f"|format(change.old_score) }}</td>
+                                            <td>{{ "%.1f"|format(change.new_score) }}</td>
+                                            <td class="{% if change.difference > 0 %}text-success{% else %}text-danger{% endif %}">
+                                                {{ "+%.1f"|format(change.difference) if change.difference > 0 else "%.1f"|format(change.difference) }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>No significant score changes detected. The fix may have already been applied.</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('scoring.score_list') }}" class="btn btn-primary">View Updated Scores</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

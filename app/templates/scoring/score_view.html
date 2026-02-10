@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup 2025 - Bewertung Bearbeiten{% endblock %}
+
+{% block content %}
+<div class="container-sm" style="max-width: 600px;">
+    <div class="card">
+        <div class="card-header py-1">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">NRW Cup 2025 - Bewertungsbogen</h5>
+                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" style="height: 40px;">
+            </div>
+        </div>
+        <div class="card-body p-3">
+            <form method="POST" action="{{ url_for('scoring.update_score', score_id=score.score_id) }}" class="needs-validation" novalidate>
+                <!-- Scoresheet Header -->
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Durchgang</span>
+                            {% set team_round = score_team_round %}
+                            {% set round_obj = team_round_round %}
+                            {% set team = team_round_team %}
+                            <input type="text" class="form-control" value="{{ round_obj.round_number if round_obj else '-' }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Team</span>
+                            <input type="text" class="form-control" value="{{ team.team_nummer if team else '-' }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Punktwerter</span>
+                            <input type="text" class="form-control" value="{{ score.judge.name if score.judge else '-' }}" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score Values Table -->
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Figur</th>
+                            <th>Score</th>
+                            <th>K-Faktor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for figure in figures %}
+                            {% set value = value_map.get(figure.code) %}
+                            <tr>
+                                <td>{{ figure.name_de }}</td>
+                                <td>
+                                    {% if figure.code in ['LANDGM', 'LANS', 'SEILZ'] %}
+                                        <select class="form-select form-select-sm" name="score_{{ figure.code }}">
+                                            <option value="">-</option>
+                                            {% for val in [0, 5, 10, 20, 30] %}
+                                                <option value="{{ val }}" {% if value == val %}selected{% endif %}>{{ val }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    {% elif figure.code == 'SEGZEIT' %}
+                                        <input type="number" class="form-control form-control-sm decimal-dot" 
+                                               name="score_{{ figure.code }}" value="{{ value }}" 
+                                               min="0" max="300" step="1"
+                                               oninput="updateTotalPoints()">
+                                    {% else %}
+                                        <input type="number" class="form-control form-control-sm decimal-dot" 
+                                               name="score_{{ figure.code }}" value="{{ value }}" 
+                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}" 
+                                               step="0.5"
+                                               oninput="updateTotalPoints()">
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="k-factor" data-value="{{ figure.k_factor or 1 }}">{{ figure.k_factor or 1 }}</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Total Points -->
+                <div class="row mt-3 pt-2 border-top">
+                    <div class="col-8 text-end">
+                        <strong>Gesamtpunktzahl:</strong>
+                    </div>
+                    <div class="col-4">
+                        <input type="text" class="form-control form-control-sm text-end fw-bold" 
+                               id="total_points" readonly>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="mt-3">
+                    <h6>Anmerkungen:</h6>
+                    <textarea class="form-control" name="notes" rows="3">{{ score.notes }}</textarea>
+                </div>
+
+                <!-- Timestamp -->
+                <div class="text-muted small mt-3">
+                    Eingegeben: {{ score.entered_at.strftime('%d.%m.%Y %H:%M') if score.entered_at else '-' }}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-primary">Speichern</button>
+                    <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück zur Liste</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calculate total points
+function updateTotalPoints() {
+    let total = 0;
+    const inputs = document.querySelectorAll('input[name^="score_"], select[name^="score_"]');
+    const kFactors = document.querySelectorAll('.k-factor');
+    
+    inputs.forEach((input, index) => {
+        if (input.value) {
+            const value = parseFloat(input.value);
+            if (!isNaN(value)) {
+                const kFactor = parseInt(kFactors[index].dataset.value || 1);
+                total += value * kFactor;
+            }
+        }
+    });
+    
+    document.getElementById('total_points').value = total.toFixed(1);
+}
+
+// Make sure all number fields use decimal point
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[type="number"]').forEach(function(input) {
+        input.addEventListener('input', function(e) {
+            // Replace commas with dots for any input values
+            if (this.value.includes(',')) {
+                this.value = this.value.replace(',', '.');
+            }
+        });
+    });
+    
+    // Calculate initial total
+    updateTotalPoints();
+});
+</script>
+{% endblock %}

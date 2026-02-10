@@ -1,0 +1,148 @@
+<!--
+    File: app/templates/teams/teams_main.html
+    Version: 2.0.0
+    Created: 2024-12-05
+    Last Updated: 2025-04-19
+-->
+{% extends "base.html" %}
+{% block title %}NRW Cup 2025 - Teams{% endblock %}
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Team Verwaltung</h2>
+        <div class="btn-group">
+            <a href="{{ url_for('teams.create') }}" class="btn btn-primary">
+                Neues Team
+            </a>
+            
+            <form action="{{ url_for('teams.renumber') }}" method="POST" style="display: inline-block;" 
+                  onsubmit="return confirm('Möchten Sie alle Teams neu nummerieren? Dies ändert die Nummern aller aktiven Teams und entfernt Lücken in der Nummerierung.');">
+                <button type="submit" class="btn btn-warning">
+                    Teams neu nummerieren
+                </button>
+            </form>
+            
+            <a href="{{ url_for('teams.print_list') }}" class="btn btn-secondary">
+                Teamliste
+            </a>
+         </div>
+    </div>
+    <!-- Teams Table -->
+<div class="table-responsive">
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Team Nr.</th>
+            <th>Schlepper Pilot</th>
+            <th>Segler Pilot</th>
+            <th>Schlepper</th>
+            <th>Segler</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for team in teams %}
+        <tr class="{% if team.status == 'disabled' %}table-secondary{% endif %}">
+            <td>{{ team.team_nummer }}</td>
+            <td>
+                {% if team.schlepper_pilot %}
+                    {{ team.schlepper_pilot.name }}
+                {% else %}
+                    <span class="text-muted">- Nicht zugewiesen -</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if team.segler_pilot %}
+                    {{ team.segler_pilot.name }}
+                {% else %}
+                    <span class="text-muted">- Nicht zugewiesen -</span>
+                {% endif %}
+            </td>
+            
+            <td>
+                {% if team.schlepper_flugzeug %}
+                    {{ team.schlepper_flugzeug.name }}
+                {% else %}
+                    <span class="text-muted">- Nicht zugewiesen -</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if team.segler_flugzeug %}
+                    {{ team.segler_flugzeug.name }}
+                {% else %}
+                    <span class="text-muted">- Nicht zugewiesen -</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if team.status == 'active' %}
+                    <span class="badge bg-success">Aktiv</span>
+                {% else %}
+                    <span class="badge bg-secondary">Inaktiv</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="btn-group">
+                    <a href="{{ url_for('teams.edit', team_id=team.team_id) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        Bearbeiten
+                    </a>
+                    
+                    <!-- Status toggle button -->
+                    <form action="{{ url_for('teams.toggle_status', team_id=team.team_id) }}" method="POST" 
+                          style="display: inline-block;">
+                        <button type="submit" class="btn btn-sm {% if team.status == 'active' %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+                            {% if team.status == 'active' %}Deaktivieren{% else %}Aktivieren{% endif %}
+                        </button>
+                    </form>
+                    
+                    <!-- Delete button -->
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger"
+                            onclick="confirmDelete('{{ team.team_id }}', '{{ team.team_nummer }}')">
+                        Löschen
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7" class="text-center">Keine Teams gefunden</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Team Löschen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Möchten Sie Team <span id="deleteTeamNumber"></span> wirklich löschen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Löschen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(id, teamNumber) {
+    const modalEl = document.getElementById('deleteModal');
+    const modal = new bootstrap.Modal(modalEl);
+    document.getElementById('deleteTeamNumber').textContent = teamNumber;
+    document.getElementById('deleteForm').action = `{{ url_for('teams.delete', team_id=0) }}`.replace('0', id);
+    modal.show();
+}
+</script>
+{% endblock %}

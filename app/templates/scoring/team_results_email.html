@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team {{ team_data.team.team_nummer }} Ergebnisse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .team-info {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #6c757d;
+            color: white;
+            font-weight: bold;
+        }
+        .table-warning {
+            background-color: #fff3cd;
+        }
+        .table-success {
+            background-color: #d1e7dd;
+        }
+        .text-muted {
+            color: #6c757d;
+        }
+        .fw-bold {
+            font-weight: bold;
+        }
+        .credit {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!--<h2>Team Ergebnisse</h2>
+            <!--{% if event %}<h2>{{ event.name }}</h2>{% endif %} -->
+            {% if round_obj %}<h2>Durchgang {{ round_obj.round_number }}</h2>{% endif %}
+        </div>
+
+        {% if team_data %}
+            <div class="team-info">
+                <h4>
+                    Team {{ team_data.team.team_nummer }}:
+                    {% if team_data.team.schlepper_pilot %}
+                        Schlepper: <strong>{{ team_data.team.schlepper_pilot.name }}</strong>
+                    {% endif %}
+                    {% if team_data.team.schlepper_pilot and team_data.team.segler_pilot %} 
+                        | Segler: <strong>{{ team_data.team.segler_pilot.name }}</strong>
+                    {% endif %}
+                </h4>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Figur</th>
+                        <th>K-Faktor</th>
+                        {% for score in team_data.scores %}
+                            <th>{{ score.judge.name if score.judge else 'Judge ' + score.judge_id|string }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for figure in team_data.figures %}
+                        <tr>
+                            <td>{{ figure.name_de }}</td>
+                            <td>{{ figure.k_factor or 1 }}</td>
+                            {% for score in team_data.scores %}
+                                <td>
+                                    {% for score_value in score.values %}
+                                        {% if score_value.task_type and score_value.task_type.code == figure.code %}
+                                            {% if score_value.value is not none %}
+                                                {% if score_value.task_type.code == 'SEGZEIT' %}
+                                                    {% set target_time = 200 %}
+                                                    {% set max_points = 300 %}
+                                                    {% set penalty_factor = 3 %}
+                                                    {% set time_diff = (target_time - score_value.value)|abs %}
+                                                    {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
+                                                    {% if score_value.value == 0 %}
+                                                        <span class="text-muted">{{ score_value.value }} ({{ segzeit_points|round(1) }})</span>
+                                                    {% else %}
+                                                        {{ score_value.value }} ({{ segzeit_points|round(1) }})
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% set k_factor = score_value.task_type.k_factor or 1 %}
+                                                    {% if score_value.value == 0 %}
+                                                        <span class="text-muted">{{ score_value.value }} ({{ (score_value.value * k_factor)|round(1) }})</span>
+                                                    {% else %}
+                                                        {{ score_value.value }} ({{ (score_value.value * k_factor)|round(1) }})
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    
+                    <!-- Totals row -->
+                    <tr class="table-warning fw-bold">
+                        <td>GESAMT</td>
+                        <td></td>
+                        {% for score in team_data.scores %}
+                            <td>
+                                {% set total = [] %}
+                                {% for score_value in score.values %}
+                                    {% if score_value.value is not none %}
+                                        {% if score_value.task_type.code == 'SEGZEIT' %}
+                                            {% set target_time = 200 %}
+                                            {% set max_points = 300 %}
+                                            {% set penalty_factor = 3 %}
+                                            {% set time_diff = (target_time - score_value.value)|abs %}
+                                            {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
+                                            {% set _ = total.append(segzeit_points) %}
+                                        {% else %}
+                                            {% set k_factor = score_value.task_type.k_factor or 1 %}
+                                            {% set _ = total.append(score_value.value * k_factor) %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ total|sum|round(1) }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    
+                    <!-- Grand Total row -->
+                    <tr class="table-success fw-bold">
+                        <td>TOTAL</td>
+                        <td></td>
+                        <td colspan="{{ team_data.scores|length }}">
+                            {% set grand_total = [] %}
+                            {% for score in team_data.scores %}
+                                {% for score_value in score.values %}
+                                    {% if score_value.value is not none %}
+                                        {% if score_value.task_type.code == 'SEGZEIT' %}
+                                            {% set target_time = 200 %}
+                                            {% set max_points = 300 %}
+                                            {% set penalty_factor = 3 %}
+                                            {% set time_diff = (target_time - score_value.value)|abs %}
+                                            {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
+                                            {% set _ = grand_total.append(segzeit_points) %}
+                                        {% else %}
+                                            {% set k_factor = score_value.task_type.k_factor or 1 %}
+                                            {% set _ = grand_total.append(score_value.value * k_factor) %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {{ grand_total|sum|round(1) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="credit">
+                Gesendet von der NRW-Cup Wettkampfleitung.
+                Fragen? Mail uns: wettkampf@nrw-cup.de
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

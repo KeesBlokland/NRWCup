@@ -1,0 +1,413 @@
+/*
+File: app/static/css/consolidated_styles.css
+Version: 1.0.0
+Created: 2025-04-07
+Description: Consolidated CSS styles extracted from HTML templates
+*/
+
+/* From main_styles.css - Base Styles - Original Colors Preserved */
+:root {
+    --nrw-primary: #2c3e50;
+    --nrw-secondary: #34495e;
+    --nrw-accent: #3498db;
+    --nrw-success: #27ae60;
+    --nrw-warning: #f1c40f;
+    --nrw-danger: #e74c3c;
+}
+
+/* Card Styling */
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.418);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    color: var(--nrw-primary);
+    border-bottom: 2px solid var(--nrw-accent);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-text {
+    flex-grow: 1;
+    margin-bottom: 1rem;
+}
+
+/* Button Styling - Using original colors from home_main.html */
+.btn-primary {
+    background-color: #c7ddeb;
+    border-color: #b0d1e5;
+    color: #203243 !important; /* Higher contrast color for better visibility */
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #b0d1e5;
+    border-color: #9ec5e0;
+    color: #132639 !important;
+}
+
+/* From formular_main.html */
+.dragging {
+    opacity: 0.5;
+    background: #f8f9fa;
+}
+
+tr[draggable] {
+    cursor: move;
+}
+
+.position-number {
+    width: 60px !important;
+}
+
+.is-changed {
+    background-color: #fff3cd;
+}
+
+/* From teams_main.html and other templates */
+.table th, 
+.table tr:first-child th {
+    background-color: #88898a !important;
+    color: white !important;
+    font-weight: bold !important;
+    padding: 10px !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+}
+
+/* From reports_standings.html */
+.text-decoration-line-through {
+    text-decoration: line-through solid 2px !important;
+}
+
+/* Print-specific classes */
+.print-container {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+.print-title {
+    text-align: center;
+    font-size: 14pt;
+    margin-bottom: 20px;
+}
+
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+}
+
+.print-th {
+    border: 1px solid #000;
+    padding: 8px;
+    background-color: #ddd;
+}
+
+.print-th.start-nr, .print-th.punkte {
+    text-align: center;
+    width: 80px;
+}
+
+.print-th.team {
+    width: 100px;
+}
+
+.print-cell {
+    border: 1px solid #000;
+    padding: 8px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.print-row {
+    border: none;
+}
+
+/* Existing print media query - updated version */
+@media print {
+    /* Basic page setup */
+    body { 
+        width: 270mm; 
+        height: auto; 
+        margin: 0; 
+        padding: 0; 
+        border: none;
+        background: none !important;
+    }
+    
+    /* Hide elements not needed in print */
+    header, 
+    footer, 
+    nav, 
+    .btn, 
+    form,
+    .alert,
+    .accordion-button,
+    .accordion-item,
+    .no-print {
+        display: none !important;
+    }
+    
+    /* Remove all outer borders and frame lines */
+    body::before,
+    body::after,
+    html::before,
+    html::after,
+    .container::before,
+    .container::after,
+    div::before,
+    div::after {
+        display: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        background: none !important;
+    }
+    
+    /* Remove outer border box */
+    .container, 
+    .container-sm,
+    .card,
+    .table-responsive { 
+        width: 100%; 
+        max-width: none; 
+        padding: 0; 
+        margin: 0; 
+        border: none !important;
+        box-shadow: none !important;
+        background: none !important;
+    }
+    
+    /* Set zero margin on page */
+    @page {
+        margin: 15;
+    }
+    
+    /* Remove card styling in print */
+    .card { 
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header { 
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    
+    .card-body {
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    /* Remove the outer border box */
+    body, div, .container, .table-responsive, .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Make the title smaller and on a single line */
+    .print-title {
+        font-size: 14pt;
+        margin-bottom: 15px;
+    }
+    
+    /* Hide the date */
+    .print-date {
+        display: none !important;
+    }
+
+    /* Ensure no vertical borders on any container elements */
+    body, 
+    .container, 
+    .row, 
+    .col, 
+    .card,
+    .table-responsive {
+        border-left: none !important;
+        border-right: none !important;
+    }
+    
+    /* Remove vertical borders from table cells */
+    table td, 
+    table th {
+        border-left: none !important;
+        border-right: none !important;
+    }
+    
+    /* Keep only horizontal borders if needed */
+    table td, 
+    table th {
+        border-top: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
+    }
+    
+    /* Fix for the last column that appears to have a border */
+    table td:last-child,
+    table th:last-child {
+        border-right: none !important;
+    }
+    
+    /* Fix for any container with shadow or border */
+    .container, table, tr, td, th {
+        box-shadow: none !important;
+    }
+}
+
+.btn-group label.btn { 
+    padding: 0.1rem 0.3rem; 
+}
+
+input:invalid {
+    border-color: #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+/* Force decimal point instead of comma for number inputs */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* From home_main.html */
+.border-success {
+    border-width: 2px !important;
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+.text-primary {
+    color: #203243 !important; /* Original color from home_main.html */
+}
+
+/* Additional home_main.html styles preserved */
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.btn-success {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+/* Dashboard styling from system_main.html and others */
+.stat-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.stat-card.primary {
+    background-color: var(--nrw-primary);
+}
+
+.stat-card.secondary {
+    background-color: var(--nrw-secondary);
+}
+
+.stat-card.accent {
+    background-color: var(--nrw-accent);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .table-responsive {
+        box-shadow: none;
+    }
+    
+    .stat-card {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Cleanup module specific styles */
+.modal-backdrop {
+    z-index: 1040;
+}
+
+.modal {
+    z-index: 1050;
+}
+
+/* Danger Warning Text - used in cleanup and elsewhere */
+.danger-text {
+    color: #dc3545 !important;
+    font-weight: bold;
+}
+
+/* Form Field Styles */
+.form-range {
+    width: 100%;
+}
+
+.form-select {
+    appearance: auto;
+}
+
+.form-check-input {
+    margin-top: 0.25rem;
+}
+
+/* Tab Navigation Styles */
+.nav-tabs .nav-link {
+    border: 1px solid transparent;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+/* Cross-browser dropdown arrow fix */
+select {
+    /* Remove default arrows */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    
+    /* Firefox-specific */
+    text-indent: 0.01px;
+    text-overflow: '';
+    
+    /* Custom arrow */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 30px;
+  }
+  
+  /* Extra Firefox-specific override */
+  @-moz-document url-prefix() {
+    select {
+      text-indent: 0;
+      text-overflow: clip;
+    }
+  }
+  
+  /* This specifically prevents Firefox from showing dropdown arrow */
+  select::-ms-expand {
+    display: none;
+  }

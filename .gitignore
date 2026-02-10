@@ -1,0 +1,32 @@
+# Ignore temp files
+*.tmp
+*.log
+*.bak
+*.swp
+*.DS_Store
+*.__pycache__
+*.pyc
+
+# Ignore Python virtual environments
+venv/
+.venv/
+
+# Ignore archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Ignore sensitive / runtime files
+instance/
+backups/
+doc_archives/
+*.db
+*.db.*
+secret_key
+.env
+
+# Ignore other unnecessary files
+node_modules/
+__pycache__/
+.idea/
+.git_old/

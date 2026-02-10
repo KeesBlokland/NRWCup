@@ -31,7 +31,7 @@ Created: 2025-01-20
                 <tr class="bg-primary text-white">
                     <th>Nr</th>
                     <th>Name</th>
-                    <th>Wertebereich</th>
+                    <th>Max. Wert</th>
                     <th>K-Faktor</th>
                     <th>Status</th>
                     <th>Aktionen</th>
@@ -43,11 +43,7 @@ Created: 2025-01-20
                     <td class="py-1">{{ task.sort_order if task.sort_order != None else '-' }}</td>
                     <td class="py-1">{{ task.name_de }}</td>
                     <td class="py-1">
-                        {% if task.min_value is not none and task.max_value is not none %}
-                            {{ task.min_value }} - {{ task.max_value }}
-                        {% else %}
-                            -
-                        {% endif %}
+                        {{ task.max_value if task.max_value is not none else '-' }}
                     </td>
                     <td class="py-1">{{ task.k_factor }}</td>
                     <td class="py-1">

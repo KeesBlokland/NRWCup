@@ -37,6 +37,7 @@ gitback.sh
 nrw-gitback.sh
 utils/
 tests/
+migrations/
 
 # Ignore non-essential app files
 app/Readme.txt

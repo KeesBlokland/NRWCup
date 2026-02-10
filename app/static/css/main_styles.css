@@ -60,6 +60,13 @@ Description: Consolidated CSS styles extracted from HTML templates
     color: #132639 !important;
 }
 
+/* Match badge size to buttons */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    font-weight: 500;
+}
+
 /* From formular_main.html */
 .dragging {
     opacity: 0.5;

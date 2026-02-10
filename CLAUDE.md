@@ -139,12 +139,12 @@ These documents only cover per-round scoring and optional figure selection.
 | **TaG** | **???** | 0,5,10,20,30 | **MISSING FROM DB!** |
 
 **Kürfiguren rules** (from Kürfiguren 2025.pdf):
-- Teams choose ONE optional figure per round (or "Keine"/none)
-- Options: Platzrunde M, Platzrunde M-K, Platzüberflug Kreis, Platzüberflug Oval
+- Teams choose ONE optional figure PER GROUP (or none):
+  - Platzrunde group: pick one of M or M-K (or neither)
+  - Platzüberflug group: pick one of Kreis or Oval (or neither)
 - Unchosen variants score 0
-- System handles this via mutually exclusive groups in test data generator
-- CONFIRMED: Teams pick ONE Kürfigur total (or "Keine"). NOT one per group.
-- The test data generator incorrectly treats them as two separate groups — needs fixing.
+- System handles this via mutually exclusive groups in test data generator — CORRECT
+- All judges must score the same variant for a given team/round (consistency verified)
 
 **TaG = Touch and Go — DROPPED for 2025. System is correct without it.**
 
@@ -225,10 +225,47 @@ All referenced templates exist. Key templates:
 - [ ] Test the app end-to-end on the dev server
 - [ ] Add 'code' key to figures_data in api_score route
 - [x] ~~Clarify TaG~~: Touch and Go - dropped for 2025, no action needed
-- [x] ~~Verify Kürfiguren~~: ONE total (or none). Test data generator needs fix (treats as two groups)
-- [ ] Fix test data generator: Kürfiguren should be ONE choice from all 4 variants (not one per group)
-- [x] ~~Validate scoring calculations~~: Manual calc for team 9 round 1 matches DB (1388.5). Messwertung handling verified correct — no longer averages across judges.
+- [x] ~~Verify Kürfiguren~~: ONE per group (Platzrunde: M or M-K; Platzüberflug: Kreis or Oval). Test data generator is correct.
+- [x] ~~Validate scoring calculations~~: Full verification completed (see below). All correct.
 - [ ] **CRITICAL: Verify round-dropping rule** — code drops LOWEST, Excel drops HIGHEST. Ask competition organizers which is correct!
+
+---
+
+## Scoring Verification Results (2026-02-10, Pi database, Event 2: NRW Cup 2026)
+
+Test data: 13 teams, 3 rounds (round_ids 4,5,6), 3 judges, 39 score sheets per round.
+
+### Raw Score Calculation: ALL 39 MATCH
+Manual recalculation of every team/round matches DB values exactly.
+- Qualitätswertung: averaged across 3 judges (would drop lowest if 4+) — correct
+- Messwertung (SEGZEIT, SEILZ, LANDGM, LANS): first non-zero value, not averaged — correct
+- SEGZEIT formula: MAX(0, 300-(|200-time|*3)) — correct
+
+### Normalization: ALL 39 MATCH
+Per-round normalization to 1000-point scale (highest team = 1000) — correct.
+
+### Kürfiguren Consistency: ALL OK
+- All 3 judges agree on Kürfigur variants for every team/round
+- No team has both variants in same group (mutual exclusion verified)
+- Rules: ONE per group (Platzrunde: M or M-K; Platzüberflug: Kreis or Oval)
+
+### Final Standings (drop lowest of 3 rounds, normalize to 1000):
+
+| Rank | Team | R1 | R2 | R3 | Dropped | Sum | Final |
+|------|------|----|----|----|---------|-----|-------|
+| 1 | 4 | 994.59 | 954.34 | 998.22 | 954.34 | 1992.81 | 1000.00 |
+| 2 | 2 | 940.33 | 1000.00 | 991.24 | 940.33 | 1991.24 | 999.21 |
+| 3 | 1 | 985.27 | 940.44 | 999.75 | 940.44 | 1985.02 | 996.09 |
+| 4 | 5 | 1000.00 | 933.81 | 984.64 | 933.81 | 1984.64 | 995.90 |
+| 5 | 11 | 979.98 | 1000.00 | 945.16 | 945.16 | 1979.98 | 993.56 |
+| 6 | 13 | 979.48 | 963.91 | 990.73 | 963.91 | 1970.21 | 988.66 |
+| 7 | 14 | 940.58 | 970.79 | 980.20 | 940.58 | 1950.99 | 979.01 |
+| 8 | 3 | 950.91 | 969.52 | 980.83 | 950.91 | 1950.35 | 978.69 |
+| 9 | 7 | 962.24 | 957.28 | 983.62 | 957.28 | 1945.86 | 976.44 |
+| 10 | 17 | 974.70 | 960.85 | 909.23 | 909.23 | 1935.54 | 971.26 |
+| 11 | 6 | 956.07 | 978.57 | 916.97 | 916.97 | 1934.64 | 970.81 |
+| 12 | 10 | 921.70 | 927.69 | 1000.00 | 921.70 | 1927.69 | 967.32 |
+| 13 | 9 | 942.85 | 901.67 | 949.60 | 901.67 | 1892.45 | 949.64 |
 
 ---
 

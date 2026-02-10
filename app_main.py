@@ -19,8 +19,8 @@ from app.utils.logger import DBLogger
 
 sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
 
-# Set exact hardcoded path to match your environment
-db_path = '/home/NRWcup/instance/NRWCup2025.db'
+# Database path - auto-detect based on project location
+db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'NRWCup2025.db')
 
 # Add the project root directory to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))

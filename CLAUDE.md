@@ -88,11 +88,25 @@ The scoring calculation appears correct per the README spec:
 - Final standings: drop lowest round if 3+ rounds, sum remaining
 - Final normalization to 1000
 
+### !! UNRESOLVED: ROUND DROPPING RULE — LOWEST vs HIGHEST !!
+
+**CONFLICT**: The code and README drop the **LOWEST** (schwächste) round.
+The original Excel spreadsheet drops the **HIGHEST** round.
+
+- `services_scoring.py:410`: `min_score = min(temp_scores)` → drops lowest
+- `README.md:82`: "Der schwächste Durchgang wird gestrichen" → drops lowest
+- Original Excel: drops HIGHEST
+
+**The official PDFs (Bewertungsbögen, Kürfiguren) do NOT contain a rule about this.**
+These documents only cover per-round scoring and optional figure selection.
+**This needs to be verified with the competition organizers (DMFV/NRW Cup rules).**
+
 ### RULES VALIDATION (vs official Bewertungsbögen NRW Cup.pdf & Kürfiguren 2025.pdf)
 
 **Source docs**: Pi:/home/pi/NRWCup/doc_archives/
-- "Bewertungsbögen NRW Cup.pdf" - Official scoring sheet (2023 format)
-- "Kürfiguren 2025.pdf" - Optional figure selection form
+- "Bewertungsbögen NRW Cup.pdf" - Official scoring sheet (2023 format, per-round form only)
+- "Kürfiguren 2025.pdf" - Optional figure selection form only
+- **Neither document specifies the round-dropping rule or final standings calculation**
 
 **Qualitätswertung figures (judged 0-10, multiplied by K-factor):**
 
@@ -214,6 +228,7 @@ All referenced templates exist. Key templates:
 - [x] ~~Verify Kürfiguren~~: ONE total (or none). Test data generator needs fix (treats as two groups)
 - [ ] Fix test data generator: Kürfiguren should be ONE choice from all 4 variants (not one per group)
 - [x] ~~Validate scoring calculations~~: Manual calc for team 9 round 1 matches DB (1388.5). Messwertung handling verified correct — no longer averages across judges.
+- [ ] **CRITICAL: Verify round-dropping rule** — code drops LOWEST, Excel drops HIGHEST. Ask competition organizers which is correct!
 
 ---
 

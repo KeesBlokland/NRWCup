@@ -62,9 +62,9 @@ Description: Consolidated CSS styles extracted from HTML templates
 
 /* Match badge size to buttons */
 .badge {
-    font-size: 0.85rem;
-    padding: 0.35rem 0.75rem;
-    font-weight: 500;
+    font-size: 0.85rem !important;
+    padding: 0.35rem 0.75rem !important;
+    font-weight: 500 !important;
 }
 
 /* From formular_main.html */

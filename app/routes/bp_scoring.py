@@ -446,12 +446,9 @@ def api_score(score_id):
         active_figures = scoring_service.get_active_figures()
         sort_order_map = {fig.code: i for i, fig in enumerate(active_figures)}
         
-        # Try to sort figures_data by the same order as active_figures
-        try:
-            figures_data.sort(key=lambda x: sort_order_map.get(x.get('code'), 999))
-        except Exception:
-            # Fallback to name if sorting by code fails
-            figures_data.sort(key=lambda x: x.get('name', ''))
+        # Sort figures_data by the same order as active_figures
+        name_order_map = {fig.name_de: i for i, fig in enumerate(active_figures)}
+        figures_data.sort(key=lambda x: name_order_map.get(x.get('name'), 999))
         
         return jsonify({
             'score_id': score.score_id,
@@ -607,14 +604,26 @@ def update_score(score_id):
             if field_name.startswith('score_') and value:
                 code = field_name[6:]  # Remove 'score_' prefix
                 score_values[code] = value
-        
-        # Update score
+
+        # Preserve locked status before update
+        was_locked = score.locked
+        locked_at = score.locked_at
+        locked_by = score.locked_by
+
+        # Update score (create_score uses upsert logic)
         updated_score = scoring_service.create_score(
             team_round_id=score.team_round_id,
             judge_id=score.judge_id,
             score_values=score_values,
             notes=request.form.get('notes', '')
         )
+
+        # Restore locked status if it was locked
+        if was_locked and updated_score:
+            updated_score.locked = was_locked
+            updated_score.locked_at = locked_at
+            updated_score.locked_by = locked_by
+            db.session.commit()
         
         flash('Bewertung erfolgreich aktualisiert', 'success')
         logger.info(f"Score {score_id} updated successfully")
@@ -626,8 +635,6 @@ def update_score(score_id):
         flash(f'Fehler beim Aktualisieren der Bewertung: {str(e)}', 'error')
     
     return redirect(url_for('scoring.score_list'))
-
-# File: app/routes/bp_scoring.py
 
 @scoring_bp.route('/view/<int:score_id>')
 def view_score(score_id):
@@ -1074,8 +1081,6 @@ def email_team_results():
         logger.error(f"Email error: {str(e)}")
         return jsonify({'success': False, 'message': str(e)})
 
-# Add this route to your app/routes/bp_scoring.py file
-
 @scoring_bp.route('/admin/recalculate_scores', methods=['GET', 'POST'])
 @admin_required
 def recalculate_scores():
@@ -1153,25 +1158,17 @@ def recalculate_scores():
     return render_template('scoring/recalculate_confirm.html')
     
 
-# Add this route to app/routes/bp_scoring.py
-
 @scoring_bp.route('/team_scoresheet_pdf/<int:team_id>/<int:round_id>')
 def team_scoresheet_pdf(team_id, round_id):
     """Generate detailed PDF scoresheet for a team in a specific round"""
     try:
         # Get basic objects
         team = Team.query.get_or_404(team_id)
-        logger.info(f"Found team: {team.team_nummer}")
-        logger.info(f"DEBUG: team_id parameter = {team_id}")
-        logger.info(f"DEBUG: team.team_id from database = {team.team_id}")
-        logger.info(f"DEBUG: team.team_nummer from database = {team.team_nummer}")
         round_obj = Round.query.get_or_404(round_id)
-        print(f"Found round: {round_obj.round_number}")
         event = Event.query.get_or_404(round_obj.event_id)
-        
+
         # Get team round
         team_round = TeamRound.query.filter_by(team_id=team_id, round_id=round_id).first()
-        print(f"Team round exists: {team_round is not None}")
         
         if not team_round:
             flash('Keine Wertungen für dieses Team in diesem Durchgang gefunden', 'error')
@@ -1182,7 +1179,6 @@ def team_scoresheet_pdf(team_id, round_id):
             db.joinedload(Score.values).joinedload(ScoreValue.task_type),
             db.joinedload(Score.judge)
         ).filter_by(team_round_id=team_round.team_round_id).all()
-        print(f"Found {len(scores)} scores")
         
         # CHANGE: Get ALL active figures instead of only scored ones
         figures = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
@@ -1292,6 +1288,3 @@ def team_scoresheet_pdf(team_id, round_id):
         return redirect(url_for('scoring.team_results'))
 
 
-@scoring_bp.route('/test_scoresheet/<int:team_id>/<int:round_id>')
-def test_scoresheet(team_id, round_id):
-    return f"Team ID: {team_id}, Round ID: {round_id}"

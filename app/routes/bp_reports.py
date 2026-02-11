@@ -208,8 +208,6 @@ def print_scoresheet(round_id):
         flash(f'Error printing scoresheet: {str(e)}', 'error')
         return redirect(url_for('scoring.score_list'))
 
-# Add this route to app/routes/bp_reports.py
-
 @reports_bp.route('/email_results/<int:event_id>', methods=['POST'])
 def email_results(event_id):
     """Email results to Wettkampfleitung participants"""
@@ -275,8 +273,6 @@ def email_results(event_id):
         flash(f'Fehler beim Senden der Email: {str(e)}', 'error')
         
     return redirect(url_for('reports.standings', event_id=event_id))
-
-    # Add this route to app/routes/bp_reports.py
 
 @reports_bp.route('/export_excel/<int:event_id>')
 def export_excel(event_id):

@@ -153,7 +153,6 @@ class Score(db.Model):
     notes = db.Column(db.Text)
     vermerk = db.Column(db.Text)
     
-    # ADD THESE THREE NEW FIELDS
     locked = db.Column(db.Boolean, default=False)
     locked_at = db.Column(db.DateTime)
     locked_by = db.Column(db.String(100))

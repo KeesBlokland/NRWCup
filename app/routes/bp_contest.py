@@ -188,10 +188,6 @@ def delete_event(event_id):
         
     return redirect(url_for('contest.index'))
 
-# Add this import at the top of the file
-from app.utils.clear_data import clear_all_scores, clear_event_data
-
-# Modify the clear_scores function to use the utility functions
 @contest_bp.route('/clear_scores', methods=['POST'])
 def clear_scores():
     """Clear scores based on selection (by event status or specific event)"""

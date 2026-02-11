@@ -129,8 +129,9 @@ def index():
     # Get all rounds for this event with their start orders
     all_rounds = []
     round_orders = {}
+    all_round_objects = []
     all_teams_by_id = {team.team_id: team for team in active_teams}
-    
+
     if active_event:
         # Get all rounds from the database with actual TeamRound entries
         all_round_objects = Round.query.filter_by(event_id=active_event.event_id).order_by(Round.round_number).all()

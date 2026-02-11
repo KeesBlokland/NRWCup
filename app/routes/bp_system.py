@@ -25,6 +25,28 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 system_bp = Blueprint('system', __name__)
 
+def get_log_files_info():
+    """Get information about log files in the logs directory"""
+    log_files = []
+    log_dir = os.path.join(os.getcwd(), 'logs')
+    if os.path.exists(log_dir):
+        for filename in sorted(os.listdir(log_dir)):
+            if filename.endswith('.log'):
+                file_path = os.path.join(log_dir, filename)
+                size = os.path.getsize(file_path)
+                if size < 1024:
+                    size_formatted = f"{size} B"
+                elif size < 1024 * 1024:
+                    size_formatted = f"{size / 1024:.1f} KB"
+                else:
+                    size_formatted = f"{size / (1024 * 1024):.1f} MB"
+                log_files.append({
+                    'name': filename,
+                    'size_formatted': size_formatted,
+                    'modified': datetime.fromtimestamp(os.path.getmtime(file_path))
+                })
+    return log_files
+
 def get_system_stats():
     """Gather system statistics"""
     try:

@@ -2,9 +2,9 @@
 
 ## CRITICAL
 
-- [ ] Fix `get_log_files_info` missing function in bp_system.py — crashes /system/ route (bp_system.py:111)
-- [ ] Fix `all_round_objects` NameError in bp_formular.py when no active event (bp_formular.py:~181)
-- [ ] **Verify round-dropping rule with competition organizers** — code drops LOWEST round, original Excel drops HIGHEST. Ask DMFV/NRW Cup which is correct!
+- [x] Fix `get_log_files_info` missing function in bp_system.py — added function (ada347f)
+- [x] Fix `all_round_objects` NameError in bp_formular.py when no active event (ada347f)
+- [x] Round-dropping rule resolved — drop LOWEST is safe, drop HIGHEST is dangerous with missing scores. See README.md section 4 for explanation.
 
 ## MODERATE
 

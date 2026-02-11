@@ -90,6 +90,35 @@ Die Summe der verbleibenden Durchgänge ergibt die Gesamtwertung.
 - Durchgang 3: 742,31 Punkte (schwächster Durchgang, wird gestrichen)
 - Gesamtwertung: 856,52 + 923,08 = 1779,60 Punkte
 
+### Warum der schwächste (niedrigste) Durchgang gestrichen wird
+
+Die originale Excel-Vorlage streicht den **höchsten** Durchgang. Dieses System streicht
+bewusst den **niedrigsten** Durchgang. Der Grund:
+
+**Streichung des höchsten Durchgangs ist gefährlich bei fehlenden Wertungen:**
+
+| Durchgang 1 | Durchgang 2 | Durchgang 3 | Gestrichen | Ergebnis |
+|-------------|-------------|-------------|------------|----------|
+| 900 | 800 | 0 (nicht geflogen) | 900 (höchster!) | 800 |
+
+Das Team wird doppelt bestraft: Es hat einen Durchgang verpasst (0 Punkte) UND
+verliert seinen besten Durchgang. Das Ergebnis ist unfair.
+
+**Streichung des niedrigsten Durchgangs ist immer sicher:**
+
+| Durchgang 1 | Durchgang 2 | Durchgang 3 | Gestrichen | Ergebnis |
+|-------------|-------------|-------------|------------|----------|
+| 900 | 800 | 0 (nicht geflogen) | 0 (niedrigster) | 1700 |
+
+Der verpasste Durchgang fällt weg, das Team behält seine echten Wertungen.
+Ein Durchgang mit 0 Punkten verursacht nie Probleme, weil er immer der
+niedrigste ist und automatisch gestrichen wird.
+
+**Fazit:** Solange nicht garantiert ist, dass alle Teams in allen Durchgängen
+antreten (3 Wertungen > 0), darf nur der niedrigste Durchgang gestrichen werden.
+Eine Streichung des höchsten Durchgangs wäre nur dann sicher, wenn vorher
+geprüft wird, dass alle Durchgangswertungen > 0 sind.
+
 ---
 
 ## 5. Finale Normalisierung

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Bewertungsbogen{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Bewertungsbogen{% endblock %}
 
 {% block content %}
 <div class="container-sm" style="max-width: 600px;">
@@ -13,7 +13,7 @@
                     {% elif active_event %}
                         {{ active_event.name }} - Bewertungsbogen
                     {% else %}
-                        NRW Cup 2025 - Bewertungsbogen
+                        NRW Cup {{ current_year }} - Bewertungsbogen
                     {% endif %}
                 </h5>
                 <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" style="height: 40px;">

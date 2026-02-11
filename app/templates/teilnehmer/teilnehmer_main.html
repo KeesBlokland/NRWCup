@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Teilnehmer{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Teilnehmer{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -92,7 +92,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <div class="btn-group">
+                        <div>
                             <a href="{{ url_for('teilnehmer.edit', id=teilnehmer.teilnehmer_id) }}" 
                                class="btn btn-outline-primary">
                                 Bearbeiten

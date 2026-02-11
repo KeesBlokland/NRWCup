@@ -7,7 +7,7 @@ Description: Corrected raw score display and dropped rounds logic
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Wettkampfstände{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Wettkampfstände{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -27,8 +27,8 @@ Description: Corrected raw score display and dropped rounds logic
         </div>
         <div>
             
-            <div class="btn-group">
-                <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" 
+            <div>
+                <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}"
                 class="btn btn-secondary">
                     <i class="bi bi-printer"></i> Ergebnisse drucken
                 </a>
@@ -184,7 +184,7 @@ Description: Corrected raw score display and dropped rounds logic
                     <div class="accordion-body">
                         <div class="d-flex justify-content-between mb-3">
                             <h5>Durchgang {{ round.round_number }}</h5>
-                            <div class="btn-group">
+                            <div>
                                 <a href="{{ url_for('scoring.score_list', round_id=round.round_id) }}" 
                                    class="btn btn-outline-secondary">
                                     Detaillierte Wertungen
@@ -254,7 +254,7 @@ Description: Corrected raw score display and dropped rounds logic
 <div id="printable-start-list" style="display: none;">
     <div class="print-container">
         <!-- Single line title with smaller font size, no date -->
-        <h2 class="print-title">NRW Cup 2025 - Startliste für Durchgang <span id="print-round-number"></span></h2>
+        <h2 class="print-title">NRW Cup {{ current_year }} - Startliste für Durchgang <span id="print-round-number"></span></h2>
         
         <!-- Table with no outer border -->
         <table id="print-table" class="print-table">

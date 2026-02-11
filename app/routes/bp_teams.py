@@ -404,7 +404,7 @@ def print_list():
         title_style = styles['Title']
         
         # Header
-        elements.append(Paragraph("NRW Cup 2025", title_style))
+        elements.append(Paragraph(f"NRW Cup {datetime.now().year}", title_style))
         elements.append(Paragraph(
             f"Datum: {datetime.now().strftime('%d.%m.%Y')} - Teamliste",
             styles['Normal']

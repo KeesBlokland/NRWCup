@@ -2,7 +2,7 @@
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Wertung & Ergebnisse{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Wertung & Ergebnisse{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -60,10 +60,10 @@
                         <p class="text-muted mb-0">{{ event.event_date.strftime('%d.%m.%Y') }}</p>
                     {% endif %}
                 </div>
-                <div class="btn-group">
-                        
-                    
-                    
+                <div>
+
+
+
                     {% if event %}
                         {% set button_round_number = 1 %}
                         {% set current_event_id = event.event_id if event else 0 %}
@@ -135,38 +135,36 @@
                     <small class="text-muted fw-bold">AKTIONEN:</small>
                 </div>
                 <div class="col">
-                    <div class="btn-group btn-group-sm" role="group">
-                        <!-- Admin Login/Logout -->
-                        {% if session.get('is_admin') %}
-                            <a href="{{ url_for('scoring.admin_logout') }}" class="btn btn-outline-danger">
-                                <i class="bi bi-unlock"></i> Admin Logout
-                            </a>
-                        {% else %}
-                            <a href="{{ url_for('scoring.admin_login') }}" class="btn btn-outline-warning">
-                                <i class="bi bi-lock"></i> Admin Login
-                            </a>
-                        {% endif %}
-                        
-                        <!-- Print Results -->
-                        <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" 
-                        class="btn btn-outline-secondary">
-                            <i class="bi bi-printer"></i> Drucken
+                    <!-- Admin Login/Logout -->
+                    {% if session.get('is_admin') %}
+                        <a href="{{ url_for('scoring.admin_logout') }}" class="btn btn-danger">
+                            <i class="bi bi-unlock"></i> Admin Logout
                         </a>
-                        
-                        <!-- Email Results -->
-                        <form method="POST" action="{{ url_for('reports.email_results', event_id=event.event_id) }}" style="display: inline;">
-                            <button type="submit" class="btn btn-outline-primary" 
-                                    onclick="return confirm('Ergebnisse an Wettkampfleitung senden?')">
-                                <i class="bi bi-envelope"></i> Mailen
-                            </button>
-                        </form>
-                        
-                        <!-- Excel Export -->
-                        <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}" 
-                        class="btn btn-outline-success">
-                            <i class="bi bi-file-earmark-excel"></i> Excel
+                    {% else %}
+                        <a href="{{ url_for('scoring.admin_login') }}" class="btn btn-warning">
+                            <i class="bi bi-lock"></i> Admin Login
                         </a>
-                    </div>
+                    {% endif %}
+
+                    <!-- Print Results -->
+                    <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}"
+                       class="btn btn-secondary">
+                        <i class="bi bi-printer"></i> Drucken
+                    </a>
+
+                    <!-- Email Results -->
+                    <form method="POST" action="{{ url_for('reports.email_results', event_id=event.event_id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-primary"
+                                onclick="return confirm('Ergebnisse an Wettkampfleitung senden?')">
+                            <i class="bi bi-envelope"></i> Mailen
+                        </button>
+                    </form>
+
+                    <!-- Excel Export -->
+                    <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}"
+                       class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </a>
                 </div>
             </div>
         </div>
@@ -630,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </style>
                             </head>
                             <body>
-                                <h2>NRW Cup 2025 - Startliste</h2>
+                                <h2>NRW Cup ${new Date().getFullYear()} - Startliste</h2>
                                 <h3>Nächster Durchgang</h3>
                                 ${document.getElementById('nextRoundTable').outerHTML}
                             </body>

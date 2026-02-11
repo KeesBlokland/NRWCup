@@ -7,7 +7,7 @@ Last Updated: 2024-12-05
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Aufgabenverwaltung{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Aufgabenverwaltung{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -52,7 +52,7 @@ Last Updated: 2024-12-05
                         {% endif %}
                     </td>
                     <td>
-                        <div class="btn-group">
+                        <div>
                             <a href="{{ url_for('contest.edit_task', id=task.type_id) }}" 
                                class="btn btn-outline-primary">
                                 Bearbeiten

@@ -7,7 +7,7 @@ Last Updated: 2024-12-04
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Benutzerverwaltung{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Benutzerverwaltung{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -41,7 +41,7 @@ Last Updated: 2024-12-04
                                     <td>{{ user.username }}</td>
                                     <td>{{ user.role }}</td>
                                     <td>
-                                        <div class="btn-group">
+                                        <div>
                                             <button type="button" class="btn btn-outline-primary"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#editUserModal{{ user.user_id }}">

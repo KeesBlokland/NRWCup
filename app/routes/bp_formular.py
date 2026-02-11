@@ -319,7 +319,7 @@ def print_list(event_id):
         title_style = styles['Title']
         
         # Header
-        elements.append(Paragraph("NRW Cup 2025", title_style))
+        elements.append(Paragraph(f"NRW Cup {datetime.now().year}", title_style))
         elements.append(Paragraph(
             f"Datum: {event.event_date.strftime('%d.%m.%Y') if event.event_date else 'N/A'} - 1. Durchgang",
             styles['Normal']
@@ -555,7 +555,7 @@ def print_round_list(round_id):
         title_style = styles['Title']
         
         # Header
-        elements.append(Paragraph("NRW Cup 2025", title_style))
+        elements.append(Paragraph(f"NRW Cup {datetime.now().year}", title_style))
         elements.append(Paragraph(
             f"Datum: {event.event_date.strftime('%d.%m.%Y') if event.event_date else 'N/A'} - Durchgang {round_obj.round_number}",
             styles['Normal']

@@ -7,14 +7,14 @@ Last Updated: 2024-12-04
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - System{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - System{% endblock %}
 
 {% block content %}
 <div class="container">
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>System & Einstellungen</h2>
-        <div class="btn-group">
+        <div>
             <a href="{{ url_for('system.backup') }}" class="btn btn-primary">
                 Backup erstellen
             </a>
@@ -161,7 +161,7 @@ Last Updated: 2024-12-04
                     <table class="table table-borderless">
                         <tr>
                             <td width="200"><strong>Anwendung:</strong></td>
-                            <td>NRW Cup 2025 Scoring System</td>
+                            <td>NRW Cup {{ current_year }} Scoring System</td>
                         </tr>
                         <tr>
                             <td><strong>Version:</strong></td>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Regelwerke{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Regelwerke{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -46,7 +46,7 @@
                                 </td>
                                 <td>{{ rule_set.rules|length }}</td>
                                 <td>
-                                    <div class="btn-group">
+                                    <div>
                                         <a href="{{ url_for('rules.edit_rule_set', rule_set_id=rule_set.rule_set_id) }}" 
                                            class="btn btn-outline-primary">
                                             Bearbeiten

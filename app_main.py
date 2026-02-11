@@ -80,6 +80,11 @@ with app.app_context():
 
 DBLogger.info("Application starting")
 
+# Make current year available in all templates
+@app.context_processor
+def inject_year():
+    return {'current_year': datetime.now().year}
+
 # Error handlers
 @app.errorhandler(404)
 def page_not_found(e):

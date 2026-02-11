@@ -28,7 +28,7 @@ class PdfService:
         
         # Add title and header
         styles = getSampleStyleSheet()
-        elements.append(Paragraph("NRW Cup 2025 - Bewertungsbogen", styles['Title']))
+        elements.append(Paragraph(f"NRW Cup {datetime.now().year} - Bewertungsbogen", styles['Title']))
         
         # Get teams for this round
         query = TeamRound.query.filter_by(round_id=round_id)
@@ -118,7 +118,7 @@ class PdfService:
             return None
 
         # Title + Date
-        elements.append(Paragraph("NRW Cup 2025 - Ergebnisse", styles['Heading2']))
+        elements.append(Paragraph(f"NRW Cup {datetime.now().year} - Ergebnisse", styles['Heading2']))
         elements.append(Paragraph(event.event_date.strftime('%d.%m.%Y'), styles['Normal']))
 
         # Get scoring service and standings - we'll use this data directly 

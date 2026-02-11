@@ -5,13 +5,13 @@
     Last Updated: 2025-04-19
 -->
 {% extends "base.html" %}
-{% block title %}NRW Cup 2025 - Teams{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Teams{% endblock %}
 {% block content %}
 <div class="container">
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Team Verwaltung</h2>
-        <div class="btn-group">
+        <div>
             <a href="{{ url_for('teams.create') }}" class="btn btn-primary">
                 Neues Team
             </a>
@@ -83,7 +83,7 @@
                 {% endif %}
             </td>
             <td>
-                <div class="btn-group">
+                <div>
                     <a href="{{ url_for('teams.edit', team_id=team.team_id) }}" 
                        class="btn btn-outline-primary">
                         Bearbeiten

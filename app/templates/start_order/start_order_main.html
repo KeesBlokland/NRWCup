@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Startfolgen{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Startfolgen{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -83,7 +83,7 @@
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h4 class="mb-0">Durchgang {{ round.round_number }} Startfolge</h4>
-                            <div class="btn-group">
+                            <div>
                                 {% if round.round_number == 1 %}
                                     <form method="POST" action="{{ url_for('start_order.randomize', round_id=round.round_id) }}">
                                         <button type="submit" class="btn btn-outline-secondary">

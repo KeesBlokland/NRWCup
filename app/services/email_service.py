@@ -6,6 +6,7 @@ Description: Email service for sending competition scores and notifications
 """
 
 import smtplib
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.models import db, Score, Teilnehmer, Team, TeamRound, Round, TaskType, ScoreValue
@@ -72,7 +73,7 @@ class EmailService:
             # Send the email
             result = EmailService._send_email(
                 recipients=email_addresses,
-                subject=f"NRW Cup 2025 - Bewertung Team {team.team_nummer}, Durchgang {round_obj.round_number}",
+                subject=f"NRW Cup {datetime.now().year} - Bewertung Team {team.team_nummer}, Durchgang {round_obj.round_number}",
                 html_content=email_content
             )
             
@@ -131,7 +132,7 @@ class EmailService:
             </style>
         </head>
         <body>
-            <h2>NRW Cup 2025 - Bewertungsbogen</h2>
+            <h2>NRW Cup {datetime.now().year} - Bewertungsbogen</h2>
             <p><strong>Team:</strong> {team.team_nummer}</p>
             <p><strong>Durchgang:</strong> {round_obj.round_number}</p>
             <p><strong>Punktrichter:</strong> {judge.name if judge else '-'}</p>

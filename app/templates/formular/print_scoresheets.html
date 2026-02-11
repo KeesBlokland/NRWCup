@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Bewertungsbögen Drucken{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Bewertungsbögen Drucken{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,8 +10,8 @@
         
         <div class="mb-4">
             <button class="btn btn-primary" onclick="window.print()">Drucken / Als PDF speichern</button>
-            <a href="{{ url_for('static', filename='Figuren.pdf') }}" class="btn btn-info" target="_blank">Kürfiguren 2025</a>
-            <a href="{{ url_for('static', filename='Bewertungsbogen2025.pdf') }}" class="btn btn-info" target="_blank">Bewertungsbögen 2025</a>
+            <a href="{{ url_for('static', filename='Figuren.pdf') }}" class="btn btn-info" target="_blank">Kürfiguren {{ current_year }}</a>
+            <a href="{{ url_for('static', filename='Bewertungsbogen2025.pdf') }}" class="btn btn-info" target="_blank">Bewertungsbögen {{ current_year }}</a>
             <a href="{{ url_for('formular.index') }}" class="btn btn-secondary">Zurück</a>
         </div>
         
@@ -27,7 +27,7 @@
                 <!-- First scoresheet on the page -->
                 <div class="scoresheet">
                     <div class="scoresheet-header">
-                        <h3>NRW Cup 2025 - Bewertungsbogen</h3><br>
+                        <h3>NRW Cup {{ current_year }} - Bewertungsbogen</h3><br>
                         <div class="scoresheet-meta">
                             <div class="meta-row">
                                 <span class="meta-label">Durchgang:</span>
@@ -69,7 +69,7 @@
                 {% if i+1 < scoresheets|length %}
                     <div class="scoresheet">
                         <div class="scoresheet-header">
-                            <h3>NRW Cup 2025 - Bewertungsbogen</h3><br>
+                            <h3>NRW Cup {{ current_year }} - Bewertungsbogen</h3><br>
                             <div class="scoresheet-meta">
                                 <div class="meta-row">
                                     <span class="meta-label">Durchgang:</span>

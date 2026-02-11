@@ -10,7 +10,7 @@ Description: Base template for public pages
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}NRW Cup 2025 - Ergebnisse{% endblock %}</title>
+    <title>{% block title %}NRW Cup {{ current_year }} - Ergebnisse{% endblock %}</title>
     
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     
@@ -26,7 +26,7 @@ Description: Base template for public pages
             <div class="d-flex align-items-center">
                 <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" class="me-3" style="height: 80px;">
                 <div>
-                    <h1>NRW Cup 2025</h1>
+                    <h1>NRW Cup {{ current_year }}</h1>
                     <p class="mb-0">Öffentliche Ergebnisse</p>
                 </div>
             </div>

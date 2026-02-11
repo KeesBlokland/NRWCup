@@ -6,7 +6,7 @@ Created: 2025-01-20
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Figuren{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Figuren{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -54,7 +54,7 @@ Created: 2025-01-20
                         {% endif %}
                     </td>
                     <td class="py-1">
-                        <div class="btn-group">
+                        <div>
                             <a href="{{ url_for('figures.edit', id=task.type_id) }}" 
                                class="btn btn-outline-primary">Bearbeiten</a>
                             <button type="button" 

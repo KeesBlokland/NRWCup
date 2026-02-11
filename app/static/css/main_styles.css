@@ -40,11 +40,13 @@ Description: Consolidated CSS styles extracted from HTML templates
     margin-bottom: 1rem;
 }
 
-/* Button Styling - Consistent sizing */
+/* Button Styling - Consistent sizing, rounded corners, solid fill, spacing */
 .btn {
     font-size: 0.85rem;
     padding: 0.35rem 0.75rem;
     font-weight: 500;
+    border-radius: 0.5rem !important;
+    margin: 2px;
 }
 
 .btn-primary {
@@ -58,6 +60,73 @@ Description: Consolidated CSS styles extracted from HTML templates
     background-color: #b0d1e5;
     border-color: #9ec5e0;
     color: #132639 !important;
+}
+
+/* Convert all outline buttons to solid filled style */
+.btn-outline-primary {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+}
+.btn-outline-primary:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    color: #fff !important;
+}
+
+.btn-outline-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: #fff !important;
+}
+.btn-outline-secondary:hover {
+    background-color: #5c636a !important;
+    border-color: #565e64 !important;
+    color: #fff !important;
+}
+
+.btn-outline-success {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #fff !important;
+}
+.btn-outline-success:hover {
+    background-color: #157347 !important;
+    border-color: #146c43 !important;
+    color: #fff !important;
+}
+
+.btn-outline-danger {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #fff !important;
+}
+.btn-outline-danger:hover {
+    background-color: #bb2d3b !important;
+    border-color: #b02a37 !important;
+    color: #fff !important;
+}
+
+.btn-outline-warning {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #000 !important;
+}
+.btn-outline-warning:hover {
+    background-color: #ffca2c !important;
+    border-color: #ffc720 !important;
+    color: #000 !important;
+}
+
+.btn-outline-info {
+    background-color: #0dcaf0 !important;
+    border-color: #0dcaf0 !important;
+    color: #000 !important;
+}
+.btn-outline-info:hover {
+    background-color: #31d2f2 !important;
+    border-color: #25cff2 !important;
+    color: #000 !important;
 }
 
 /* Match badge size to buttons */
@@ -278,8 +347,22 @@ tr[draggable] {
     }
 }
 
-.btn-group label.btn { 
-    padding: 0.1rem 0.3rem; 
+/* Remove extra margin inside btn-groups (buttons should touch within a group) */
+.btn-group > .btn {
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+.btn-group > .btn:first-child {
+    border-top-left-radius: 0.5rem !important;
+    border-bottom-left-radius: 0.5rem !important;
+}
+.btn-group > .btn:last-child {
+    border-top-right-radius: 0.5rem !important;
+    border-bottom-right-radius: 0.5rem !important;
+}
+
+.btn-group label.btn {
+    padding: 0.1rem 0.3rem;
 }
 
 input:invalid {
@@ -313,7 +396,6 @@ input[type="number"] {
 
 .btn-success {
     font-weight: 500;
-    padding: 0.5rem 1rem;
 }
 
 /* Dashboard styling from system_main.html and others */

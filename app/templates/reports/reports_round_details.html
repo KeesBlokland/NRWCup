@@ -8,7 +8,7 @@ Description: Template for displaying detailed round scores with raw scores
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Durchgang Details{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Durchgang Details{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -24,7 +24,7 @@ Description: Template for displaying detailed round scores with raw scores
             </p>
         </div>
         <div>
-            <div class="btn-group">
+            <div>
                 <a href="{{ url_for('reports.standings', event_id=event.event_id) }}" 
                    class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Zurück zur Rangliste

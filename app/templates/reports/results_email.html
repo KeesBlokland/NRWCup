@@ -76,7 +76,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>NRW Cup 2025 - Ergebnisse</h1>
+            <h1>NRW Cup {{ current_year }} - Ergebnisse</h1>
             <h2>{{ event.name }}</h2>
             {% if event.event_date %}
                 <p>{{ event.event_date.strftime('%d.%m.%Y') }}</p>

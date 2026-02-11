@@ -12,7 +12,7 @@ Description: Base template with updated navigation and clickable logo
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}NRW Cup 2025{% endblock %}</title>
+    <title>{% block title %}NRW Cup {{ current_year }}{% endblock %}</title>
     
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     
@@ -94,7 +94,7 @@ Description: Base template with updated navigation and clickable logo
 
     <footer class="bg-dark text-white py-3 mt-4">
         <div class="container text-center">
-            <p>&copy; 2025 Kees Blokland. All rights reserved. Contact: kees@blokland.net | Rev. 2 Jun 2025</p>
+            <p>&copy; {{ current_year }} Kees Blokland. All rights reserved. Contact: kees@blokland.net</p>
         </div>
     </footer>
 

@@ -2,7 +2,7 @@
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup 2025 - Wettbewerbe{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - Wettbewerbe{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -137,8 +137,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="btn-group">
-                                        <button class="btn btn-outline-primary" 
+                                    <div>
+                                        <button class="btn btn-outline-primary"
                                                 onclick="editEvent({{ event.event_id }})">Bearbeiten</button>
                                         <button class="btn btn-outline-danger" 
                                                 onclick="confirmDelete({{ event.event_id }})">Löschen</button>

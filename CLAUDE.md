@@ -26,9 +26,6 @@ Runs on Raspberry Pi with SQLite database.
 | cleanup_bp | /cleanup | bp_cleanup.py |
 | start_order_bp | /start_order | bp_start_order.py |
 
-## Unregistered Blueprints (NOT in app_main.py)
-- **bp_public.py** - Public results view (broken — missing imports)
-- **bp_rules.py** - Rule set management (broken — references non-existent models)
 
 ## Environment & Workflow
 - **Dev server (30)**: 192.168.2.30 — git repo, all editing here

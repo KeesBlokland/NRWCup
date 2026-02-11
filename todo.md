@@ -20,12 +20,6 @@
 - [x] Removed "# ADD THESE THREE NEW FIELDS" comment in models.py (d7882fb)
 - [x] Removed `test_scoresheet` debug route from bp_scoring.py (d7882fb)
 
-## UNREGISTERED BLUEPRINTS (enable when ready)
-
-- [ ] bp_public.py — add missing imports (Blueprint, render_template, Event, Round, ScoringService)
-- [ ] bp_public.py — create templates: public/index.html, public/results.html, public/not_available.html
-- [ ] bp_rules.py — add ScoringRuleSet/ScoringRule models to models.py
-- [ ] Register bp_public and bp_rules in app_main.py
 
 ## DONE
 

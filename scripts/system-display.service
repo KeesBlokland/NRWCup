@@ -1,0 +1,15 @@
+[Unit]
+Description=System Status Display
+After=network-manager.service
+Wants=network-manager.service
+
+[Service]
+Type=simple
+User=pi
+Environment="DISPLAY=:0"
+ExecStart=/usr/bin/python3 /usr/local/bin/system_display.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=graphical.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=NRWCup Flask Application
+After=network-manager.service
+Wants=network-manager.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/NRWCup
+ExecStart=/home/pi/NRWCup/venv/bin/python3 app_main.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

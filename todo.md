@@ -8,17 +8,17 @@
 
 ## MODERATE
 
-- [ ] bp_scoring.py: `api_score` sort uses non-existent 'code' key (~line 451) — falls back to name sort, works but not as intended
-- [ ] bp_scoring.py: `update_score` calls `create_score` instead of update (~line 612) — works via upsert but `locked` status could be lost
-- [ ] bp_reports.py: verify `round_details` template renders correctly with `raw_scores` variable
-- [ ] bp_contest.py: duplicate `clear_all_scores` import (line 15 and 192)
+- [x] bp_scoring.py: `api_score` sort — fixed to use name_de instead of missing 'code' key (d7882fb)
+- [x] bp_scoring.py: `update_score` — now preserves locked status when calling create_score (d7882fb)
+- [x] bp_reports.py: `round_details` template verified — uses team_round.raw_score directly, renders correctly
+- [x] bp_contest.py: removed duplicate `clear_all_scores` import (d7882fb)
 
 ## MINOR / CLEANUP
 
-- [ ] Remove debug print statements from `team_scoresheet_pdf` (bp_scoring.py ~lines 1169, 1174, 1185)
-- [ ] Clean up comment artifacts ("# Add this route to..." etc.)
-- [ ] Remove "# ADD THESE THREE NEW FIELDS" comment in models.py:156
-- [ ] Remove `test_scoresheet` debug route at end of bp_scoring.py (line 1295)
+- [x] Removed debug print statements from `team_scoresheet_pdf` (d7882fb)
+- [x] Cleaned up comment artifacts ("# Add this route to..." etc.) (d7882fb)
+- [x] Removed "# ADD THESE THREE NEW FIELDS" comment in models.py (d7882fb)
+- [x] Removed `test_scoresheet` debug route from bp_scoring.py (d7882fb)
 
 ## UNREGISTERED BLUEPRINTS (enable when ready)
 

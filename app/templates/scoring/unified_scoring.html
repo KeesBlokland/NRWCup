@@ -794,24 +794,26 @@ function showResultsRecipients(eventId) {
     .catch(error => { alert('Fehler: ' + error.message); });
 }
 
-document.getElementById('confirmSendResultsBtn').onclick = function() {
-    const checked = document.querySelectorAll('#resultsRcptList input:checked');
-    const selected = Array.from(checked).map(c => c.value);
-    if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
-    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('confirmSendResultsBtn').onclick = function() {
+        const checked = document.querySelectorAll('#resultsRcptList input:checked');
+        const selected = Array.from(checked).map(c => c.value);
+        if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
+        if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
 
-    fetch('/reports/email_results/' + _resultsEventId, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipients: selected })
-    })
-    .then(r => r.json())
-    .then(result => {
-        bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
-        alert(result.success ? result.message : 'Fehler: ' + result.message);
-    })
-    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
-};
+        fetch('/reports/email_results/' + _resultsEventId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipients: selected })
+        })
+        .then(r => r.json())
+        .then(result => {
+            bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
+            alert(result.success ? result.message : 'Fehler: ' + result.message);
+        })
+        .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+    };
+});
 </script>
 
 <!-- Results Email Recipient Selection Modal -->

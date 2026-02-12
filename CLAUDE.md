@@ -28,13 +28,16 @@ Runs on Raspberry Pi with SQLite database.
 
 
 ## Environment & Workflow
-- **Dev server (30)**: 192.168.2.30 — git repo, all editing here
-- **Pi (83)**: 192.168.2.83 — production
+- **Dev server (30)**: 192.168.2.30 — git repo, all editing here, path: `/home/NRWcup`
+- **Pi (83)**: 192.168.2.83 — production, path: `/home/pi/NRWCup` (capital C!), user: `pi`, pass: `13TM31n`
+- **SSH to Pi**: `sshpass -p '13TM31n' ssh pi@192.168.2.83`
 - **Gitea**: 192.168.2.7:3000 — LOCAL git remote, commit here during working sessions
 - **GitHub**: github.com/KeesBlokland/NRWCup — PUBLIC remote, push only when explicitly asked
+- **VPS**: nrwcup.scale-f-schlepp.de (194.164.90.238) — public site, gunicorn+systemd, user: `scalefschleppwilga2008`
 - Python: Flask 2.3.3, SQLAlchemy 1.4.54, CSRFProtect (flask_wtf)
-- Deploy to Pi: rsync from 30 to 83 (exclude instance/, venv/, backups/, doc_archives/)
-- Flask restart on Pi: `ssh pi@192.168.2.83`, kill old process, run `nohup venv/bin/python3 app_main.py`
+- Pi uses system python3 (no venv)
+- Deploy to Pi: `sshpass -p '13TM31n' rsync -avz --exclude='instance/' --exclude='venv/' --exclude='backups/' --exclude='doc_archives/' --exclude='__pycache__/' /home/NRWcup/ pi@192.168.2.83:/home/pi/NRWCup/`
+- Flask restart on Pi: `sshpass -p '13TM31n' ssh pi@192.168.2.83 "kill \$(pgrep -f 'python3.*app_main') 2>/dev/null; sleep 1; cd /home/pi/NRWCup && nohup python3 app_main.py > /dev/null 2>&1 &"`
 - **Always start Claude from /home/NRWcup** (not /root)
 - **TODOs go in todo.md**, not here
 

@@ -21,7 +21,19 @@
 - [x] Removed `test_scoresheet` debug route from bp_scoring.py (d7882fb)
 
 
-## DONE
+## DONE (2026-02-12)
+
+- [x] Protect completed events from clear_all_scores — Completed events are NEVER cleared
+- [x] Add email recipient selection modals — all 3 email senders now require explicit recipient selection
+- [x] Fix results email send button (DOMContentLoaded) — script ran before modal HTML existed
+- [x] Restore 2025 scores from Pi backup (nrwcup_backup_2026-02-10_08-22-58.zip)
+- [x] Document Pi deployment details in CLAUDE.md (path, credentials, commands)
+- [x] Audit logging wired into scoring, contest, cleanup, system blueprints
+- [x] Log file management: download, cleanup of startup-only logs
+- [x] Full project backup (not just DB + app/)
+- [x] Fix all paths to use PROJECT_ROOT instead of os.getcwd()
+
+## DONE (earlier)
 
 - [x] Clarify TaG: Touch and Go — dropped for 2025, no action needed
 - [x] Verify Kürfiguren: ONE per group (Platzrunde: M or M-K; Platzüberflug: Kreis or Oval)

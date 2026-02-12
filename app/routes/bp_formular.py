@@ -722,27 +722,27 @@ def export_labels():
         flash(f'Fehler beim Erstellen der Label-Datei: {str(e)}', 'error')
         return redirect(url_for('formular.index'))
 
-@formular_bp.route('/email-startlist', methods=['POST'])
-def email_startlist():
-    """Email start list to active participants"""
+@formular_bp.route('/email-startlist-recipients', methods=['POST'])
+def email_startlist_recipients():
+    """Return list of potential recipients for start list email"""
     try:
-        data = request.get_json()
-        event_id = data.get('event_id')
-        team_order = data.get('team_order', [])
-        
-        event = Event.query.get_or_404(event_id)
-        all_teams = {team.team_nummer: team for team in Team.query.filter_by(status='active').all()}
-        
-        # Get emails from: active team pilots, judges, and wettkampfleitung
-        recipients = set()
-        
+        recipients = []
+
         # Active team pilots
         for team in Team.query.filter_by(status='active').all():
             if team.schlepper_pilot and team.schlepper_pilot.email:
-                recipients.add(team.schlepper_pilot.email)
+                recipients.append({
+                    'email': team.schlepper_pilot.email,
+                    'name': team.schlepper_pilot.name,
+                    'role': f'Pilot Team {team.team_nummer}'
+                })
             if team.segler_pilot and team.segler_pilot.email:
-                recipients.add(team.segler_pilot.email)
-        
+                recipients.append({
+                    'email': team.segler_pilot.email,
+                    'name': team.segler_pilot.name,
+                    'role': f'Pilot Team {team.team_nummer}'
+                })
+
         # Judges and Wettkampfleitung
         from app.models import Teilnehmer
         officials = Teilnehmer.query.filter(
@@ -750,14 +750,49 @@ def email_startlist():
             Teilnehmer.email.isnot(None),
             Teilnehmer.email != ''
         ).all()
-        
+
         for official in officials:
-            recipients.add(official.email)
-        
-        recipients = list(recipients)  # Convert set to list
-        
-        if not recipients:
-            return jsonify({'success': False, 'message': 'Keine Email-Adressen gefunden'})
+            role = []
+            if official.is_punktwerter:
+                role.append('Punktwerter')
+            if official.is_wettkampfleitung:
+                role.append('Wettkampfleitung')
+            recipients.append({
+                'email': official.email,
+                'name': official.name,
+                'role': ', '.join(role)
+            })
+
+        # Deduplicate by email
+        seen = set()
+        unique = []
+        for r in recipients:
+            if r['email'] not in seen:
+                seen.add(r['email'])
+                unique.append(r)
+
+        return jsonify({'success': True, 'recipients': unique})
+
+    except Exception as e:
+        logger.error(f"Error getting recipients: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@formular_bp.route('/email-startlist', methods=['POST'])
+def email_startlist():
+    """Email start list to selected recipients only"""
+    try:
+        data = request.get_json()
+        event_id = data.get('event_id')
+        team_order = data.get('team_order', [])
+        selected_emails = data.get('recipients', [])
+
+        if not selected_emails:
+            return jsonify({'success': False, 'message': 'Keine Empfänger ausgewählt'})
+
+        event = Event.query.get_or_404(event_id)
+        all_teams = {team.team_nummer: team for team in Team.query.filter_by(status='active').all()}
+
+        recipients = selected_emails
         
         # Create email content
         html_content = f"""

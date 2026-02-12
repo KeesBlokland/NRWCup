@@ -33,11 +33,9 @@ Description: Corrected raw score display and dropped rounds logic
                     <i class="bi bi-printer"></i> Ergebnisse drucken
                 </a>
                 <!-- Email Results Button -->
-                <form method="POST" action="{{ url_for('reports.email_results', event_id=event.event_id) }}" style="display: inline;">
-                    <button type="submit" class="btn btn-primary" onclick="return confirm('Ergebnisse an Wettkampfleitung senden?')">
-                        <i class="bi bi-envelope"></i> Ergebnisse mailen
-                    </button>
-                </form>
+                <button type="button" class="btn btn-primary" onclick="showResultsRecipients({{ event.event_id }})">
+                    <i class="bi bi-envelope"></i> Ergebnisse mailen
+                </button>
                 <!-- New print button - added for direct printing -->
                 <button onclick="window.print()" class="btn btn-outline-secondary no-print">
                     <i class="bi bi-printer"></i> Diese Seite drucken
@@ -333,5 +331,78 @@ function printRoundData(roundId) {
         });
     }, 100);
 }
+</script>
+
+<!-- Email Recipient Selection Modal -->
+<div class="modal fade" id="resultsRecipientsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email-Empfänger auswählen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="resultsRecipientsBody">
+                <p>Laden...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-success" id="confirmSendResultsBtn">Senden</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var _resultsEventId = null;
+
+function showResultsRecipients(eventId) {
+    _resultsEventId = eventId;
+    fetch('/reports/email_results_recipients/' + eventId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success || !result.recipients.length) {
+            alert('Keine Email-Adressen gefunden');
+            return;
+        }
+        let html = '<div class="mb-3">' +
+            '<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll(\'#resultsRcptList input\').forEach(c=>c.checked=true)">Alle</button>' +
+            '<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll(\'#resultsRcptList input\').forEach(c=>c.checked=false)">Keine</button>' +
+            '</div><div id="resultsRcptList">';
+        result.recipients.forEach(r => {
+            html += `<div class="form-check">
+                <input class="form-check-input" type="checkbox" value="${r.email}" id="rrcpt_${r.email}" checked>
+                <label class="form-check-label" for="rrcpt_${r.email}">
+                    <strong>${r.name}</strong> — ${r.email} <small class="text-muted">(${r.role})</small>
+                </label>
+            </div>`;
+        });
+        html += '</div>';
+        document.getElementById('resultsRecipientsBody').innerHTML = html;
+        new bootstrap.Modal(document.getElementById('resultsRecipientsModal')).show();
+    })
+    .catch(error => { alert('Fehler: ' + error.message); });
+}
+
+document.getElementById('confirmSendResultsBtn').onclick = function() {
+    const checked = document.querySelectorAll('#resultsRcptList input:checked');
+    const selected = Array.from(checked).map(c => c.value);
+    if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
+    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+
+    fetch('/reports/email_results/' + _resultsEventId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipients: selected })
+    })
+    .then(r => r.json())
+    .then(result => {
+        bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
+        alert(result.success ? result.message : 'Fehler: ' + result.message);
+    })
+    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+};
 </script>
 {% endblock %}

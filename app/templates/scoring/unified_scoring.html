@@ -153,12 +153,9 @@
                     </a>
 
                     <!-- Email Results -->
-                    <form method="POST" action="{{ url_for('reports.email_results', event_id=event.event_id) }}" style="display: inline;">
-                        <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Ergebnisse an Wettkampfleitung senden?')">
-                            <i class="bi bi-envelope"></i> Mailen
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-primary" onclick="showResultsRecipients({{ event.event_id }})">
+                        <i class="bi bi-envelope"></i> Mailen
+                    </button>
 
                     <!-- Excel Export -->
                     <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}"
@@ -442,6 +439,61 @@
    </div>
 </div>
 
+<!-- Email Recipient Selection Modal -->
+<div class="modal fade" id="emailRecipientsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email-Empfänger auswählen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="emailRecipientsBody">
+                <p>Laden...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-success" id="confirmSendEmailBtn">
+                    Senden
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('confirmSendEmailBtn').onclick = function() {
+    const checked = document.querySelectorAll('#recipientList input:checked');
+    const selected = Array.from(checked).map(c => c.value);
+
+    if (!selected.length) {
+        alert('Keine Empfänger ausgewählt');
+        return;
+    }
+
+    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+
+    const payload = window._emailPayload;
+    payload.recipients = selected;
+    payload.next_round = true;
+
+    fetch('/formular/email-startlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(result => {
+        bootstrap.Modal.getInstance(document.getElementById('emailRecipientsModal')).hide();
+        if (result.success) {
+            alert('Startliste an ' + selected.length + ' Empfänger versendet');
+        } else {
+            alert('Fehler: ' + result.message);
+        }
+    })
+    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+};
+</script>
+
 <!-- Hidden form for next round generation -->
 <form id="nextRoundForm" method="POST" action="{{ url_for('scoring.generate_next_round') }}" style="display: none;">
    <input type="hidden" name="event_id" id="nextRoundEventId">
@@ -639,45 +691,46 @@ document.addEventListener('DOMContentLoaded', function() {
                         printWin.print();
                     };
                     
-                    // Setup email button
+                    // Setup email button — show recipient selection first
                     document.getElementById('emailNextRoundBtn').onclick = function() {
-                        console.log('Email button clicked');
                         const eventId = document.getElementById('eventSelect').value;
-                        console.log('Event ID:', eventId);
-                        
-                        // Build team order array from displayed data
                         const teamOrder = [];
                         const nextRoundData = data.round_data.concat(data.teams_without_scores);
-                        nextRoundData.forEach(team => {
-                            teamOrder.push(team.team_nummer);
-                        });
-                        console.log('Team order:', teamOrder);
-                        
-                        fetch('/formular/email-startlist', {
+                        nextRoundData.forEach(team => { teamOrder.push(team.team_nummer); });
+
+                        // Store for later send
+                        window._emailPayload = { event_id: parseInt(eventId), team_order: teamOrder };
+
+                        // Fetch recipients list
+                        fetch('/formular/email-startlist-recipients', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                event_id: parseInt(eventId),
-                                team_order: teamOrder,
-                                next_round: true
-                            })
+                            body: JSON.stringify({ event_id: parseInt(eventId) })
                         })
-                        .then(response => {
-                            console.log('Response:', response);
-                            return response.json();
-                        })
+                        .then(r => r.json())
                         .then(result => {
-                            console.log('Result:', result);
-                            if (result.success) {
-                                alert('Startliste für nächsten Durchgang erfolgreich per Email versendet');
-                            } else {
-                                alert('Fehler: ' + result.message);
+                            if (!result.success || !result.recipients.length) {
+                                alert('Keine Email-Adressen gefunden');
+                                return;
                             }
+                            // Build recipient list
+                            let html = '<div class="mb-3">' +
+                                '<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll(\'#recipientList input\').forEach(c=>c.checked=true)">Alle</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll(\'#recipientList input\').forEach(c=>c.checked=false)">Keine</button>' +
+                                '</div><div id="recipientList">';
+                            result.recipients.forEach(r => {
+                                html += `<div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="${r.email}" id="rcpt_${r.email}" checked>
+                                    <label class="form-check-label" for="rcpt_${r.email}">
+                                        <strong>${r.name}</strong> — ${r.email} <small class="text-muted">(${r.role})</small>
+                                    </label>
+                                </div>`;
+                            });
+                            html += '</div>';
+                            document.getElementById('emailRecipientsBody').innerHTML = html;
+                            new bootstrap.Modal(document.getElementById('emailRecipientsModal')).show();
                         })
-                        .catch(error => {
-                            console.log('Error:', error);
-                            alert('Fehler beim Senden: ' + error.message);
-                        });
+                        .catch(error => { alert('Fehler: ' + error.message); });
                     };
                 } else {
                     document.getElementById('startListContent').innerHTML = `
@@ -706,5 +759,77 @@ function confirmNextRound() {
         form.submit();
     }
 }
+
+// === Results Email Recipient Selection ===
+var _resultsEventId = null;
+
+function showResultsRecipients(eventId) {
+    _resultsEventId = eventId;
+    fetch('/reports/email_results_recipients/' + eventId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success || !result.recipients.length) {
+            alert('Keine Email-Adressen gefunden');
+            return;
+        }
+        let html = '<div class="mb-3">' +
+            '<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll(\'#resultsRcptList input\').forEach(c=>c.checked=true)">Alle</button>' +
+            '<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll(\'#resultsRcptList input\').forEach(c=>c.checked=false)">Keine</button>' +
+            '</div><div id="resultsRcptList">';
+        result.recipients.forEach(r => {
+            html += `<div class="form-check">
+                <input class="form-check-input" type="checkbox" value="${r.email}" id="rrcpt_${r.email}" checked>
+                <label class="form-check-label" for="rrcpt_${r.email}">
+                    <strong>${r.name}</strong> — ${r.email} <small class="text-muted">(${r.role})</small>
+                </label>
+            </div>`;
+        });
+        html += '</div>';
+        document.getElementById('resultsRecipientsBody').innerHTML = html;
+        new bootstrap.Modal(document.getElementById('resultsRecipientsModal')).show();
+    })
+    .catch(error => { alert('Fehler: ' + error.message); });
+}
+
+document.getElementById('confirmSendResultsBtn').onclick = function() {
+    const checked = document.querySelectorAll('#resultsRcptList input:checked');
+    const selected = Array.from(checked).map(c => c.value);
+    if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
+    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+
+    fetch('/reports/email_results/' + _resultsEventId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipients: selected })
+    })
+    .then(r => r.json())
+    .then(result => {
+        bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
+        alert(result.success ? result.message : 'Fehler: ' + result.message);
+    })
+    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+};
 </script>
+
+<!-- Results Email Recipient Selection Modal -->
+<div class="modal fade" id="resultsRecipientsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email-Empfänger auswählen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="resultsRecipientsBody">
+                <p>Laden...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-success" id="confirmSendResultsBtn">Senden</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

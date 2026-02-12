@@ -263,7 +263,9 @@ function emailResults() {
         alert('Fehler: Team-, Durchgang- oder Event-ID fehlt');
         return;
     }
-    
+
+    if (!confirm('Ergebnisse per Email an die Team-Piloten senden?')) return;
+
     fetch('/scoring/email_team_results', {
         method: 'POST',
         headers: {

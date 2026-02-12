@@ -13,39 +13,63 @@ logger = logging.getLogger(__name__)
 
 def clear_all_scores():
     """
-    Clear all scores from the database.
-    
+    Clear scores from non-completed events only.
+    Completed events are NEVER touched.
+
     Returns:
         Dict with deletion statistics
     """
     try:
         result = {
             'scores_deleted': 0,
-            'team_rounds_deleted': 0  # We're not deleting team rounds, just clearing scores
+            'team_rounds_deleted': 0,
+            'events_skipped': 0
         }
-        
-        # Get all score IDs
-        score_ids = [score.score_id for score in Score.query.all()]
-        
-        # Delete score values first
-        if score_ids:
-            deleted_score_values = ScoreValue.query.filter(ScoreValue.score_id.in_(score_ids)).delete(synchronize_session=False)
-            # Then delete scores
-            deleted_scores = Score.query.delete()
-            result['scores_deleted'] = deleted_scores
-        
-        # Clear team round scores (set to NULL) but don't delete team rounds
-        team_rounds = TeamRound.query.all()
+
+        # Only clear scores for events that are NOT Completed
+        protected_events = Event.query.filter_by(status='Completed').all()
+        protected_event_ids = [e.event_id for e in protected_events]
+        result['events_skipped'] = len(protected_events)
+
+        # Get rounds for non-completed events only
+        clearable_rounds = Round.query.filter(
+            ~Round.event_id.in_(protected_event_ids)
+        ).all() if protected_event_ids else Round.query.all()
+        round_ids = [r.round_id for r in clearable_rounds]
+
+        if not round_ids:
+            db.session.commit()
+            return result
+
+        # Get team rounds for these rounds
+        team_rounds = TeamRound.query.filter(TeamRound.round_id.in_(round_ids)).all()
+        team_round_ids = [tr.team_round_id for tr in team_rounds]
+
+        # Delete score values and scores
+        if team_round_ids:
+            scores = Score.query.filter(Score.team_round_id.in_(team_round_ids)).all()
+            score_ids = [s.score_id for s in scores]
+
+            if score_ids:
+                ScoreValue.query.filter(ScoreValue.score_id.in_(score_ids)).delete(synchronize_session=False)
+                deleted = Score.query.filter(Score.score_id.in_(score_ids)).delete(synchronize_session=False)
+                result['scores_deleted'] = deleted
+
+        # Clear team round scores but don't delete team rounds
         for team_round in team_rounds:
             team_round.raw_score = None
             team_round.normalized_score = None
             team_round.rank = None
-            
+
         db.session.commit()
         result['team_rounds_deleted'] = len(team_rounds)
-        
+
+        if protected_events:
+            logger.info(f"Protected {len(protected_events)} completed event(s): "
+                       f"{', '.join(e.name for e in protected_events)}")
+
         return result
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error in clear_all_scores: {str(e)}")
@@ -54,12 +78,13 @@ def clear_all_scores():
 def clear_event_data(event_id, clear_scores_only=True):
     """
     Clear data for a specific event.
-    
+    Refuses to clear completed events.
+
     Args:
         event_id: ID of the event to clear
         clear_scores_only: If True, just clear scores but keep rounds
                            If False, delete rounds and all related data
-                           
+
     Returns:
         Dict with deletion statistics
     """
@@ -69,7 +94,13 @@ def clear_event_data(event_id, clear_scores_only=True):
             'team_rounds_deleted': 0,
             'rounds_deleted': 0
         }
-        
+
+        # PROTECT completed events
+        event = Event.query.get(event_id)
+        if event and event.status == 'Completed':
+            logger.warning(f"Refused to clear completed event: {event.name}")
+            raise ValueError(f"Abgeschlossener Wettbewerb '{event.name}' kann nicht gelöscht werden")
+
         # Get rounds for this event
         rounds = Round.query.filter_by(event_id=event_id).all()
         round_ids = [r.round_id for r in rounds]

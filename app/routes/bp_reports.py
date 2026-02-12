@@ -208,71 +208,71 @@ def print_scoresheet(round_id):
         flash(f'Error printing scoresheet: {str(e)}', 'error')
         return redirect(url_for('scoring.score_list'))
 
+@reports_bp.route('/email_results_recipients/<int:event_id>', methods=['POST'])
+def email_results_recipients(event_id):
+    """Return list of Wettkampfleitung recipients for selection"""
+    try:
+        recipients = []
+        for t in Teilnehmer.query.filter(
+            Teilnehmer.is_wettkampfleitung == True,
+            Teilnehmer.email.isnot(None),
+            Teilnehmer.email != ''
+        ).all():
+            recipients.append({'email': t.email, 'name': t.name, 'role': 'Wettkampfleitung'})
+        return jsonify({'success': True, 'recipients': recipients})
+    except Exception as e:
+        logger.error(f"Error getting recipients: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
+
 @reports_bp.route('/email_results/<int:event_id>', methods=['POST'])
 def email_results(event_id):
-    """Email results to Wettkampfleitung participants"""
+    """Email results to selected recipients"""
     try:
         import smtplib
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
         from app.config import Config
-        
-        # Get event
+
+        data = request.get_json()
+        selected_emails = data.get('recipients', []) if data else []
+
+        if not selected_emails:
+            return jsonify({'success': False, 'message': 'Keine Empfänger ausgewählt'})
+
         event = Event.query.get_or_404(event_id)
-        
-        # Get Wettkampfleitung participants with email addresses
-        recipients = Teilnehmer.query.filter(
-            Teilnehmer.is_wettkampfleitung == True,
-            Teilnehmer.email.isnot(None),
-            Teilnehmer.email != ''
-        ).all()
-        
-        if not recipients:
-            flash('Keine Email-Adressen für Wettkampfleitung gefunden', 'warning')
-            return redirect(url_for('reports.standings', event_id=event_id))
-        
+
         # Get standings for email content
         scoring_service = ScoringService()
         standings = scoring_service.calculate_final_standings(event_id)
         rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all()
-        
-        # Create HTML email content
-        html_content = render_template('reports/results_email.html', 
+
+        html_content = render_template('reports/results_email.html',
                                      event=event,
                                      standings=standings,
                                      rounds=rounds)
-        
-        # Email configuration
+
         smtp_server = Config.MAIL_SERVER
         smtp_port = Config.MAIL_PORT
         email_user = Config.MAIL_USERNAME
         email_password = Config.MAIL_PASSWORD
-        
-        # Create recipient list
-        email_addresses = [t.email for t in recipients]
-        
-        # Create email
+
         msg = MIMEMultipart()
         msg['From'] = email_user
-        msg['To'] = ', '.join(email_addresses)
+        msg['To'] = ', '.join(selected_emails)
         msg['Subject'] = f"Ergebnisse - {event.name}"
-        
         msg.attach(MIMEText(html_content, 'html'))
-        
-        # Send email
+
         import ssl
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.login(email_user, email_password)
             server.send_message(msg)
-        
-        flash(f'Ergebnisse erfolgreich an {len(email_addresses)} Wettkampfleitung-Teilnehmer gesendet', 'success')
-        
+
+        return jsonify({'success': True, 'message': f'Ergebnisse an {len(selected_emails)} Empfänger gesendet'})
+
     except Exception as e:
         logger.error(f"Email error: {str(e)}")
-        flash(f'Fehler beim Senden der Email: {str(e)}', 'error')
-        
-    return redirect(url_for('reports.standings', event_id=event_id))
+        return jsonify({'success': False, 'message': str(e)})
 
 @reports_bp.route('/export_excel/<int:event_id>')
 def export_excel(event_id):

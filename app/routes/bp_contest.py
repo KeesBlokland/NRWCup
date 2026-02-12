@@ -199,18 +199,25 @@ def clear_scores():
         clear_rounds_too = request.form.get('clear_rounds_too') == 'true'
         
         if selection == 'all':
-            # Clear all scores using the utility function
+            # Clear scores for non-completed events only
             audit_log('scores', None, 'clear_all', None, None)
             result = clear_all_scores()
-            
+
+            skipped = result.get('events_skipped', 0)
+            skip_msg = f' ({skipped} abgeschlossene(r) Wettbewerb(e) geschützt)' if skipped else ''
+
             if clear_rounds_too:
-                # If clearing rounds too, we need to delete the rounds manually
-                # since clear_all_scores only clears scoring data
-                rounds_deleted = Round.query.delete()
-                
-                flash(f'Alle Bewertungen und Durchgänge erfolgreich gelöscht ({result["scores_deleted"]} Bewertungen, {rounds_deleted} Durchgänge)', 'success')
+                # Only delete rounds for non-completed events
+                protected_ids = [e.event_id for e in Event.query.filter_by(status='Completed').all()]
+                if protected_ids:
+                    rounds_deleted = Round.query.filter(~Round.event_id.in_(protected_ids)).delete(synchronize_session=False)
+                else:
+                    rounds_deleted = Round.query.delete()
+                db.session.commit()
+
+                flash(f'Bewertungen und Durchgänge gelöscht ({result["scores_deleted"]} Bewertungen, {rounds_deleted} Durchgänge){skip_msg}', 'success')
             else:
-                flash(f'Alle Bewertungen erfolgreich gelöscht ({result["scores_deleted"]} Bewertungen, {result["team_rounds_deleted"]} Team-Rundenzuordnungen entfernt)', 'success')
+                flash(f'Bewertungen gelöscht ({result["scores_deleted"]} Bewertungen, {result["team_rounds_deleted"]} Team-Rundenzuordnungen){skip_msg}', 'success')
             
         elif selection == 'pending' or selection == 'active':
             # Clear scores for events with specific status

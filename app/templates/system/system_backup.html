@@ -72,12 +72,17 @@ Last Updated: 2024-12-04
                     <strong>Backup-Inhalt:</strong>
                     <ul>
                         <li>Datenbank (instance/NRWCup2025.db)</li>
-                        <li>Anwendungsdateien (app/)</li>
+                        <li>Anwendungscode (app/, app_main.py)</li>
+                        <li>Templates und statische Dateien</li>
+                        <li>Skripte (scripts/)</li>
                         <li>Konfigurationsdateien</li>
                     </ul>
                 </li>
                 <li class="mb-2">
-                    <strong>Speicherort:</strong> backups/
+                    <strong>Ausgeschlossen:</strong> venv/, backups/, .git/, logs/, __pycache__/
+                </li>
+                <li class="mb-2">
+                    <strong>Speicherort:</strong> {{ backup_dir }}
                 </li>
                 <li>
                     <strong>Format:</strong> ZIP-Archiv

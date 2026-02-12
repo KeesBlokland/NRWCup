@@ -17,10 +17,12 @@ import os
 import shutil
 from datetime import datetime, timedelta
 import zipfile
-import io
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+# Project root: this file lives at app/routes/bp_system.py → two levels up
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Create blueprint
 system_bp = Blueprint('system', __name__)
@@ -28,7 +30,7 @@ system_bp = Blueprint('system', __name__)
 def get_log_files_info():
     """Get information about log files in the logs directory"""
     log_files = []
-    log_dir = os.path.join(os.getcwd(), 'logs')
+    log_dir = os.path.join(PROJECT_ROOT, 'logs')
     if os.path.exists(log_dir):
         for filename in sorted(os.listdir(log_dir)):
             if filename.endswith('.log'):
@@ -64,13 +66,13 @@ def get_system_stats():
         stats['log_count'] = AuditLog.query.count()
         
         # Count backups
-        backup_dir = os.path.join(os.getcwd(), 'backups')
+        backup_dir = os.path.join(PROJECT_ROOT, 'backups')
         if os.path.exists(backup_dir):
             stats['backup_count'] = len([f for f in os.listdir(backup_dir) 
                                        if f.endswith('.zip')])
         
         # Get database size
-        db_path = os.path.join(os.getcwd(), 'instance', 'NRWCup2025.db')
+        db_path = os.path.join(PROJECT_ROOT, 'instance', 'NRWCup2025.db')
         if os.path.exists(db_path):
             stats['db_size'] = os.path.getsize(db_path)
             
@@ -86,39 +88,42 @@ def get_system_stats():
         }
 
 def create_backup():
-    """Create system backup"""
+    """Create full project backup (database + code + config)"""
     try:
-        # Setup backup directory
-        backup_dir = os.path.join(os.getcwd(), 'backups')
+        project_root = PROJECT_ROOT
+        backup_dir = os.path.join(project_root, 'backups')
         os.makedirs(backup_dir, exist_ok=True)
-        
-        # Create backup filename with timestamp
+
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         backup_name = f'nrwcup_backup_{timestamp}.zip'
         backup_path = os.path.join(backup_dir, backup_name)
-        
-        # Create ZIP file in memory
-        memory_file = io.BytesIO()
-        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-            # Add database
-            db_path = os.path.join(os.getcwd(), 'instance', 'NRWCup2025.db')
+
+        # Directories to skip
+        exclude_dirs = {'__pycache__', '.git', 'venv', 'backups', 'doc_archives',
+                        'instance', 'node_modules', '.pytest_cache', 'logs'}
+        # File extensions to skip
+        exclude_ext = {'.pyc', '.pyo', '.pyd', '.bak'}
+
+        with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # Database first (kept under instance/ path in the archive)
+            db_path = os.path.join(project_root, 'instance', 'NRWCup2025.db')
             if os.path.exists(db_path):
-                zf.write(db_path, 'NRWCup2025.db')
-            
-            # Add application files
-            for root, _, files in os.walk(os.path.join(os.getcwd(), 'app')):
+                zf.write(db_path, 'instance/NRWCup2025.db')
+
+            # Walk entire project tree
+            for root, dirs, files in os.walk(project_root):
+                dirs[:] = [d for d in dirs if d not in exclude_dirs]
                 for file in files:
-                    if not file.endswith(('.pyc', '.pyo')):
-                        file_path = os.path.join(root, file)
-                        arc_path = os.path.relpath(file_path, os.getcwd())
-                        zf.write(file_path, arc_path)
-        
-        # Save backup file
-        with open(backup_path, 'wb') as f:
-            f.write(memory_file.getvalue())
-        
+                    if os.path.splitext(file)[1] in exclude_ext:
+                        continue
+                    file_path = os.path.join(root, file)
+                    arc_path = os.path.relpath(file_path, project_root)
+                    zf.write(file_path, arc_path)
+
+        size_mb = os.path.getsize(backup_path) / (1024 * 1024)
+        logger.info(f"Backup created: {backup_name} ({size_mb:.1f} MB)")
         return backup_name
-        
+
     except Exception as e:
         logger.error(f"Backup creation failed: {str(e)}")
         raise
@@ -164,7 +169,7 @@ def backup():
     
     # List existing backups
     backups = []
-    backup_dir = os.path.join(os.getcwd(), 'backups')
+    backup_dir = os.path.join(PROJECT_ROOT, 'backups')
     if os.path.exists(backup_dir):
         for filename in sorted(os.listdir(backup_dir), reverse=True):
             if filename.endswith('.zip'):
@@ -175,7 +180,8 @@ def backup():
                     'date': datetime.fromtimestamp(os.path.getctime(file_path))
                 })
     
-    return render_template('system/system_backup.html', backups=backups)
+    return render_template('system/system_backup.html', backups=backups,
+                           backup_dir=os.path.join(PROJECT_ROOT, 'backups'))
 
 @system_bp.route('/backup/download/<filename>')
 @admin_required
@@ -183,7 +189,7 @@ def download_backup(filename):
     """Download specific backup"""
     try:
         safe_filename = secure_filename(filename)
-        backup_path = os.path.join(os.getcwd(), 'backups', safe_filename)
+        backup_path = os.path.join(PROJECT_ROOT, 'backups', safe_filename)
         if os.path.exists(backup_path) and safe_filename.endswith('.zip'):
             return send_file(
                 backup_path,

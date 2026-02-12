@@ -403,36 +403,95 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Bitte wählen Sie zuerst eine Veranstaltung aus');
             return;
         }
-        
-        // Get the current team order
-        const order = Array.from(tbody.getElementsByTagName('tr')).map(row => 
+
+        // Store team order for later send
+        const order = Array.from(tbody.getElementsByTagName('tr')).map(row =>
             parseInt(row.cells[1].textContent.replace('Team ', ''))
         );
-        
-        fetch('/formular/email-startlist', {
+        window._formularEmailPayload = { event_id: parseInt(eventId), team_order: order };
+
+        // Fetch recipients list first
+        fetch('/formular/email-startlist-recipients', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                event_id: eventId,
-                team_order: order 
-            })
+            body: JSON.stringify({ event_id: parseInt(eventId) })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Startliste erfolgreich per Email versendet');
-            } else {
-                alert('Fehler: ' + data.message);
+        .then(r => r.json())
+        .then(result => {
+            if (!result.success || !result.recipients.length) {
+                alert('Keine Email-Adressen gefunden');
+                return;
             }
+            let html = '<div class="mb-3">' +
+                '<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll(\'#formularRcptList input\').forEach(c=>c.checked=true)">Alle</button>' +
+                '<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll(\'#formularRcptList input\').forEach(c=>c.checked=false)">Keine</button>' +
+                '</div><div id="formularRcptList">';
+            result.recipients.forEach(r => {
+                html += `<div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="${r.email}" id="frcpt_${r.email}" checked>
+                    <label class="form-check-label" for="frcpt_${r.email}">
+                        <strong>${r.name}</strong> — ${r.email} <small class="text-muted">(${r.role})</small>
+                    </label>
+                </div>`;
+            });
+            html += '</div>';
+            document.getElementById('formularRecipientsBody').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('formularRecipientsModal')).show();
         })
-        .catch(error => {
-            alert('Fehler beim Senden: ' + error.message);
-        });
+        .catch(error => { alert('Fehler: ' + error.message); });
     });
 
     // Apply initial lock state when page loads
     updateLockState();
 });
+</script>
+
+<!-- Email Recipient Selection Modal -->
+<div class="modal fade" id="formularRecipientsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email-Empfänger auswählen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="formularRecipientsBody">
+                <p>Laden...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-success" id="confirmSendFormularBtn">Senden</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('confirmSendFormularBtn').onclick = function() {
+    const checked = document.querySelectorAll('#formularRcptList input:checked');
+    const selected = Array.from(checked).map(c => c.value);
+    if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
+    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+
+    const payload = window._formularEmailPayload;
+    payload.recipients = selected;
+    payload.next_round = true;
+
+    fetch('/formular/email-startlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(result => {
+        bootstrap.Modal.getInstance(document.getElementById('formularRecipientsModal')).hide();
+        if (result.success) {
+            alert('Startliste an ' + selected.length + ' Empfänger versendet');
+        } else {
+            alert('Fehler: ' + result.message);
+        }
+    })
+    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+};
 </script>
 
 {% endblock %}

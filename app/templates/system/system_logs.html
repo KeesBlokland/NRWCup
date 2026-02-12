@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}NRW Cup {{ current_year }} - System Logs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>System Logs</h2>
+        <a href="{{ url_for('system.index') }}" class="btn btn-secondary">Zurück</a>
+    </div>
+
+    <!-- Log Files (downloadable) -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Log-Dateien</h5>
+            {% if log_files|length > 5 %}
+                <form method="POST" action="{{ url_for('system.cleanup_log_files') }}">
+                    <button type="submit" class="btn btn-sm btn-outline-warning"
+                            onclick="return confirm('Alte Log-Dateien ohne Inhalt löschen (5 neueste behalten)?')">
+                        Alte Logs bereinigen
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if log_files %}
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Dateiname</th>
+                            <th>Größe</th>
+                            <th>Letzte Änderung</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log_file in log_files %}
+                            <tr>
+                                <td>{{ log_file.name }}</td>
+                                <td>{{ log_file.size_formatted }}</td>
+                                <td>{{ log_file.modified.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                                <td>
+                                    <a href="{{ url_for('system.download_log', filename=log_file.name) }}"
+                                       class="btn btn-sm btn-outline-primary">Download</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-center mb-0">Keine Log-Dateien vorhanden</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Audit Log (DB entries) -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Audit Log</h5>
+            {% if logs and logs.items %}
+                <form method="POST" action="{{ url_for('system.clear_logs') }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Logs älter als 30 Tage löschen?')">
+                        Alte Logs löschen
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if logs and logs.items %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Benutzer</th>
+                                <th>Tabelle</th>
+                                <th>Feld</th>
+                                <th>Alt</th>
+                                <th>Neu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs.items %}
+                                <tr>
+                                    <td>{{ log.changed_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                                    <td>{{ log.user.username if log.user else '-' }}</td>
+                                    <td>{{ log.table_name or '-' }}</td>
+                                    <td>{{ log.field_changed or '-' }}</td>
+                                    <td>{{ log.old_value or '-' }}</td>
+                                    <td>{{ log.new_value or '-' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if logs.pages > 1 %}
+                    <nav>
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if logs.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('system.logs', page=logs.prev_num) }}">Zurück</a>
+                                </li>
+                            {% endif %}
+                            {% for p in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                {% if p %}
+                                    <li class="page-item {% if p == logs.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('system.logs', page=p) }}">{{ p }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if logs.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('system.logs', page=logs.next_num) }}">Weiter</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-center mb-0">Keine Audit-Log-Einträge vorhanden</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

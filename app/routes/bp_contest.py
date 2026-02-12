@@ -13,6 +13,7 @@ from app.services.services_rounds import RoundService  # Import the new service
 from app.utils.utils_base_controller import BaseController
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.clear_data import clear_all_scores, clear_event_data
+from app.utils.audit import audit_log
 import logging
 import os
 from datetime import datetime
@@ -175,8 +176,10 @@ def delete_event(event_id):
             return redirect(url_for('contest.index'))
             
         # Delete using service
+        audit_log('events', event_id, 'deleted', event.name, None)
         success = contest_service.delete_event_with_location(event_id)
         if success:
+            db.session.commit()
             flash('Wettbewerb erfolgreich gelöscht', 'success')
         else:
             flash('Fehler beim Löschen des Wettbewerbs', 'error')
@@ -197,6 +200,7 @@ def clear_scores():
         
         if selection == 'all':
             # Clear all scores using the utility function
+            audit_log('scores', None, 'clear_all', None, None)
             result = clear_all_scores()
             
             if clear_rounds_too:

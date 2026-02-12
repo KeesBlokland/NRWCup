@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import admin_required
+from app.utils.audit import audit_log
 import logging
 import os
 import shutil
@@ -174,10 +175,16 @@ def backup():
         for filename in sorted(os.listdir(backup_dir), reverse=True):
             if filename.endswith('.zip'):
                 file_path = os.path.join(backup_dir, filename)
+                # Parse date from filename (nrwcup_backup_2026-02-12_07-30-00.zip)
+                try:
+                    ts = filename.replace('nrwcup_backup_', '').replace('.zip', '')
+                    backup_date = datetime.strptime(ts, '%Y-%m-%d_%H-%M-%S')
+                except ValueError:
+                    backup_date = datetime.fromtimestamp(os.path.getmtime(file_path))
                 backups.append({
                     'name': filename,
                     'size': os.path.getsize(file_path),
-                    'date': datetime.fromtimestamp(os.path.getctime(file_path))
+                    'date': backup_date
                 })
     
     return render_template('system/system_backup.html', backups=backups,
@@ -233,6 +240,7 @@ def add_user():
             role=request.form['role']
         )
         db.session.add(user)
+        audit_log('users', None, 'created', None, f'{username} ({request.form["role"]})')
         db.session.commit()
         flash('Benutzer erfolgreich angelegt', 'success')
         
@@ -256,7 +264,8 @@ def edit_user(user_id):
             )
         if request.form.get('role'):
             user.role = request.form['role']
-            
+
+        audit_log('users', user_id, 'updated', None, user.username)
         db.session.commit()
         flash('Benutzer erfolgreich aktualisiert', 'success')
         
@@ -277,6 +286,7 @@ def delete_user(user_id):
             flash('Der Admin-Benutzer kann nicht gelöscht werden', 'error')
             return redirect(url_for('system.users'))
             
+        audit_log('users', user_id, 'deleted', user.username, None)
         db.session.delete(user)
         db.session.commit()
         flash('Benutzer erfolgreich gelöscht', 'success')
@@ -295,17 +305,35 @@ def logs():
     try:
         page = request.args.get('page', 1, type=int)
         per_page = 50
-        
+
         logs_query = AuditLog.query\
             .order_by(AuditLog.changed_at.desc())\
             .paginate(page=page, per_page=per_page)
-            
-        return render_template('system/system_logs.html', logs=logs_query)
-        
+        log_files = get_log_files_info()
+
+        return render_template('system/system_logs.html', logs=logs_query,
+                               log_files=log_files)
+
     except SQLAlchemyError as e:
         logger.error(f"Database error in logs: {str(e)}")
         flash('Fehler beim Laden der Logs', 'error')
-        return render_template('system/system_logs.html', logs=None)
+        return render_template('system/system_logs.html', logs=None, log_files=[])
+
+@system_bp.route('/logs/download/<filename>')
+@admin_required
+def download_log(filename):
+    """Download a log file"""
+    try:
+        safe_filename = secure_filename(filename)
+        log_path = os.path.join(PROJECT_ROOT, 'logs', safe_filename)
+        if os.path.exists(log_path) and safe_filename.endswith('.log'):
+            return send_file(log_path, as_attachment=True, download_name=safe_filename)
+        else:
+            flash('Log-Datei nicht gefunden', 'error')
+    except Exception as e:
+        flash('Fehler beim Download der Log-Datei', 'error')
+        logger.error(f"Log download error: {str(e)}")
+    return redirect(url_for('system.logs'))
 
 @system_bp.route('/logs/clear', methods=['POST'])
 @admin_required
@@ -323,6 +351,47 @@ def clear_logs():
         flash('Fehler beim Löschen der Logs', 'error')
         
     return redirect(url_for('system.logs'))
+
+@system_bp.route('/logs/cleanup', methods=['POST'])
+@admin_required
+def cleanup_log_files():
+    """Delete startup-only log files, keep 5 most recent"""
+    try:
+        log_dir = os.path.join(PROJECT_ROOT, 'logs')
+        if not os.path.exists(log_dir):
+            flash('Kein Log-Verzeichnis vorhanden', 'warning')
+            return redirect(url_for('system.index'))
+
+        log_files = sorted(f for f in os.listdir(log_dir) if f.endswith('.log'))
+        deleted = 0
+        flagged = []
+
+        # Keep the 5 most recent regardless
+        candidates = log_files[:-5] if len(log_files) > 5 else []
+
+        for filename in candidates:
+            file_path = os.path.join(log_dir, filename)
+            with open(file_path, 'r') as f:
+                has_real_content = any(
+                    'Application starting' not in line
+                    for line in f if line.strip()
+                )
+            if has_real_content:
+                flagged.append(filename)
+            else:
+                os.remove(file_path)
+                deleted += 1
+
+        msg = f'{deleted} Log-Datei(en) gelöscht'
+        if flagged:
+            msg += f', {len(flagged)} mit Inhalt übersprungen: {", ".join(flagged)}'
+        flash(msg, 'success')
+
+    except Exception as e:
+        logger.error(f"Log cleanup error: {str(e)}")
+        flash('Fehler beim Bereinigen der Log-Dateien', 'error')
+
+    return redirect(url_for('system.index'))
 
 @system_bp.route('/toggle_logging', methods=['POST'])
 @admin_required

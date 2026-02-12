@@ -96,9 +96,10 @@ Last Updated: 2024-12-04
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Filename</th>
-                                    <th>Size</th>
-                                    <th>Last Modified</th>
+                                    <th>Dateiname</th>
+                                    <th>Größe</th>
+                                    <th>Letzte Änderung</th>
+                                    <th>Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -107,6 +108,10 @@ Last Updated: 2024-12-04
                                         <td>{{ log_file.name }}</td>
                                         <td>{{ log_file.size_formatted }}</td>
                                         <td>{{ log_file.modified.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('system.download_log', filename=log_file.name) }}"
+                                               class="btn btn-sm btn-outline-primary">Download</a>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -140,9 +145,12 @@ Last Updated: 2024-12-04
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ url_for('system.logs') }}" class="btn btn-outline-info w-100">
-                                System Logs
-                            </a>
+                            <form method="POST" action="{{ url_for('system.cleanup_log_files') }}">
+                                <button type="submit" class="btn btn-outline-warning w-100"
+                                        onclick="return confirm('Alte Log-Dateien ohne Inhalt löschen (5 neueste behalten)?')">
+                                    Alte Logs bereinigen
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -165,7 +173,7 @@ Last Updated: 2024-12-04
                         </tr>
                         <tr>
                             <td><strong>Version:</strong></td>
-                            <td>1.0.0</td>
+                            <td>2.1.0</td>
                         </tr>
                         <tr>
                             <td><strong>Datenbank:</strong></td>

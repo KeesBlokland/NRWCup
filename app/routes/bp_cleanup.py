@@ -11,6 +11,7 @@ from app.models import db, Teilnehmer, Team, Flugzeuge, Event, Round, TeamRound,
 from app.utils.force_delete import force_delete_teilnehmer, force_delete_flugzeug, force_delete_team
 from app.utils.clear_data import clear_event_data
 from app.utils.auth import admin_required
+from app.utils.audit import audit_log
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
@@ -63,6 +64,8 @@ def delete_teilnehmer(id):
         if 'error' in result:
             flash(f'Fehler beim Löschen von {name}: {result["error"]}', 'error')
         else:
+            audit_log('teilnehmer', id, 'deleted', name, None)
+            db.session.commit()
             message = f'{name} erfolgreich gelöscht'
             if result['teams_deleted']:
                 message += f', {result["teams_deleted"]} Teams'
@@ -91,6 +94,8 @@ def delete_flugzeug(id):
         if 'error' in result:
             flash(f'Fehler beim Löschen von {name}: {result["error"]}', 'error')
         else:
+            audit_log('flugzeuge', id, 'deleted', name, None)
+            db.session.commit()
             message = f'{name} erfolgreich gelöscht'
             if result['teams_updated']:
                 message += f', {result["teams_updated"]} Teams aktualisiert'
@@ -115,6 +120,8 @@ def delete_team(id):
         if 'error' in result:
             flash(f'Fehler beim Löschen von {name}: {result["error"]}', 'error')
         else:
+            audit_log('teams', id, 'deleted', name, None)
+            db.session.commit()
             message = f'{name} erfolgreich gelöscht'
             if result['scores_deleted']:
                 message += f', {result["scores_deleted"]} Bewertungen'

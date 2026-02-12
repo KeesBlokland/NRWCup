@@ -13,6 +13,7 @@ from functools import wraps
 from app.models import db, Score, TaskType, TeamRound, Teilnehmer, Team, Round, Event, ScoreValue
 from app.services.services_scoring import ScoringService
 from app.utils.utils_base_controller import BaseController
+from app.utils.audit import audit_log
 from sqlalchemy.exc import SQLAlchemyError
 from app.services.services_rounds import RoundService
 from datetime import datetime
@@ -88,8 +89,9 @@ def lock_score(score_id):
         score.locked = True
         score.locked_at = datetime.utcnow()
         score.locked_by = judge_name
+        audit_log('scores', score_id, 'locked', None, judge_name)
         db.session.commit()
-        
+
         logger.info(f"Score {score_id} locked successfully by {judge_name}")
         flash('Bewertung gesperrt', 'success')
         
@@ -625,6 +627,8 @@ def update_score(score_id):
             updated_score.locked_by = locked_by
             db.session.commit()
         
+        audit_log('scores', score_id, 'updated', None, str(score_values))
+        db.session.commit()
         flash('Bewertung erfolgreich aktualisiert', 'success')
         logger.info(f"Score {score_id} updated successfully")
         

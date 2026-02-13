@@ -1,58 +1,21 @@
-# Ignore temp files
+# Python
+*.pyc
+__pycache__/
+venv/
+.venv/
+
+# Temp/OS files
 *.tmp
 *.log
 *.bak
 *.swp
 *.DS_Store
-*.__pycache__
-*.pyc
 
-# Ignore Python virtual environments
-venv/
-.venv/
-
-# Ignore archive files
+# Archives
 *.zip
 *.tar.gz
 *.rar
 
-# Ignore sensitive / runtime files
-instance/
-backups/
-doc_archives/
-*.db
-*.db.*
-secret_key
-.env
-
-# Ignore dev/utility files
-CLAUDE.md
-workspace.code-workspace
-index.html
-file_mapper.py
-recalculate_scores.py
-backup_script.py
-/favicon.ico
-gitback.sh
-nrw-gitback.sh
-/utils/
-tests/
-migrations/
-
-# Ignore non-essential app files
-app/Readme.txt
-app/routes/wifi_switcher.sh
-app/templates/home_main.vps.html
-app/templates/testdata/testdata_main-old.html
-
-# Ignore one-off migration scripts
-migrations/migration_script.py
-migrations/versions/add_indexes.sql
-migrations/versions/cleanup_01.py
-
-# Ignore other unnecessary files
-node_modules/
-__pycache__/
+# IDE
 .idea/
-.git_old/
-todo.md
+node_modules/

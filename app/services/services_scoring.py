@@ -336,12 +336,12 @@ class ScoringService(BaseService):
         if highest_score == 0:
             return {}
             
-        # Calculate normalized scores (0-1000)
+        # Calculate normalized scores (0-1000 scale, divide by 10 for percentage display)
         normalized_scores = {}
         for team_id, raw_score in raw_scores.items():
             if raw_score is not None:
                 normalized_scores[team_id] = (raw_score / highest_score) * 1000
-                
+
         return normalized_scores
     
     def calculate_final_standings(self, event_id):
@@ -449,18 +449,8 @@ class ScoringService(BaseService):
         for i, standing in enumerate(standings, 1):
             standing['rank'] = i
         
-        # Properly normalize the final totals to 1000-point scale
-        # FIXED: Now we correctly normalize to 1000 instead of the max score
-        if standings:
-            max_score = max(standing['score'] for standing in standings)
-            if max_score > 0:  # Avoid division by zero
-                for standing in standings:
-                    standing['normalized_score'] = (standing['score'] / max_score) * 1000
-            else:
-                # Fallback if max_score is 0
-                for standing in standings:
-                    standing['normalized_score'] = 0
-            
+        # Endstand IS the sum of percentages — no further normalization
+        # With 4 rounds: max = 300 (3 × 100%), with 3 rounds: max = 200 (2 × 100%)
         return standings
     
     def calculate_seglerzeit(self, actual_time, target_time=200, max_points=300, penalty_factor=3):

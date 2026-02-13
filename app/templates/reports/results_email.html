@@ -98,8 +98,7 @@
                         <th>D{{ round_obj.round_number }}</th>
                     {% endfor %}
                     
-                    <th>Gesamt</th>
-                    <th>Norm.</th>
+                    <th>Endstand</th>
                 </tr>
                 
                 {% for standing in standings %}
@@ -120,9 +119,9 @@
                                 {% if i < standing.round_scores|length %}
                                     {% set score = standing.round_scores[i] %}
                                     {% if i in standing.dropped_indices %}
-                                        <span class="dropped">{{ "%.1f"|format(score) }}</span>
+                                        <span class="dropped">{{ "%.1f"|format(score / 10) }}%</span>
                                     {% else %}
-                                        {{ "%.1f"|format(score) }}
+                                        {{ "%.1f"|format(score / 10) }}%
                                     {% endif %}
                                 {% else %}
                                     -
@@ -130,16 +129,7 @@
                             </td>
                         {% endfor %}
                         
-                        <td class="total-col">{{ "%.1f"|format(standing.score) }}</td>
-                        <td class="norm-col">
-                            {% if loop.first %}
-                                1000.0
-                            {% elif standings[0].score > 0 %}
-                                {{ "%.1f"|format((standing.score / standings[0].score) * 1000) }}
-                            {% else %}
-                                0.0
-                            {% endif %}
-                        </td>
+                        <td class="total-col">{{ "%.1f"|format(standing.score / 10) }}%</td>
                     </tr>
                 {% endfor %}
             </table>

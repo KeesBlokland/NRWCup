@@ -103,8 +103,7 @@ Description: Corrected raw score display and dropped rounds logic
                                 <th style="text-align: center; padding: 10px;">D{{ rounds[i].round_number }}</th>
                             {% endfor %}
                             
-                            <th style="text-align: center; padding: 10px;">Gesamt</th>
-                            <th style="text-align: center; padding: 10px;">Norm.</th>
+                            <th style="text-align: center; padding: 10px;">Endstand</th>
                         </tr>
                         
                         <!-- Table body -->
@@ -132,10 +131,9 @@ Description: Corrected raw score display and dropped rounds logic
                                             {% set round_obj = rounds[i] %}
                                             
                                             {% if i in standing.dropped_indices %}
-                                                <!-- Dropped round with only strikethrough, no text -->
-                                                <del class="text-muted">{{ "%.1f"|format(score) }}</del>
+                                                <del class="text-muted">{{ "%.1f"|format(score / 10) }}%</del>
                                             {% else %}
-                                                {{ "%.1f"|format(score) }}
+                                                {{ "%.1f"|format(score / 10) }}%
                                             {% endif %}
                                         {% else %}
                                             -
@@ -143,18 +141,7 @@ Description: Corrected raw score display and dropped rounds logic
                                     </td>
                                 {% endfor %}
                                 
-                                <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }}</td>
-                                <td class="text-center fw-bold text-success">
-                                    {% if loop.first %}
-                                        <!-- First place team always gets 1000.0 -->
-                                        1000.0
-                                    {% elif standings[0].score > 0 %}
-                                        <!-- Other teams get proportional scores -->
-                                        {{ "%.1f"|format((standing.score / standings[0].score) * 1000) }}
-                                    {% else %}
-                                        0.0
-                                    {% endif %}
-                                </td>
+                                <td class="text-center fw-bold">{{ "%.1f"|format(standing.score / 10) }}%</td>
                             </tr>
                         {% endfor %}
                     </table>

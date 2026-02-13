@@ -126,12 +126,6 @@ class PdfService:
         scoring_service = ScoringService()
         standings = scoring_service.calculate_final_standings(event_id)
         
-        # Find max score for normalization
-        max_score = 0
-        for standing in standings:
-            if standing['score'] > max_score:
-                max_score = standing['score']
-                
         # Get rounds for header
         rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all()
         
@@ -139,9 +133,7 @@ class PdfService:
         header = ['Rang', 'Team', 'Piloten']
         for round_obj in rounds:
             header.append(f"D {round_obj.round_number}")
-        # FIXED: Always add Final and Normalized as the last two columns
-        header.append('Gesamt')
-        header.append('Normalisiert')
+        header.append('Endstand')
         
         data = [header]
         
@@ -170,23 +162,19 @@ class PdfService:
                 
                 # Add scores for each round, using strikethrough for dropped rounds
                 for i, score in enumerate(round_scores):
-                    score_text = f"{score:.1f}"
+                    score_text = f"{score / 10:.1f}%"
                     if i in dropped_indices:
                         # Use the strikethrough style for dropped rounds
                         row.append(Paragraph(f"<para align='center'><strike>{score_text}</strike></para>", strike_style))
                     else:
                         row.append(score_text)
             
-            # FIXED: Add empty cells if we have fewer scores than rounds
-            while len(row) < len(header) - 2:  # -2 for Final and Normalized columns
+            # Add empty cells if we have fewer scores than rounds
+            while len(row) < len(header) - 1:  # -1 for Endstand column
                 row.append("-")
-                
-            # Add final score - already calculated
-            row.append(f"{standing['score']:.1f}")
-            
-            # Add normalized score - calculate based on max
-            normalized = (standing['score'] / max_score * 1000) if max_score > 0 else 0
-            row.append(f"{normalized:.1f}")
+
+            # Endstand = sum of best round percentages
+            row.append(f"{standing['score'] / 10:.1f}%")
             
             data.append(row)
             

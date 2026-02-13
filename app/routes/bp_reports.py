@@ -291,52 +291,64 @@ def export_excel(event_id):
             flash('Keine Ergebnisse zum Exportieren gefunden', 'warning')
             return redirect(url_for('scoring.score_list'))
         
-        # Prepare data for Excel
-        data = []
-        for standing in standings:
-            row = {
+        # Build base columns for each standing
+        def build_base_row(standing):
+            return {
                 'Rang': standing['rank'],
                 'Team': standing['team'].team_nummer,
-                'Schlepper_Pilot': standing['team'].schlepper_pilot.name if standing['team'].schlepper_pilot else '',
-                'Segler_Pilot': standing['team'].segler_pilot.name if standing['team'].segler_pilot else '',
+                'Schlepper Pilot': standing['team'].schlepper_pilot.name if standing['team'].schlepper_pilot else '',
+                'Segler Pilot': standing['team'].segler_pilot.name if standing['team'].segler_pilot else '',
             }
-            
-            # Add round scores
+
+        # Tab 1: "Punkte" — raw normalized scores (0-1000 scale)
+        data_punkte = []
+        for standing in standings:
+            row = build_base_row(standing)
             for i, round_obj in enumerate(rounds):
-                col_name = f'Durchgang_{round_obj.round_number}'
+                col_name = f'D{round_obj.round_number}'
                 if i < len(standing['round_scores']):
                     score = standing['round_scores'][i]
                     if i in standing.get('dropped_indices', []):
-                        row[col_name] = f"{score:.1f} (gestrichen)"
+                        row[col_name] = f"{score:.1f} (gestr.)"
                     else:
                         row[col_name] = f"{score:.1f}"
                 else:
                     row[col_name] = ''
-            
-            # Add totals
-            row['Gesamt'] = f"{standing['score']:.1f}"
-            if standings[0]['score'] > 0:
-                normalized = (standing['score'] / standings[0]['score']) * 1000
-                row['Normalisiert'] = f"{normalized:.1f}"
-            else:
-                row['Normalisiert'] = "0.0"
-            
-            data.append(row)
-        
-        # Create Excel file
-        df = pd.DataFrame(data)
+            row['Endstand'] = f"{standing['score']:.1f}"
+            data_punkte.append(row)
+
+        # Tab 2: "Prozent" — percentage display (÷10, with % suffix)
+        data_prozent = []
+        for standing in standings:
+            row = build_base_row(standing)
+            for i, round_obj in enumerate(rounds):
+                col_name = f'D{round_obj.round_number}'
+                if i < len(standing['round_scores']):
+                    score = standing['round_scores'][i]
+                    pct = f"{score / 10:.1f}%"
+                    if i in standing.get('dropped_indices', []):
+                        row[col_name] = f"{pct} (gestr.)"
+                    else:
+                        row[col_name] = pct
+                else:
+                    row[col_name] = ''
+            row['Endstand'] = f"{standing['score'] / 10:.1f}%"
+            data_prozent.append(row)
+
+        # Create Excel file with two tabs
+        df_punkte = pd.DataFrame(data_punkte)
+        df_prozent = pd.DataFrame(data_prozent)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Ergebnisse')
-            
-            # Add this section for column widths
-            workbook = writer.book
-            worksheet = writer.sheets['Ergebnisse']
-            
-            # Set all columns to 1.75 inches (≈13 character units)
-            for column in worksheet.columns:
-                column_letter = column[0].column_letter
-                worksheet.column_dimensions[column_letter].width = 20
+            df_punkte.to_excel(writer, index=False, sheet_name='Punkte')
+            df_prozent.to_excel(writer, index=False, sheet_name='Prozent')
+
+            # Set column widths on both sheets
+            for sheet_name in ['Punkte', 'Prozent']:
+                worksheet = writer.sheets[sheet_name]
+                for column in worksheet.columns:
+                    column_letter = column[0].column_letter
+                    worksheet.column_dimensions[column_letter].width = 20
 
         output.seek(0)
         

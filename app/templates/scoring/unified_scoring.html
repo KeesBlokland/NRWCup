@@ -466,9 +466,10 @@ document.getElementById('confirmSendEmailBtn').onclick = function() {
     payload.recipients = selected;
     payload.next_round = true;
 
+    const csrfToken3 = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     fetch('/formular/email-startlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken3 },
         body: JSON.stringify(payload)
     })
     .then(r => r.json())
@@ -692,9 +693,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         window._emailPayload = { event_id: parseInt(eventId), team_order: teamOrder };
 
                         // Fetch recipients list
+                        const csrfToken4 = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                         fetch('/formular/email-startlist-recipients', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken4 },
                             body: JSON.stringify({ event_id: parseInt(eventId) })
                         })
                         .then(r => r.json())
@@ -755,9 +757,10 @@ var _resultsEventId = null;
 
 function showResultsRecipients(eventId) {
     _resultsEventId = eventId;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     fetch('/reports/email_results_recipients/' + eventId, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
     })
     .then(r => r.json())
     .then(result => {
@@ -791,9 +794,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
         if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
 
+        const csrfToken2 = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         fetch('/reports/email_results/' + _resultsEventId, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken2 },
             body: JSON.stringify({ recipients: selected })
         })
         .then(r => r.json())

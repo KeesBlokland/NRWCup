@@ -266,7 +266,7 @@ def email_results(event_id):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.login(email_user, email_password)
-            server.send_message(msg)
+            server.sendmail(email_user, selected_emails, msg.as_string())
 
         return jsonify({'success': True, 'message': f'Ergebnisse an {len(selected_emails)} Empfänger gesendet'})
 

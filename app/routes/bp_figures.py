@@ -33,7 +33,7 @@ def process_form_data(form):
     form_data.pop('csrf_token', None)
 
     # Handle boolean fields
-    form_data['is_active'] = 'is_active' in form_data
+    form_data['is_active'] = form_data.get('is_active') == 'on'
     
     # Convert numeric fields
     for field in ['max_value', 'sort_order', 'k_factor']:

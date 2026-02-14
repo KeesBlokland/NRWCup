@@ -28,10 +28,15 @@ Last Updated: 2024-12-04
         </div>
         <div class="card-body">
             {% if backups %}
+                <form method="POST" action="{{ url_for('system.delete_backups') }}" id="deleteBackupsForm">
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" class="form-check-input" id="selectAll"
+                                           onclick="document.querySelectorAll('.backup-cb').forEach(c=>c.checked=this.checked)">
+                                </th>
                                 <th>Datum</th>
                                 <th>Dateiname</th>
                                 <th>Größe</th>
@@ -41,12 +46,16 @@ Last Updated: 2024-12-04
                         <tbody>
                             {% for backup in backups %}
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input backup-cb"
+                                               name="selected" value="{{ backup.name }}">
+                                    </td>
                                     <td>{{ backup.date.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                                     <td>{{ backup.name }}</td>
                                     <td>{{ "%.2f"|format(backup.size / 1024 / 1024) }} MB</td>
                                     <td>
-                                        <a href="{{ url_for('system.download_backup', filename=backup.name) }}" 
-                                           class="btn btn-outline-primary">
+                                        <a href="{{ url_for('system.download_backup', filename=backup.name) }}"
+                                           class="btn btn-outline-primary btn-sm">
                                             Download
                                         </a>
                                     </td>
@@ -55,6 +64,20 @@ Last Updated: 2024-12-04
                         </tbody>
                     </table>
                 </div>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteBackups()">
+                    Ausgewählte löschen
+                </button>
+                </form>
+
+                <script>
+                function confirmDeleteBackups() {
+                    const checked = document.querySelectorAll('.backup-cb:checked');
+                    if (!checked.length) { alert('Keine Backups ausgewählt'); return; }
+                    if (confirm(checked.length + ' Backup(s) unwiderruflich löschen?')) {
+                        document.getElementById('deleteBackupsForm').submit();
+                    }
+                }
+                </script>
             {% else %}
                 <p class="text-center mb-0">Keine Backups vorhanden</p>
             {% endif %}

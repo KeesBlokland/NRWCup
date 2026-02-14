@@ -212,6 +212,26 @@ def download_backup(filename):
     
     return redirect(url_for('system.backup'))
 
+@system_bp.route('/backup/delete', methods=['POST'])
+@admin_required
+def delete_backups():
+    """Delete selected backups"""
+    selected = request.form.getlist('selected')
+    deleted = 0
+    for filename in selected:
+        safe_name = secure_filename(filename)
+        if safe_name.endswith('.zip'):
+            file_path = os.path.join(PROJECT_ROOT, 'backups', safe_name)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                deleted += 1
+                logger.info(f"Backup deleted: {safe_name}")
+    if deleted:
+        flash(f'{deleted} Backup(s) gelöscht', 'success')
+    else:
+        flash('Keine Backups gelöscht', 'warning')
+    return redirect(url_for('system.backup'))
+
 @system_bp.route('/users')
 @admin_required
 def users():

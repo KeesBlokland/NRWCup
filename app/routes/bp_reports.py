@@ -266,7 +266,7 @@ def email_results(event_id):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.login(email_user, email_password)
-            server.send_message(msg)
+            server.sendmail(email_user, selected_emails, msg.as_string())
 
         return jsonify({'success': True, 'message': f'Ergebnisse an {len(selected_emails)} Empfänger gesendet'})
 
@@ -301,25 +301,20 @@ def export_excel(event_id):
                 'Segler_Pilot': standing['team'].segler_pilot.name if standing['team'].segler_pilot else '',
             }
             
-            # Add round scores
+            # Add round scores as percentages
             for i, round_obj in enumerate(rounds):
-                col_name = f'Durchgang_{round_obj.round_number}'
+                col_name = f'D{round_obj.round_number}'
                 if i < len(standing['round_scores']):
-                    score = standing['round_scores'][i]
+                    score = standing['round_scores'][i] / 10
                     if i in standing.get('dropped_indices', []):
-                        row[col_name] = f"{score:.1f} (gestrichen)"
+                        row[col_name] = f"{score:.1f}% (gestrichen)"
                     else:
-                        row[col_name] = f"{score:.1f}"
+                        row[col_name] = f"{score:.1f}%"
                 else:
                     row[col_name] = ''
-            
-            # Add totals
-            row['Gesamt'] = f"{standing['score']:.1f}"
-            if standings[0]['score'] > 0:
-                normalized = (standing['score'] / standings[0]['score']) * 1000
-                row['Normalisiert'] = f"{normalized:.1f}"
-            else:
-                row['Normalisiert'] = "0.0"
+
+            # Add Endstand as percentage
+            row['Endstand'] = f"{standing['score'] / 10:.1f}%"
             
             data.append(row)
         

@@ -118,7 +118,8 @@ class PdfService:
             return None
 
         # Title + Date
-        elements.append(Paragraph(f"NRW Cup {datetime.now().year} - Ergebnisse", styles['Heading2']))
+        event_year = event.event_date.year if event.event_date else datetime.now().year
+        elements.append(Paragraph(f"NRW Cup {event_year} - Ergebnisse", styles['Heading2']))
         elements.append(Paragraph(event.event_date.strftime('%d.%m.%Y'), styles['Normal']))
 
         # Get scoring service and standings - we'll use this data directly 

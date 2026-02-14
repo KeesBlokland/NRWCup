@@ -328,7 +328,7 @@
                                        {% set team_found = false %}
                                        {% for standing in standings %}
                                            {% if standing.team.team_id == team.team_id %}
-                                               <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(standing.score) }}</span>
+                                               <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(standing.score / 10) }}</span>
                                                {% set team_found = true %}
                                            {% endif %}
                                        {% endfor %}
@@ -381,9 +381,9 @@
                                        {% if i < standing.round_scores|length %}
                                            {% set score = standing.round_scores[i] %}
                                            {% if i in standing.dropped_indices %}
-                                               <span class="text-muted text-decoration-line-through">{{ "%.1f%%"|format(score) }}</span>
+                                               <span class="text-muted text-decoration-line-through">{{ "%.1f%%"|format(score / 10) }}</span>
                                            {% else %}
-                                               {{ "%.1f%%"|format(score) }}
+                                               {{ "%.1f%%"|format(score / 10) }}
                                            {% endif %}
                                        {% else %}
                                            -
@@ -391,7 +391,7 @@
                                    </td>
                                {% endfor %}
                                
-                               <td class="text-center fw-bold">{{ "%.1f%%"|format(standing.score) }}</td>
+                               <td class="text-center fw-bold">{{ "%.1f%%"|format(standing.score / 10) }}</td>
                            </tr>
                        {% endfor %}
                    </table>
@@ -466,9 +466,10 @@ document.getElementById('confirmSendEmailBtn').onclick = function() {
     payload.recipients = selected;
     payload.next_round = true;
 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     fetch('/formular/email-startlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
         body: JSON.stringify(payload)
     })
     .then(r => r.json())
@@ -603,7 +604,8 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch('/formular/api/next-round-order', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({ event_id: eventId })
             })
@@ -694,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Fetch recipients list
                         fetch('/formular/email-startlist-recipients', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
                             body: JSON.stringify({ event_id: parseInt(eventId) })
                         })
                         .then(r => r.json())
@@ -757,7 +759,7 @@ function showResultsRecipients(eventId) {
     _resultsEventId = eventId;
     fetch('/reports/email_results_recipients/' + eventId, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
     })
     .then(r => r.json())
     .then(result => {
@@ -784,6 +786,7 @@ function showResultsRecipients(eventId) {
     .catch(error => { alert('Fehler: ' + error.message); });
 }
 
+document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('confirmSendResultsBtn').onclick = function() {
     const checked = document.querySelectorAll('#resultsRcptList input:checked');
     const selected = Array.from(checked).map(c => c.value);
@@ -792,7 +795,7 @@ document.getElementById('confirmSendResultsBtn').onclick = function() {
 
     fetch('/reports/email_results/' + _resultsEventId, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
         body: JSON.stringify({ recipients: selected })
     })
     .then(r => r.json())
@@ -802,6 +805,7 @@ document.getElementById('confirmSendResultsBtn').onclick = function() {
     })
     .catch(error => { alert('Fehler beim Senden: ' + error.message); });
 };
+});
 </script>
 
 <!-- Results Email Recipient Selection Modal -->

@@ -141,7 +141,7 @@
                                 <td>
                                     <div>
                                         {% if event.status in ['Completed', 'Published'] %}
-                                            <a class="btn btn-outline-secondary btn-sm"
+                                            <a class="btn btn-outline-secondary"
                                                href="{{ url_for('reports.standings', event_id=event.event_id) }}">Ansehen</a>
                                         {% else %}
                                             <button class="btn btn-outline-primary"
@@ -149,6 +149,12 @@
                                             <button class="btn btn-outline-danger"
                                                     onclick="confirmDelete({{ event.event_id }})">Löschen</button>
                                         {% endif %}
+                                        <form action="{{ url_for('contest.toggle_lock', event_id=event.event_id) }}" method="POST" style="display: inline-block;">
+                                            <button type="submit" class="btn {{ 'btn-danger' if event.status in ['Completed', 'Published'] else 'btn-outline-warning' }}"
+                                                    onclick="return confirm('{{ 'Wettbewerb entsperren?' if event.status in ['Completed', 'Published'] else 'Wettbewerb abschließen und sperren?' }}')">
+                                                {{ 'Gesperrt' if event.status in ['Completed', 'Published'] else 'Abschließen' }}
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

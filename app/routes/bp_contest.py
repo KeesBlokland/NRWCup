@@ -367,10 +367,35 @@ def cleanup_event(event_id):
         db.session.commit()
         
         flash(f'Alle {rounds_deleted} Durchgänge für Wettbewerb "{event.name}" wurden gelöscht. Der Wettbewerb kann jetzt gelöscht werden.', 'success')
-        
+
     except SQLAlchemyError as e:
         db.session.rollback()
         logger.error(f"Database error in cleanup_event: {str(e)}")
         flash(f'Fehler beim Bereinigen des Wettbewerbs: {str(e)}', 'error')
-        
+
+    return redirect(url_for('contest.index'))
+
+@contest_bp.route('/toggle_lock/<int:event_id>', methods=['POST'])
+def toggle_lock(event_id):
+    """Toggle event between Completed and Active status"""
+    try:
+        event = contest_service.get_by_id(event_id)
+        if not event:
+            flash('Wettbewerb nicht gefunden', 'error')
+            return redirect(url_for('contest.index'))
+
+        if event.status in ('Completed', 'Published'):
+            # Unlock: set back to Active
+            contest_service.change_event_status(event_id, 'Active')
+            flash(f'Wettbewerb "{event.name}" entsperrt (Aktiv)', 'success')
+        else:
+            # Lock: set to Completed
+            contest_service.change_event_status(event_id, 'Completed')
+            flash(f'Wettbewerb "{event.name}" abgeschlossen (Gesperrt)', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error toggling event lock: {str(e)}")
+        flash(f'Fehler: {str(e)}', 'error')
+
     return redirect(url_for('contest.index'))

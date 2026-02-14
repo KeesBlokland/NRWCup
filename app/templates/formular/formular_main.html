@@ -16,11 +16,13 @@
                         {% else %}
                             <button type="button" class="btn btn-secondary me-2" id="randomizeBtn" {% if is_locked %}disabled{% endif %}>Zufällige Reihenfolge</button>
                         {% endif %}
-                        <select class="form-select d-inline-block me-2" id="eventSelect" style="width: auto;">
+                        <select class="form-select d-inline-block me-2" id="eventSelect" style="width: auto;"
+                                onchange="if(this.value) window.location.href='/formular/?event_id='+this.value">
                             <option value="">- Wettbewerb auswählen -</option>
                             {% for event in events %}
                             <option value="{{ event.event_id }}" {% if active_event and event.event_id == active_event.event_id %}selected{% endif %}>
                                 {{ event.name }} {% if event.event_date %}({{ event.event_date.strftime('%d.%m.%Y') }}){% endif %}
+                                {% if event.status in ['Completed', 'Published'] %}(Gesperrt){% endif %}
                             </option>
                             {% endfor %}
                         </select>

@@ -114,36 +114,39 @@
                         <td>{{ "%.2f"|format(item.points) }}</td>
                     </tr>
                 {% endfor %}
+                <tr class="total-row">
+                    <td class="figure-name">Summe Qualitätswertung</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>{{ "%.2f"|format(qualitaet_total) }}</td>
+                </tr>
             {% endif %}
 
             <!-- Messwertung Section -->
             {% if messwertung_data %}
+                <tr class="section-title">
+                    <td colspan="5">Messwertung</td>
+                </tr>
                 {% for item in messwertung_data %}
                     <tr>
                         <td class="figure-name">{{ item.figure.name_de }}</td>
-                        <td>{{ item.figure.k_factor or 1 }}</td>
                         <td>-</td>
+                        <td>{% if item.value is not none %}{{ "%.1f"|format(item.value) }}{% else %}-{% endif %}</td>
                         <td>-</td>
                         <td>{{ "%.2f"|format(item.points) }}</td>
                     </tr>
                 {% endfor %}
+                <tr class="total-row">
+                    <td class="figure-name">Summe Messwertung</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>{{ "%.2f"|format(messwertung_total) }}</td>
+                </tr>
             {% endif %}
 
-            <!-- Totals -->
-            <tr class="total-row">
-                <td class="figure-name">Qualitätswertung Gesamt</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{{ "%.2f"|format(qualitaet_total) }}</td>
-            </tr>
-            <tr class="total-row">
-                <td class="figure-name">Messwertung Gesamt</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{{ "%.2f"|format(messwertung_total) }}</td>
-            </tr>
+            <!-- Grand Total -->
             <tr class="grand-total">
                 <td class="figure-name">Ergebnis</td>
                 <td>-</td>
@@ -154,8 +157,16 @@
         </tbody>
     </table>
 
+    <!-- Legend -->
+    <div style="margin-top: 15px; font-size: 9pt; color: #444; border-top: 1px solid #ccc; padding-top: 8px;">
+        <strong>Legende:</strong>
+        Summe = Summe aller Punktrichter &nbsp;|&nbsp;
+        Wertung = Summe / Anzahl Punktrichter &nbsp;|&nbsp;
+        Punkte = Wertung &times; K-Faktor
+    </div>
+
     <!-- Event info -->
-    <div style="margin-top: 20px; font-size: 10pt; color: #666;">
+    <div style="margin-top: 10px; font-size: 10pt; color: #666;">
         {{ event.name }} - {{ event.event_date.strftime('%d.%m.%Y') if event.event_date }}<br>
         Durchgang {{ round_obj.round_number }} - {{ judge_count }} Punktrichter
     </div>

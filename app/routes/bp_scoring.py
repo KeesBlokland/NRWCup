@@ -1238,13 +1238,13 @@ def team_scoresheet_pdf(team_id, round_id):
         for figure in messwertung_figures:
             value = None
             points = 0
-            
+
             for score in scores:
                 for score_value in score.values:
                     if score_value.task_type and score_value.task_type.code == figure.code:
                         if score_value.value is not None:
                             value = score_value.value
-                            
+
                             # Calculate points based on figure type
                             if figure.code == 'SEGZEIT':
                                 # Special Seglerzeit calculation
@@ -1257,7 +1257,8 @@ def team_scoresheet_pdf(team_id, round_id):
                                 # Standard Messwertung (direct points)
                                 points = value
                             break
-                break
+                if value is not None:
+                    break
             
             # Add ALL figures, even without scores
             messwertung_data.append({

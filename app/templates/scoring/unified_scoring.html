@@ -196,7 +196,7 @@
                             <th>Piloten</th>
                             <th>Punktrichter Rohwerte</th>
                             <th class="text-center">Punkte</th>
-                            <th class="text-center">Normalisiert</th>
+                            <th class="text-center">Normalisiert (%)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -316,7 +316,7 @@
                                        {% if team_round_key in team_rounds %}
                                            {% set team_round = team_rounds[team_round_key] %}
                                            {% if team_round.normalized_score is not none %}
-                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(team_round.normalized_score) }}</span>
+                                               <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(team_round.normalized_score / 10) }}</span>
                                            {% else %}
                                                -
                                            {% endif %}
@@ -328,7 +328,7 @@
                                        {% set team_found = false %}
                                        {% for standing in standings %}
                                            {% if standing.team.team_id == team.team_id %}
-                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(standing.score) }}</span>
+                                               <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(standing.score) }}</span>
                                                {% set team_found = true %}
                                            {% endif %}
                                        {% endfor %}
@@ -358,8 +358,7 @@
                                <th style="text-align: center; padding: 10px;">D{{ round_obj.round_number }}</th>
                            {% endfor %}
                            
-                           <th style="text-align: center; padding: 10px;">Gesamt</th>
-                           <th style="text-align: center; padding: 10px;">Norm.</th>
+                           <th style="text-align: center; padding: 10px;">Endstand</th>
                        </tr>
                        
                        {% for standing in standings %}
@@ -382,9 +381,9 @@
                                        {% if i < standing.round_scores|length %}
                                            {% set score = standing.round_scores[i] %}
                                            {% if i in standing.dropped_indices %}
-                                               <span class="text-muted text-decoration-line-through">{{ "%.1f"|format(score) }}</span>
+                                               <span class="text-muted text-decoration-line-through">{{ "%.1f%%"|format(score) }}</span>
                                            {% else %}
-                                               {{ "%.1f"|format(score) }}
+                                               {{ "%.1f%%"|format(score) }}
                                            {% endif %}
                                        {% else %}
                                            -
@@ -392,16 +391,7 @@
                                    </td>
                                {% endfor %}
                                
-                               <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }}</td>
-                               <td class="text-center fw-bold text-success">
-                                   {% if loop.first %}
-                                       1000.0
-                                   {% elif standings[0].score > 0 %}
-                                       {{ "%.1f"|format((standing.score / standings[0].score) * 1000) }}
-                                   {% else %}
-                                       0.0
-                                   {% endif %}
-                               </td>
+                               <td class="text-center fw-bold">{{ "%.1f%%"|format(standing.score) }}</td>
                            </tr>
                        {% endfor %}
                    </table>

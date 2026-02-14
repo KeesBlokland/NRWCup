@@ -13,8 +13,13 @@ Created: 2025-01-20
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">{{ 'Figur Bearbeiten' if task else 'Neue Figur' }}</h3>
+                    {% if task %}
+                    <span class="badge {{ 'bg-success' if task.is_active else 'bg-secondary' }}">
+                        {{ 'Aktiv' if task.is_active else 'Inaktiv' }}
+                    </span>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <form method="POST" class="needs-validation" novalidate>
@@ -60,10 +65,11 @@ Created: 2025-01-20
                                 </div>
 
                                 <div class="col-md-3 d-flex align-items-end">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                    <div class="form-check form-switch fs-5">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active"
+                                               style="width: 3em; height: 1.5em;"
                                                {% if not task or task.is_active %}checked{% endif %}>
-                                        <label class="form-check-label" for="is_active">Figur aktiv</label>
+                                        <label class="form-check-label ms-2" for="is_active">Figur aktiv</label>
                                     </div>
                                 </div>
                             </div>
@@ -78,12 +84,40 @@ Created: 2025-01-20
 
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('figures.index') }}" class="btn btn-secondary">Abbrechen</a>
+                            <div>
+                                <a href="{{ url_for('figures.index') }}" class="btn btn-secondary">Abbrechen</a>
+                                {% if task %}
+                                <button type="button" class="btn btn-outline-danger ms-2" onclick="confirmDelete()">Löschen</button>
+                                {% endif %}
+                            </div>
                             <button type="submit" class="btn btn-primary">
                                 {{ 'Änderungen Speichern' if task else 'Figur Anlegen' }}
                             </button>
                         </div>
                     </form>
+
+                    {% if task %}
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Figur Löschen</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Möchten Sie die Figur <strong>{{ task.name_de }}</strong> wirklich löschen?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                                    <form action="{{ url_for('figures.delete', id=task.type_id) }}" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-danger">Löschen</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -91,6 +125,10 @@ Created: 2025-01-20
 </div>
 
 <script>
+function confirmDelete() {
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
 // Form validation
 (function () {
     'use strict'

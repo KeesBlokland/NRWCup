@@ -119,14 +119,20 @@ def save_event():
     """Save or update event details"""
     try:
         event_id = request.form.get('event_id')
-        
+
         # Process form data
         event_data = process_event_data(request.form)
         location_data = process_location_data(request.form)
-        
+
         if event_id:  # Update existing
             # Convert to int
             event_id = int(event_id)
+
+            # Protect completed/published events from editing
+            existing_event = contest_service.get_by_id(event_id)
+            if existing_event and existing_event.status in ('Completed', 'Published'):
+                flash('Abgeschlossene Wettbewerbe können nicht bearbeitet werden', 'error')
+                return redirect(url_for('contest.index'))
             
             # Update the event and location
             contest_service.update_event_with_location(
@@ -170,6 +176,11 @@ def delete_event(event_id):
             flash('Wettbewerb nicht gefunden', 'error')
             return redirect(url_for('contest.index'))
             
+        # Protect completed/published events from deletion
+        if event.status in ('Completed', 'Published'):
+            flash('Abgeschlossene Wettbewerbe können nicht gelöscht werden', 'error')
+            return redirect(url_for('contest.index'))
+
         # Check for related rounds
         if event.rounds:
             flash('Wettbewerb kann nicht gelöscht werden - es existieren zugehörige Durchgänge', 'error')
@@ -251,11 +262,16 @@ def clear_scores():
             # Clear scores for a specific event
             event_id = int(selection)
             event = Event.query.get(event_id)
-            
+
             if not event:
                 flash('Wettbewerb nicht gefunden', 'error')
                 return redirect(url_for('contest.index'))
-            
+
+            # Protect completed/published events
+            if event.status in ('Completed', 'Published'):
+                flash(f'Bewertungen für abgeschlossene Wettbewerbe können nicht gelöscht werden ({event.name})', 'error')
+                return redirect(url_for('contest.index'))
+
             # Use the utility function
             result = clear_event_data(event_id, clear_scores_only=not clear_rounds_too)
             
@@ -328,7 +344,12 @@ def cleanup_event(event_id):
         if not event:
             flash('Wettbewerb nicht gefunden', 'error')
             return redirect(url_for('contest.index'))
-            
+
+        # Protect completed/published events
+        if event.status in ('Completed', 'Published'):
+            flash('Abgeschlossene Wettbewerbe können nicht bereinigt werden', 'error')
+            return redirect(url_for('contest.index'))
+
         # Delete all rounds for this event
         rounds_deleted = 0
         for round_obj in event.rounds:

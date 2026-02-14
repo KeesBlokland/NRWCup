@@ -196,7 +196,7 @@
                             <th>Piloten</th>
                             <th>Punktrichter Rohwerte</th>
                             <th class="text-center">Punkte</th>
-                            <th class="text-center">%</th>
+                            <th class="text-center">Normalisiert</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -316,7 +316,7 @@
                                        {% if team_round_key in team_rounds %}
                                            {% set team_round = team_rounds[team_round_key] %}
                                            {% if team_round.normalized_score is not none %}
-                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(team_round.normalized_score / 10) }}%</span>
+                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(team_round.normalized_score) }}</span>
                                            {% else %}
                                                -
                                            {% endif %}
@@ -328,7 +328,7 @@
                                        {% set team_found = false %}
                                        {% for standing in standings %}
                                            {% if standing.team.team_id == team.team_id %}
-                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(standing.score / 10) }}%</span>
+                                               <span class="badge bg-primary fs-6">{{ "%.1f"|format(standing.score) }}</span>
                                                {% set team_found = true %}
                                            {% endif %}
                                        {% endfor %}
@@ -358,7 +358,8 @@
                                <th style="text-align: center; padding: 10px;">D{{ round_obj.round_number }}</th>
                            {% endfor %}
                            
-                           <th style="text-align: center; padding: 10px;">Endstand</th>
+                           <th style="text-align: center; padding: 10px;">Gesamt</th>
+                           <th style="text-align: center; padding: 10px;">Norm.</th>
                        </tr>
                        
                        {% for standing in standings %}
@@ -381,9 +382,9 @@
                                        {% if i < standing.round_scores|length %}
                                            {% set score = standing.round_scores[i] %}
                                            {% if i in standing.dropped_indices %}
-                                               <span class="text-muted text-decoration-line-through">{{ "%.1f"|format(score / 10) }}%</span>
+                                               <span class="text-muted text-decoration-line-through">{{ "%.1f"|format(score) }}</span>
                                            {% else %}
-                                               {{ "%.1f"|format(score / 10) }}%
+                                               {{ "%.1f"|format(score) }}
                                            {% endif %}
                                        {% else %}
                                            -
@@ -391,7 +392,16 @@
                                    </td>
                                {% endfor %}
                                
-                               <td class="text-center fw-bold">{{ "%.1f"|format(standing.score / 10) }}%</td>
+                               <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }}</td>
+                               <td class="text-center fw-bold text-success">
+                                   {% if loop.first %}
+                                       1000.0
+                                   {% elif standings[0].score > 0 %}
+                                       {{ "%.1f"|format((standing.score / standings[0].score) * 1000) }}
+                                   {% else %}
+                                       0.0
+                                   {% endif %}
+                               </td>
                            </tr>
                        {% endfor %}
                    </table>
@@ -466,10 +476,9 @@ document.getElementById('confirmSendEmailBtn').onclick = function() {
     payload.recipients = selected;
     payload.next_round = true;
 
-    const csrfToken3 = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     fetch('/formular/email-startlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken3 },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
     .then(r => r.json())
@@ -693,10 +702,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         window._emailPayload = { event_id: parseInt(eventId), team_order: teamOrder };
 
                         // Fetch recipients list
-                        const csrfToken4 = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                         fetch('/formular/email-startlist-recipients', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken4 },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ event_id: parseInt(eventId) })
                         })
                         .then(r => r.json())
@@ -757,10 +765,9 @@ var _resultsEventId = null;
 
 function showResultsRecipients(eventId) {
     _resultsEventId = eventId;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     fetch('/reports/email_results_recipients/' + eventId, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+        headers: { 'Content-Type': 'application/json' }
     })
     .then(r => r.json())
     .then(result => {
@@ -787,27 +794,24 @@ function showResultsRecipients(eventId) {
     .catch(error => { alert('Fehler: ' + error.message); });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('confirmSendResultsBtn').onclick = function() {
-        const checked = document.querySelectorAll('#resultsRcptList input:checked');
-        const selected = Array.from(checked).map(c => c.value);
-        if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
-        if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+document.getElementById('confirmSendResultsBtn').onclick = function() {
+    const checked = document.querySelectorAll('#resultsRcptList input:checked');
+    const selected = Array.from(checked).map(c => c.value);
+    if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
+    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
 
-        const csrfToken2 = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        fetch('/reports/email_results/' + _resultsEventId, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken2 },
-            body: JSON.stringify({ recipients: selected })
-        })
-        .then(r => r.json())
-        .then(result => {
-            bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
-            alert(result.success ? result.message : 'Fehler: ' + result.message);
-        })
-        .catch(error => { alert('Fehler beim Senden: ' + error.message); });
-    };
-});
+    fetch('/reports/email_results/' + _resultsEventId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipients: selected })
+    })
+    .then(r => r.json())
+    .then(result => {
+        bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
+        alert(result.success ? result.message : 'Fehler: ' + result.message);
+    })
+    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+};
 </script>
 
 <!-- Results Email Recipient Selection Modal -->

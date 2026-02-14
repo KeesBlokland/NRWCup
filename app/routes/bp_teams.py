@@ -38,7 +38,8 @@ team_controller = BaseController(
 def process_form_data(form):
     """Process form data for Team model"""
     form_data = form.to_dict()
-    
+    form_data.pop('csrf_token', None)
+
     # Convert numeric fields
     for field in ['team_nummer', 'schlepper_pilot_id', 'segler_pilot_id', 
                   'schlepper_flugzeug_id', 'segler_flugzeug_id']:

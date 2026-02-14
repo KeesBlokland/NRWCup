@@ -30,11 +30,14 @@ teilnehmer_controller = BaseController(
 def process_form_data(form):
     """Process form data for Teilnehmer model"""
     form_data = form.to_dict()
-    
+
+    # Remove CSRF token — not a model field
+    form_data.pop('csrf_token', None)
+
     # Handle boolean fields - set to True if present in form
     for field in ['laermpass', 'is_segler_pilot', 'is_schlepper_pilot', 'is_punktwerter', 'is_wettkampfleitung']:
         form_data[field] = field in form_data
-    
+
     return form_data
 
 @teilnehmer_bp.route('/')

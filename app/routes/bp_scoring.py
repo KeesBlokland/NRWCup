@@ -283,6 +283,11 @@ def score_list():
                     if any_round_has_scores:
                         break
         
+        # Validate round_id belongs to this event; reset if not
+        valid_round_ids = [r.round_id for r in rounds]
+        if round_id and round_id not in valid_round_ids:
+            round_id = None
+
         # If round_id is not specified but there are rounds, use the first one
         if not round_id and rounds:
             round_id = rounds[0].round_id

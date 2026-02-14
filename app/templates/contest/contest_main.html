@@ -132,16 +132,23 @@
                                         <span class="badge bg-warning">Geplant</span>
                                     {% elif event.status == 'Active' %}
                                         <span class="badge bg-success">Aktiv</span>
+                                    {% elif event.status == 'Published' %}
+                                        <span class="badge bg-info">Veröffentlicht</span>
                                     {% else %}
                                         <span class="badge bg-secondary">Abgeschlossen</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <div>
-                                        <button class="btn btn-outline-primary"
-                                                onclick="editEvent({{ event.event_id }})">Bearbeiten</button>
-                                        <button class="btn btn-outline-danger" 
-                                                onclick="confirmDelete({{ event.event_id }})">Löschen</button>
+                                        {% if event.status in ['Completed', 'Published'] %}
+                                            <a class="btn btn-outline-secondary btn-sm"
+                                               href="{{ url_for('reports.standings', event_id=event.event_id) }}">Ansehen</a>
+                                        {% else %}
+                                            <button class="btn btn-outline-primary"
+                                                    onclick="editEvent({{ event.event_id }})">Bearbeiten</button>
+                                            <button class="btn btn-outline-danger"
+                                                    onclick="confirmDelete({{ event.event_id }})">Löschen</button>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -200,16 +207,16 @@
                         <option value="all">Alle Wertungen (auch abgeschlossene)</option>
                         <hr>
                         {% for event in events %}
+                            {% if event.status not in ['Completed', 'Published'] %}
                             <option value="{{ event.event_id }}">
-                                Nur für: {{ event.name }} 
+                                Nur für: {{ event.name }}
                                 {% if event.status == 'Pending' %}
                                     (Geplant)
                                 {% elif event.status == 'Active' %}
                                     (Aktiv)
-                                {% else %}
-                                    (Abgeschlossen)
                                 {% endif %}
                             </option>
+                            {% endif %}
                         {% endfor %}
                     </select>
                 </div>

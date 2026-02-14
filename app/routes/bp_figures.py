@@ -30,7 +30,8 @@ figures_controller = BaseController(
 def process_form_data(form):
     """Process form data for TaskType model"""
     form_data = form.to_dict()
-    
+    form_data.pop('csrf_token', None)
+
     # Handle boolean fields
     form_data['is_active'] = 'is_active' in form_data
     

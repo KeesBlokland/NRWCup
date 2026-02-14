@@ -83,8 +83,10 @@ def index():
         # Get judges
         judges = Teilnehmer.query.filter_by(is_punktwerter=True).all()
         
-        # Get events for template dropdown
-        events = Event.query.order_by(Event.event_date.desc()).all()
+        # Get events for template dropdown — exclude completed/published events
+        events = Event.query.filter(
+            Event.status.notin_(['Completed', 'Published'])
+        ).order_by(Event.event_date.desc()).all()
         
         return render_template('testdata/testdata_main.html', 
                               task_types=task_types,
@@ -137,6 +139,10 @@ def generate():
         event = Event.query.get(event_id)
         if not event:
             flash('Selected event not found', 'error')
+            return redirect(url_for('testdata.index'))
+
+        if event.status in ('Completed', 'Published'):
+            flash(f'Testdaten können nicht für abgeschlossene Wettbewerbe generiert werden ({event.name})', 'error')
             return redirect(url_for('testdata.index'))
         
         # Get existing rounds for this event

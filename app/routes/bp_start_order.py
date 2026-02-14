@@ -80,7 +80,13 @@ def generate():
         if not event_id or not target_round_id:
             flash('Event and target round are required', 'error')
             return redirect(url_for('start_order.index', event_id=event_id))
-        
+
+        # Check if event is completed/published
+        event = Event.query.get(event_id)
+        if event and event.status in ('Completed', 'Published'):
+            flash('Abgeschlossene Wettbewerbe können nicht geändert werden', 'error')
+            return redirect(url_for('start_order.index', event_id=event_id))
+
         # Get target round
         target_round = Round.query.get(target_round_id)
         if not target_round:
@@ -126,7 +132,12 @@ def update(round_id):
         round_obj = Round.query.get(round_id)
         if not round_obj:
             return jsonify({'success': False, 'message': 'Round not found'})
-        
+
+        # Check if event is completed/published
+        event = Event.query.get(round_obj.event_id)
+        if event and event.status in ('Completed', 'Published'):
+            return jsonify({'success': False, 'message': 'Abgeschlossene Wettbewerbe können nicht geändert werden'})
+
         # Update each team round's start order
         for order_data in team_orders:
             team_id = order_data.get('team_id')
@@ -175,7 +186,13 @@ def randomize(round_id):
         if not round_obj:
             flash('Round not found', 'error')
             return redirect(url_for('start_order.index'))
-        
+
+        # Check if event is completed/published
+        event = Event.query.get(round_obj.event_id)
+        if event and event.status in ('Completed', 'Published'):
+            flash('Abgeschlossene Wettbewerbe können nicht geändert werden', 'error')
+            return redirect(url_for('start_order.index', event_id=round_obj.event_id))
+
         # Get all active teams
         teams = Team.query.filter_by(status='active').all()
         if not teams:

@@ -475,12 +475,25 @@ def api_score(score_id):
         logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
     
-@scoring_bp.route('/enter_score', methods=['POST']) 
+@scoring_bp.route('/enter_score', methods=['POST'])
 def enter_score():
     logger.info("=== SCORE SUBMISSION STARTED ===")
     logger.info(f"Form data: {request.form}")
-    
+
     try:
+        # Check event status via team_round_id or round
+        _team_round_id = request.form.get('team_round_id', type=int)
+        _round_number = request.form.get('round_number', type=int)
+        if _team_round_id:
+            _tr = TeamRound.query.get(_team_round_id)
+            if _tr:
+                _round_obj = Round.query.get(_tr.round_id)
+                if _round_obj:
+                    _event = Event.query.get(_round_obj.event_id)
+                    if _event and _event.status in ('Completed', 'Published'):
+                        flash('Abgeschlossene Wettbewerbe können nicht geändert werden', 'error')
+                        return redirect(url_for('scoring.score_list'))
+
         # Get team_round_id or find/create it
         team_round_id = request.form.get('team_round_id', type=int)
         round_id = None
@@ -600,6 +613,16 @@ def update_score(score_id):
             flash('Bewertung nicht gefunden', 'error')
             return redirect(url_for('scoring.score_list'))
         
+        # Check if event is completed/published
+        team_round = TeamRound.query.get(score.team_round_id)
+        if team_round:
+            round_obj = Round.query.get(team_round.round_id)
+            if round_obj:
+                event = Event.query.get(round_obj.event_id)
+                if event and event.status in ('Completed', 'Published'):
+                    flash('Abgeschlossene Wettbewerbe können nicht geändert werden', 'error')
+                    return redirect(url_for('scoring.score_list'))
+
         # Check if score is locked and user is not admin
         if score.locked and not session.get('is_admin'):
             flash('Diese Bewertung ist gesperrt und kann nicht bearbeitet werden', 'error')
@@ -722,11 +745,17 @@ def generate_next_round():
     """Generate the next round with scoresheets based on previous round results"""
     try:
         event_id = request.form.get('event_id', type=int)
-        
+
         if not event_id:
             flash('Keine Veranstaltung ausgewählt', 'error')
             return redirect(url_for('scoring.score_list'))
-        
+
+        # Check if event is completed/published
+        event = Event.query.get(event_id)
+        if event and event.status in ('Completed', 'Published'):
+            flash('Abgeschlossene Wettbewerbe können nicht geändert werden', 'error')
+            return redirect(url_for('scoring.score_list'))
+
         # Get rounds for this event
         rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all()
         
@@ -820,9 +849,14 @@ def generate_scoresheets():
         active_event = Event.query.filter_by(status='Active').first()
         if not active_event:
             active_event = Event.query.order_by(Event.event_date.desc()).first()
-            
+
         if not active_event:
             flash('Keine Veranstaltung gefunden', 'error')
+            return redirect(url_for('scoring.score_list'))
+
+        # Check if event is completed/published
+        if active_event.status in ('Completed', 'Published'):
+            flash('Abgeschlossene Wettbewerbe können nicht geändert werden', 'error')
             return redirect(url_for('scoring.score_list'))
             
         # Find all rounds for this event

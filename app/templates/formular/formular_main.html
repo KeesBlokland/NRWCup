@@ -11,7 +11,11 @@
                 <div>
                     <!-- First row -->
                     <div class="mb-2 text-center">
-                        <button type="button" class="btn btn-secondary me-2" id="randomizeBtn" {% if is_locked %}disabled{% endif %}>Zufällige Reihenfolge</button>
+                        {% if active_event and active_event.status in ['Completed', 'Published'] %}
+                            <span class="badge bg-secondary me-2">Abgeschlossen — nur Ansicht</span>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary me-2" id="randomizeBtn" {% if is_locked %}disabled{% endif %}>Zufällige Reihenfolge</button>
+                        {% endif %}
                         <select class="form-select d-inline-block me-2" id="eventSelect" style="width: auto;">
                             <option value="">- Wettbewerb auswählen -</option>
                             {% for event in events %}
@@ -20,9 +24,11 @@
                             </option>
                             {% endfor %}
                         </select>
-                        <button type="button" class="btn {% if is_locked %}btn-danger{% else %}btn-warning{% endif %} me-2" id="lockBtn">
-                            {% if is_locked %}Gesperrt{% else %}Entsperrt{% endif %}
-                        </button>
+                        {% if active_event and active_event.status not in ['Completed', 'Published'] %}
+                            <button type="button" class="btn {% if is_locked %}btn-danger{% else %}btn-warning{% endif %} me-2" id="lockBtn">
+                                {% if is_locked %}Gesperrt{% else %}Entsperrt{% endif %}
+                            </button>
+                        {% endif %}
                     </div>
                     <!-- Second row -->
                     <div class="text-center">
@@ -51,11 +57,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% set is_completed = active_event and active_event.status in ['Completed', 'Published'] %}
                     {% for i in range(1, teams|length + 1) %}
-                    <tr draggable="{% if not is_locked %}true{% else %}false{% endif %}">
+                    <tr draggable="{% if not is_locked and not is_completed %}true{% else %}false{% endif %}">
                         <td>
                             <input type="number" class="form-control form-control-sm w-75 position-number"
-                                value="{{ i }}" min="1" max="{{ teams|length }}" {% if is_locked %}disabled{% endif %}>
+                                value="{{ i }}" min="1" max="{{ teams|length }}" {% if is_locked or is_completed %}disabled{% endif %}>
                         </td>
                         <td class="team-cell">Team {{ teams[i-1].team_nummer }}</td>
                         <td class="pilot-cell">

@@ -240,6 +240,13 @@ def save_order():
 def toggle_lock():
     """Toggle the lock state of the startlist and generate scoresheets if locking"""
     try:
+        # Check if active event is completed/published
+        active_event = Event.query.filter_by(status='Active').first()
+        if not active_event:
+            active_event = Event.query.order_by(Event.event_date.desc()).first()
+        if active_event and active_event.status in ('Completed', 'Published'):
+            return jsonify({'status': 'error', 'message': 'Abgeschlossene Wettbewerbe können nicht geändert werden'}), 403
+
         # Get current lock state
         lock_config = SystemConfig.query.filter_by(config_key='startlist_locked').first()
         
@@ -498,7 +505,12 @@ def update_start_order(round_id):
         round_obj = Round.query.get(round_id)
         if not round_obj:
             return jsonify({'success': False, 'message': 'Round not found'})
-        
+
+        # Check if event is completed/published
+        event = Event.query.get(round_obj.event_id)
+        if event and event.status in ('Completed', 'Published'):
+            return jsonify({'success': False, 'message': 'Abgeschlossene Wettbewerbe können nicht geändert werden'})
+
         # Update each team round's start order
         for order_data in team_orders:
             team_id = order_data.get('team_id')

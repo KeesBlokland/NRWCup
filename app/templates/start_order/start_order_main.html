@@ -39,6 +39,11 @@
     </div>
 
     {% if event %}
+        {% if event.status in ['Completed', 'Published'] %}
+            <div class="alert alert-secondary mb-4">
+                <i class="bi bi-lock"></i> Dieser Wettbewerb ist abgeschlossen — nur Ansicht.
+            </div>
+        {% else %}
         <!-- Round Selection and Generation -->
         <div class="card mb-4">
             <div class="card-header">
@@ -47,7 +52,7 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('start_order.generate') }}" class="row g-3">
                     <input type="hidden" name="event_id" value="{{ event.event_id }}">
-                    
+
                     <div class="col-md-5">
                         <label for="targetRoundSelect" class="form-label">Startfolge für Durchgang</label>
                         <select class="form-select" id="targetRoundSelect" name="target_round_id" required>
@@ -59,14 +64,14 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div class="col-md-7">
                         <p class="text-muted mt-4">
                             Die Startfolge wird automatisch basierend auf den Ergebnissen des vorherigen Durchgangs generiert.
                             Teams mit den niedrigsten Punktzahlen starten zuerst.
                         </p>
                     </div>
-                    
+
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary" id="generateBtn">
                             Startfolge generieren
@@ -75,6 +80,7 @@
                 </form>
             </div>
         </div>
+        {% endif %}
 
         <!-- Round-by-Round Start Orders -->
         <div class="row">
@@ -84,12 +90,14 @@
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h4 class="mb-0">Durchgang {{ round.round_number }} Startfolge</h4>
                             <div>
-                                {% if round.round_number == 1 %}
-                                    <form method="POST" action="{{ url_for('start_order.randomize', round_id=round.round_id) }}">
-                                        <button type="submit" class="btn btn-outline-secondary">
-                                            Zufällige Reihenfolge
-                                        </button>
-                                    </form>
+                                {% if event.status not in ['Completed', 'Published'] %}
+                                    {% if round.round_number == 1 %}
+                                        <form method="POST" action="{{ url_for('start_order.randomize', round_id=round.round_id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-secondary">
+                                                Zufällige Reihenfolge
+                                            </button>
+                                        </form>
+                                    {% endif %}
                                 {% endif %}
                                 <a href="{{ url_for('start_order.print_start_order', round_id=round.round_id) }}" class="btn btn-outline-primary">
                                     Drucken
@@ -112,8 +120,9 @@
                                             {% for entry in round_start_orders[round.round_id] %}
                                                 <tr data-team-id="{{ entry.team.team_id }}">
                                                     <td>
-                                                        <input type="number" class="form-control form-control-sm position-number" 
-                                                               value="{{ entry.start_order }}" min="1" data-original-value="{{ entry.start_order }}">
+                                                        <input type="number" class="form-control form-control-sm position-number"
+                                                               value="{{ entry.start_order }}" min="1" data-original-value="{{ entry.start_order }}"
+                                                               {% if event.status in ['Completed', 'Published'] %}disabled{% endif %}>
                                                     </td>
                                                     <td>Team {{ entry.team.team_nummer }}</td>
                                                     <td>{{ entry.team.schlepper_pilot.name if entry.team.schlepper_pilot else '-' }}</td>
@@ -129,7 +138,7 @@
                                 </table>
                             </div>
                             
-                            {% if round.round_id in round_start_orders and round_start_orders[round.round_id] %}
+                            {% if round.round_id in round_start_orders and round_start_orders[round.round_id] and event.status not in ['Completed', 'Published'] %}
                                 <div class="text-end mt-3">
                                     <button type="button" class="btn btn-primary save-order-btn" data-round-id="{{ round.round_id }}">
                                         Änderungen speichern

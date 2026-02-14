@@ -413,6 +413,26 @@ def cleanup_log_files():
 
     return redirect(url_for('system.index'))
 
+@system_bp.route('/logs/delete', methods=['POST'])
+@admin_required
+def delete_log_files():
+    """Delete selected log files"""
+    selected = request.form.getlist('selected')
+    deleted = 0
+    for filename in selected:
+        safe_name = secure_filename(filename)
+        if safe_name.endswith('.log'):
+            file_path = os.path.join(PROJECT_ROOT, 'logs', safe_name)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                deleted += 1
+                logger.info(f"Log file deleted: {safe_name}")
+    if deleted:
+        flash(f'{deleted} Log-Datei(en) gelöscht', 'success')
+    else:
+        flash('Keine Log-Dateien gelöscht', 'warning')
+    return redirect(url_for('system.logs'))
+
 @system_bp.route('/toggle_logging', methods=['POST'])
 @admin_required
 def toggle_logging():

@@ -11,22 +11,19 @@
 
     <!-- Log Files (downloadable) -->
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header">
             <h5 class="mb-0">Log-Dateien</h5>
-            {% if log_files|length > 5 %}
-                <form method="POST" action="{{ url_for('system.cleanup_log_files') }}">
-                    <button type="submit" class="btn btn-sm btn-outline-warning"
-                            onclick="return confirm('Alte Log-Dateien ohne Inhalt löschen (5 neueste behalten)?')">
-                        Alte Logs bereinigen
-                    </button>
-                </form>
-            {% endif %}
         </div>
         <div class="card-body">
             {% if log_files %}
+                <form method="POST" action="{{ url_for('system.delete_log_files') }}" id="deleteLogsForm">
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="selectAllLogs"
+                                       onclick="document.querySelectorAll('.log-cb').forEach(c=>c.checked=this.checked)">
+                            </th>
                             <th>Dateiname</th>
                             <th>Größe</th>
                             <th>Letzte Änderung</th>
@@ -36,6 +33,10 @@
                     <tbody>
                         {% for log_file in log_files %}
                             <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input log-cb"
+                                           name="selected" value="{{ log_file.name }}">
+                                </td>
                                 <td>{{ log_file.name }}</td>
                                 <td>{{ log_file.size_formatted }}</td>
                                 <td>{{ log_file.modified.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -47,6 +48,19 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteLogs()">
+                    Ausgewählte löschen
+                </button>
+                </form>
+                <script>
+                function confirmDeleteLogs() {
+                    const checked = document.querySelectorAll('.log-cb:checked');
+                    if (!checked.length) { alert('Keine Log-Dateien ausgewählt'); return; }
+                    if (confirm(checked.length + ' Log-Datei(en) unwiderruflich löschen?')) {
+                        document.getElementById('deleteLogsForm').submit();
+                    }
+                }
+                </script>
             {% else %}
                 <p class="text-center mb-0">Keine Log-Dateien vorhanden</p>
             {% endif %}

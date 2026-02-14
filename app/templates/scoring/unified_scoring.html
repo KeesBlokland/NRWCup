@@ -78,21 +78,22 @@
                             {% endif %}
                         {% endfor %}
 
+                        {% if event.status not in ['Completed', 'Published'] %}
                         <form method="POST" action="{{ url_for('scoring.generate_scoresheets') }}">
                             <input type="hidden" name="event_id" value="{{ event.event_id if event else '' }}">
                             <input type="hidden" name="round_id" value="{{ selected_round if selected_round else '' }}">
-                            
+
                             <!-- Get directly from the dropdown-->
                             {% set dropdown_round = None %}
                             {% set dropdown_round_number = 0 %}
-                            
+
                             {% for r in rounds %}
                                 {% if r.round_id == selected_round %}
                                     {% set dropdown_round = r %}
                                     {% set dropdown_round_number = r.round_number %}
                                 {% endif %}
                             {% endfor %}
-                            
+
                             <button type="submit" class="btn btn-warning">
                                 {% if rounds|length == 0 %}
                                     Ersten Durchgang erstellen
@@ -103,17 +104,12 @@
                                 {% endif %}
                             </button>
                         </form>
-<!--
-                        <a href="{{ url_for('scoring.team_results', event_id=event.event_id if event else '') }}" 
-                            class="btn btn-info">
-                                <i class="bi bi-person-badge"></i> Team Ergebnisse
-                        </a>
-                    -->
 
                         {% if any_round_has_scores %}
                             <button class="btn btn-info" id="generateNextRoundBtn">
                                 <i class="bi bi-arrow-right-circle"></i> Startfolge Nächste Durchgang
                             </button>
+                        {% endif %}
                         {% endif %}
 
                         

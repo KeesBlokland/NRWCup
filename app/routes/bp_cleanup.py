@@ -24,7 +24,14 @@ cleanup_bp = Blueprint('cleanup', __name__)
 def index():
     """Display cleanup options"""
     events = Event.query.order_by(Event.event_date.desc()).all()
-    return render_template('cleanup/cleanup_main.html', events=events)
+    teilnehmers = Teilnehmer.query.order_by(Teilnehmer.name).all()
+    flugzeuge = Flugzeuge.query.order_by(Flugzeuge.name).all()
+    teams = Team.query.order_by(Team.team_nummer).all()
+    return render_template('cleanup/cleanup_main.html',
+                         events=events,
+                         teilnehmers=teilnehmers,
+                         flugzeuge=flugzeuge,
+                         teams=teams)
 
 @cleanup_bp.route('/event/<int:event_id>', methods=['POST'])
 @admin_required

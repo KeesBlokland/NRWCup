@@ -164,6 +164,25 @@ Description: Base template with updated navigation and clickable logo
         })();
     </script>
 
+    <!-- Email availability check (used by all email buttons) -->
+    <script>
+        window.checkEmailAvailable = function() {
+            return fetch('/system/check_email')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.available) {
+                        alert('Email-Server nicht erreichbar. Bitte prüfen Sie die Internetverbindung.');
+                        return false;
+                    }
+                    return true;
+                })
+                .catch(() => {
+                    alert('Email-Server nicht erreichbar. Bitte prüfen Sie die Internetverbindung.');
+                    return false;
+                });
+        };
+    </script>
+
     <!-- Admin button script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {

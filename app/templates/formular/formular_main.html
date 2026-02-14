@@ -404,12 +404,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    emailStartListBtn.addEventListener('click', function() {
+    emailStartListBtn.addEventListener('click', async function() {
         const eventId = eventSelect.value;
         if (!eventId) {
             alert('Bitte wählen Sie zuerst eine Veranstaltung aus');
             return;
         }
+
+        // Check email server availability
+        const available = await checkEmailAvailable();
+        if (!available) return;
 
         // Store team order for later send
         const order = Array.from(tbody.getElementsByTagName('tr')).map(row =>

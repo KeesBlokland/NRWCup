@@ -6,7 +6,7 @@ Last Updated: 2024-12-04
 Description: Complete blueprint for system management including backup, users, and logs
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
 from app.models import db, User, AuditLog, SystemConfig
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
@@ -432,6 +432,19 @@ def delete_log_files():
     else:
         flash('Keine Log-Dateien gelöscht', 'warning')
     return redirect(url_for('system.logs'))
+
+@system_bp.route('/check_email', methods=['GET'])
+@admin_required
+def check_email():
+    """Check if the mail server is reachable"""
+    try:
+        import socket
+        from app.config import Config
+        sock = socket.create_connection((Config.MAIL_SERVER, Config.MAIL_PORT), timeout=5)
+        sock.close()
+        return jsonify({'available': True})
+    except Exception:
+        return jsonify({'available': False})
 
 @system_bp.route('/toggle_logging', methods=['POST'])
 @admin_required

@@ -342,7 +342,9 @@ function printRoundData(roundId) {
 <script>
 var _resultsEventId = null;
 
-function showResultsRecipients(eventId) {
+async function showResultsRecipients(eventId) {
+    const available = await checkEmailAvailable();
+    if (!available) return;
     _resultsEventId = eventId;
     fetch('/reports/email_results_recipients/' + eventId, {
         method: 'POST',

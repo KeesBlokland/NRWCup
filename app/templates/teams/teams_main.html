@@ -90,19 +90,12 @@
                     </a>
                     
                     <!-- Status toggle button -->
-                    <form action="{{ url_for('teams.toggle_status', team_id=team.team_id) }}" method="POST" 
+                    <form action="{{ url_for('teams.toggle_status', team_id=team.team_id) }}" method="POST"
                           style="display: inline-block;">
                         <button type="submit" class="btn {% if team.status == 'active' %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
                             {% if team.status == 'active' %}Deaktivieren{% else %}Aktivieren{% endif %}
                         </button>
                     </form>
-                    
-                    <!-- Delete button -->
-                    <button type="button" 
-                            class="btn btn-outline-danger"
-                            onclick="confirmDelete('{{ team.team_id }}', '{{ team.team_nummer }}')">
-                        Löschen
-                    </button>
                 </div>
             </td>
         </tr>
@@ -115,34 +108,4 @@
 </table>
 </div>
 </div>
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Team Löschen</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                Möchten Sie Team <span id="deleteTeamNumber"></span> wirklich löschen?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-danger">Löschen</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function confirmDelete(id, teamNumber) {
-    const modalEl = document.getElementById('deleteModal');
-    const modal = new bootstrap.Modal(modalEl);
-    document.getElementById('deleteTeamNumber').textContent = teamNumber;
-    document.getElementById('deleteForm').action = `{{ url_for('teams.delete', team_id=0) }}`.replace('0', id);
-    modal.show();
-}
-</script>
 {% endblock %}

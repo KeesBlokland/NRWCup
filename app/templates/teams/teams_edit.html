@@ -101,10 +101,34 @@ Updated: 2025-04-19
 
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('teams.index') }}" class="btn btn-secondary">Abbrechen</a>
+                            <div>
+                                <a href="{{ url_for('teams.index') }}" class="btn btn-secondary">Abbrechen</a>
+                                <button type="button" class="btn btn-outline-danger ms-2" onclick="confirmDelete()">Löschen</button>
+                            </div>
                             <button type="submit" class="btn btn-primary">Änderungen Speichern</button>
                         </div>
                     </form>
+
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Team Löschen</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Möchten Sie Team {{ team.team_nummer }} wirklich löschen?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                                    <form action="{{ url_for('teams.delete', team_id=team.team_id) }}" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-danger">Löschen</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -156,6 +180,10 @@ function loadSeglerAircraft(pilotId) {
             });
         })
         .catch(error => console.error('Error loading aircraft:', error));
+}
+
+function confirmDelete() {
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
 // Form validation

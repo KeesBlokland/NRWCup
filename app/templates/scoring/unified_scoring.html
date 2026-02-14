@@ -680,7 +680,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
                     
                     // Setup email button — show recipient selection first
-                    document.getElementById('emailNextRoundBtn').onclick = function() {
+                    document.getElementById('emailNextRoundBtn').onclick = async function() {
+                        const available = await checkEmailAvailable();
+                        if (!available) return;
                         const eventId = document.getElementById('eventSelect').value;
                         const teamOrder = [];
                         const nextRoundData = data.round_data.concat(data.teams_without_scores);
@@ -751,7 +753,9 @@ function confirmNextRound() {
 // === Results Email Recipient Selection ===
 var _resultsEventId = null;
 
-function showResultsRecipients(eventId) {
+async function showResultsRecipients(eventId) {
+    const available = await checkEmailAvailable();
+    if (!available) return;
     _resultsEventId = eventId;
     fetch('/reports/email_results_recipients/' + eventId, {
         method: 'POST',

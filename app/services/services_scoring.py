@@ -125,11 +125,68 @@ class ScoringService(BaseService):
         
         # Commit changes
         db.session.commit()
-        
+
+        # Replicate Messwertung values to all other judges for this team_round
+        self.replicate_messwertung_values(team_round_id, score.score_id)
+
         # Calculate and update raw score in team_round
         self.update_team_round_scores(team_round_id)
-        
+
         return score
+
+    def replicate_messwertung_values(self, team_round_id, source_score_id):
+        """
+        Replicate Messwertung (objective measurement) values from the source score
+        to all other scores for the same team_round.
+
+        This ensures that values like SEGZEIT, LANDGM, LANS, SEILZ are consistent
+        across all judges' scoresheets, since they are objective measurements
+        entered by one person at the 0-line.
+        """
+        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+
+        # Get the source score's Messwertung values
+        source_values = ScoreValue.query.join(TaskType).filter(
+            ScoreValue.score_id == source_score_id,
+            TaskType.code.in_(MESSWERTUNG_CODES)
+        ).all()
+
+        if not source_values:
+            return
+
+        # Build a map of task_type_id -> value for the source
+        source_map = {sv.task_type_id: sv.value for sv in source_values}
+
+        # Find all OTHER scores for the same team_round
+        other_scores = Score.query.filter(
+            Score.team_round_id == team_round_id,
+            Score.score_id != source_score_id
+        ).all()
+
+        if not other_scores:
+            return
+
+        # Get task_type_ids for Messwertung codes
+        messwertung_type_ids = [sv.task_type_id for sv in source_values]
+
+        for other_score in other_scores:
+            # Delete existing Messwertung values on this score
+            ScoreValue.query.filter(
+                ScoreValue.score_id == other_score.score_id,
+                ScoreValue.task_type_id.in_(messwertung_type_ids)
+            ).delete(synchronize_session='fetch')
+
+            # Create new Messwertung values with same values as source
+            for task_type_id, value in source_map.items():
+                new_sv = ScoreValue(
+                    score_id=other_score.score_id,
+                    task_type_id=task_type_id,
+                    value=value
+                )
+                db.session.add(new_sv)
+
+        db.session.commit()
+        logger.info(f"Replicated Messwertung values from score {source_score_id} to {len(other_scores)} other scores for team_round {team_round_id}")
 
     
     def get_score_details(self, score_id):

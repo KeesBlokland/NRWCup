@@ -125,9 +125,10 @@
                                 <td>
                                     {% if figure.code in ['LANDGM', 'LANS', 'SEILZ'] %}
                                         <!-- Landing zones with radio buttons -->
-                                        <select class="form-select form-select-sm landing-score" 
+                                        <select class="form-select form-select-sm landing-score"
                                                name="score_{{ figure.code }}"
                                                onchange="updateLandingPoints('{{ figure.code }}', this.value); updateTotalPoints()"
+                                               {% if score and value is not none %}style="background-color: #e8f4fd"{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}disabled{% endif %}>
                                             <option value="">-</option>
                                             {% for val in [0, 5, 10, 20, 30] %}
@@ -137,11 +138,12 @@
                                         <input type="hidden" class="landing-points-hidden" id="{{ figure.code }}_points_hidden" data-kfactor="1" value="{{ value }}">
                                     {% elif figure.code == 'SEGZEIT' %}
                                         <!-- Segler Flugzeit -->
-                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score" 
-                                               name="score_{{ figure.code }}" value="{{ value }}" 
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score"
+                                               name="score_{{ figure.code }}" value="{{ value }}"
                                                min="0" max="300" step="1"
                                                data-figure-code="{{ figure.code }}"
                                                oninput="calculateSeglerzeit(this.value); updateTotalPoints()"
+                                               {% if score and value is not none %}style="background-color: #e8f4fd"{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% elif 'Platzrunde' in figure.name_de %}
                                         <!-- Platzrunde variants (mutually exclusive) -->
@@ -192,6 +194,7 @@
                 </table>
 
                 <div class="text-muted" style="font-size: 0.75rem;">* Flugzeit: MAX(0, 300 - ABS(200 - Zeit) &times; 3)</div>
+                <div class="text-muted" style="font-size: 0.75rem;"><span style="background-color: #e8f4fd; padding: 0 3px;">&#9632;</span> Messwerte werden automatisch auf alle Punktwerter &uuml;bertragen</div>
 
                 <!-- Total Points Row -->
                 <div class="row mt-3 pt-2 border-top">

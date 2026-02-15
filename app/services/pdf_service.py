@@ -125,14 +125,11 @@ class PdfService:
         # Get scoring service and standings - we'll use this data directly 
         from app.services.services_scoring import ScoringService
         scoring_service = ScoringService()
-        standings = scoring_service.calculate_final_standings(event_id)
-        
-        # Get rounds for header
-        rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all()
-        
+        standings, standings_rounds = scoring_service.calculate_final_standings(event_id)
+
         # Table header
         header = ['Rang', 'Team', 'Piloten']
-        for round_obj in rounds:
+        for round_obj in standings_rounds:
             header.append(f"D {round_obj.round_number}")
         header.append('Endstand')
         

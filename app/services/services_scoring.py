@@ -451,7 +451,7 @@ class ScoringService(BaseService):
         
         # Endstand IS the sum of percentages — no further normalization
         # With 4 rounds: max = 300 (3 × 100%), with 3 rounds: max = 200 (2 × 100%)
-        return standings
+        return standings, rounds_with_data
     
     def calculate_seglerzeit(self, actual_time, target_time=200, max_points=300, penalty_factor=3):
         """

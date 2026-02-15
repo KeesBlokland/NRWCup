@@ -45,8 +45,8 @@ def standings():
             
             # Get event and calculate standings
             event = Event.query.get_or_404(event_id)
-            standings = ScoringService().calculate_final_standings(event_id)
-            
+            standings, _ = ScoringService().calculate_final_standings(event_id)
+
             # Convert to simple dict for JSON
             result = {
                 'event': {
@@ -243,13 +243,12 @@ def email_results(event_id):
 
         # Get standings for email content
         scoring_service = ScoringService()
-        standings = scoring_service.calculate_final_standings(event_id)
-        rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all()
+        standings, standings_rounds = scoring_service.calculate_final_standings(event_id)
 
         html_content = render_template('reports/results_email.html',
                                      event=event,
                                      standings=standings,
-                                     rounds=rounds)
+                                     rounds=standings_rounds)
 
         smtp_server = Config.MAIL_SERVER
         smtp_port = Config.MAIL_PORT
@@ -284,9 +283,8 @@ def export_excel(event_id):
         # Get event and data
         event = Event.query.get_or_404(event_id)
         scoring_service = ScoringService()
-        standings = scoring_service.calculate_final_standings(event_id)
-        rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all()
-        
+        standings, standings_rounds = scoring_service.calculate_final_standings(event_id)
+
         if not standings:
             flash('Keine Ergebnisse zum Exportieren gefunden', 'warning')
             return redirect(url_for('scoring.score_list'))
@@ -302,7 +300,7 @@ def export_excel(event_id):
             }
             
             # Add round scores as percentages
-            for i, round_obj in enumerate(rounds):
+            for i, round_obj in enumerate(standings_rounds):
                 col_name = f'D{round_obj.round_number}'
                 if i < len(standing['round_scores']):
                     score = standing['round_scores'][i] / 10

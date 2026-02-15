@@ -288,9 +288,9 @@ def score_list():
         if round_id and round_id not in valid_round_ids:
             round_id = None
 
-        # If round_id is not specified but there are rounds, use the first one
+        # If round_id is not specified but there are rounds, use the latest one
         if not round_id and rounds:
-            round_id = rounds[0].round_id
+            round_id = rounds[-1].round_id
             
         # Get all judges
         judges = scoring_service.get_judges()
@@ -343,8 +343,9 @@ def score_list():
         
         # Calculate standings
         standings = None
+        standings_rounds = []
         if event_id:
-            standings = scoring_service.calculate_final_standings(event_id)
+            standings, standings_rounds = scoring_service.calculate_final_standings(event_id)
             
         # Define the getRawScore function directly in this scope
         def get_raw_score(score):
@@ -404,6 +405,7 @@ def score_list():
                              selected_round=round_id,
                              selected_judge=judge_id,
                              standings=standings,
+                             standings_rounds=standings_rounds,
                              getRawScore=get_raw_score,
                              can_generate_next_round=can_generate_next_round,
                              any_round_has_scores=any_round_has_scores)

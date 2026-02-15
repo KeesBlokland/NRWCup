@@ -27,7 +27,6 @@
                     <div class="col-md-4">
                         <label for="roundSelect" class="form-label">Durchgang</label>
                         <select class="form-select" id="roundSelect" name="round_id" onchange="checkForNextRoundGeneration(this)">
-                            <option value="">Alle Durchgänge</option>
                             {% for round in rounds %}
                                 <option value="{{ round.round_id }}" {% if selected_round == round.round_id %}selected{% endif %}>
                                     Durchgang {{ round.round_number }} ({{ round.status }})
@@ -350,13 +349,13 @@
                            <th style="padding: 10px;">Team</th>
                            <th style="padding: 10px;">Piloten</th>
                            
-                           {% for round_obj in rounds %}
+                           {% for round_obj in standings_rounds %}
                                <th style="text-align: center; padding: 10px;">D{{ round_obj.round_number }}</th>
                            {% endfor %}
-                           
+
                            <th style="text-align: center; padding: 10px;">Endstand</th>
                        </tr>
-                       
+
                        {% for standing in standings %}
                            <tr>
                                <td class="text-center fw-bold">{{ standing.rank }}</td>
@@ -371,8 +370,8 @@
                                        {% endif %}
                                    </div>
                                </td>
-                               
-                               {% for i in range(rounds|length) %}
+
+                               {% for i in range(standings_rounds|length) %}
                                    <td class="text-center">
                                        {% if i < standing.round_scores|length %}
                                            {% set score = standing.round_scores[i] %}

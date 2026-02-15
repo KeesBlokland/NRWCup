@@ -101,7 +101,7 @@
                 <h3 class="card-title mb-0">Wettbewerbe</h3>
                 <div>
                     <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#clearScoresModal">
-                        Alle Bewertungen Löschen
+                        Bewertungen Löschen
                     </button>
                     <button class="btn btn-primary" onclick="toggleForm(true)">Neuer Wettbewerb</button>
                 </div>
@@ -195,7 +195,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Alle Bewertungen Löschen</h5>
+                <h5 class="modal-title">Bewertungen Löschen</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -236,7 +236,7 @@
                 <form id="clearScoresForm" method="POST" action="{{ url_for('contest.clear_scores') }}">
                     <input type="hidden" id="clearEventId" name="event_id" value="all">
                     <input type="hidden" id="clearRoundsTooHidden" name="clear_rounds_too" value="false">
-                    <button type="submit" class="btn btn-danger">Alle Bewertungen Löschen</button>
+                    <button type="submit" class="btn btn-danger">Bewertungen Löschen</button>
                 </form>
             </div>
         </div>

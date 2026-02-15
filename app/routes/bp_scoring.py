@@ -802,15 +802,21 @@ def generate_next_round():
         db.session.commit()
         
         # Get team rounds sorted by score (lowest score starts first)
-        team_rounds = TeamRound.query.filter_by(round_id=last_round.round_id)\
+        scored_team_rounds = TeamRound.query.filter_by(round_id=last_round.round_id)\
             .filter(TeamRound.raw_score != None)\
             .order_by(TeamRound.raw_score.asc())\
             .all()
-        
-        if not team_rounds:
+
+        if not scored_team_rounds:
             flash('Keine Bewertungen im letzten Durchgang gefunden', 'error')
             return redirect(url_for('scoring.score_list'))
-        
+
+        # Teams without scores (missed the round) — start last
+        scored_team_ids = {tr.team_id for tr in scored_team_rounds}
+        unscored_team_rounds = TeamRound.query.filter_by(round_id=last_round.round_id)\
+            .filter(TeamRound.team_id.notin_(scored_team_ids))\
+            .all()
+
         # Mark previous round as Completed
         last_round.status = 'Completed'
 
@@ -823,10 +829,14 @@ def generate_next_round():
         )
         db.session.add(new_round)
         db.session.flush()
-        
-        # Create team order based on scores (lowest score starts first)
+
+        # Create team order: scored teams first (lowest first), then unscored teams last
         team_order = []
-        for team_round in team_rounds:
+        for team_round in scored_team_rounds:
+            team = Team.query.get(team_round.team_id)
+            if team:
+                team_order.append(team.team_nummer)
+        for team_round in unscored_team_rounds:
             team = Team.query.get(team_round.team_id)
             if team:
                 team_order.append(team.team_nummer)

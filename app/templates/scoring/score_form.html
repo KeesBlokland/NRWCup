@@ -116,6 +116,7 @@
                             {% else %}
                                 {% set value = None %}
                             {% endif %}
+                            {% set is_messwertung_blue = figure.code in ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'] and score and value is not none and not is_messwertung_owner %}
                             <tr>
                                 <td>{{ figure.name_de }}
                                     <!-- Store figure code and limits for validation -->
@@ -128,7 +129,7 @@
                                         <select class="form-select form-select-sm landing-score"
                                                name="score_{{ figure.code }}"
                                                onchange="updateLandingPoints('{{ figure.code }}', this.value); updateTotalPoints()"
-                                               {% if score and value is not none %}style="background-color: #e8f4fd"{% endif %}
+                                               {% if is_messwertung_blue %}style="background-color: #e8f4fd"{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}disabled{% endif %}>
                                             <option value="">-</option>
                                             {% for val in [0, 5, 10, 20, 30] %}
@@ -143,7 +144,7 @@
                                                min="0" max="300" step="1"
                                                data-figure-code="{{ figure.code }}"
                                                oninput="calculateSeglerzeit(this.value); updateTotalPoints()"
-                                               {% if score and value is not none %}style="background-color: #e8f4fd"{% endif %}
+                                               {% if is_messwertung_blue %}style="background-color: #e8f4fd"{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% elif 'Platzrunde' in figure.name_de %}
                                         <!-- Platzrunde variants (mutually exclusive) -->
@@ -178,14 +179,24 @@
                                 </td>
                                 <td>
                                     <div class="input-group input-group-sm">
-                                        {% if figure.code == 'SEGZEIT' %}
+                                        {% if is_messwertung_blue %}
+                                            <span class="input-group-text" style="font-size: 0.75rem; color: #999;">-</span>
+                                            <input type="text" class="form-control form-control-sm text-end"
+                                                   id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
+                                                   data-exclude-total="true"
+                                                   value="" readonly
+                                                   style="background-color: #e8f4fd; color: #999;">
+                                        {% elif figure.code == 'SEGZEIT' %}
                                             <span class="input-group-text" style="font-size: 0.75rem;">*</span>
+                                            <input type="text" class="form-control form-control-sm text-end points-display"
+                                                   id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
+                                                   value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
                                         {% else %}
                                             <span class="input-group-text" style="font-size: 0.75rem;">&times;{{ figure.k_factor or 1 }}=</span>
+                                            <input type="text" class="form-control form-control-sm text-end points-display"
+                                                   id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
+                                                   value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
                                         {% endif %}
-                                        <input type="text" class="form-control form-control-sm text-end points-display"
-                                               id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
-                                               value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
                                     </div>
                                 </td>
                             </tr>

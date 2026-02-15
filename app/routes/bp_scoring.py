@@ -350,50 +350,62 @@ def score_list():
             standings, standings_rounds = scoring_service.calculate_final_standings(event_id)
             
         # Define the getRawScore function directly in this scope
+        # Messwertung is included only for the "owner" judge (lowest score_id
+        # per team_round).  Other judges show Messwertung as blue/informational.
+        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+
+        # Cache: team_round_id -> owner score_id
+        _messwertung_owners = {}
+
+        def _is_messwertung_owner(score):
+            tr_id = score.team_round_id
+            if tr_id not in _messwertung_owners:
+                first = Score.query.filter_by(team_round_id=tr_id)\
+                    .order_by(Score.score_id).first()
+                _messwertung_owners[tr_id] = first.score_id if first else None
+            return _messwertung_owners[tr_id] == score.score_id
+
         def get_raw_score(score):
-            """Calculate raw score for a given score object with correct Seglerzeit calculation"""
+            """Calculate raw score matching the scoresheet Gesamtpunktzahl.
+            Messwertung is included only for the owner judge."""
             if not score:
                 return None
-                
+
             raw_score = 0
-            
+            is_owner = _is_messwertung_owner(score)
+
             # Check if we have eagerly loaded the values
             if not hasattr(score, 'values') or not score.values:
-                # If values are not eagerly loaded, reload with proper relationships
                 score = Score.query.options(
                     db.joinedload(Score.values).joinedload(ScoreValue.task_type)
                 ).get(score.score_id)
-                
+
                 if not score or not score.values:
                     return None
-            
+
             for score_value in score.values:
                 if not score_value.task_type:
                     continue
-                    
-                # Get the value and code
+
                 value = score_value.value
                 if value is None:
                     continue
-                    
+
                 code = score_value.task_type.code
-                name = score_value.task_type.name_de
-                
-                # Special handling for Seglerzeit
-                if code == 'SEGZEIT' or (name and 'Flugzeit' in name):
-                    # Segler Flugzeit calculation: MAX(0, 300 - (ABS(200-actual_time) * 3))
-                    target_time = 200
-                    max_points = 300
-                    penalty_factor = 3
-                    
-                    time_diff = abs(target_time - value)
-                    points = max(0, max_points - (time_diff * penalty_factor))
-                    raw_score += points
-                else:
-                    # Standard calculation for all other figures
-                    k_factor = score_value.task_type.k_factor or 1
-                    raw_score += value * k_factor
-                
+
+                # Messwertung only counted for the owner judge
+                if code in MESSWERTUNG_CODES:
+                    if not is_owner:
+                        continue
+                    # SEGZEIT uses special formula
+                    if code == 'SEGZEIT':
+                        points = max(0, 300 - (abs(200 - value) * 3))
+                        raw_score += points
+                        continue
+
+                k_factor = score_value.task_type.k_factor or 1
+                raw_score += value * k_factor
+
             return raw_score
             
         return render_template('scoring/unified_scoring.html',
@@ -710,6 +722,12 @@ def view_score(score_id):
                 value_map[value.task_type.code] = value.value
                 logger.debug(f"Mapped {value.task_type.code} -> {value.value}")
         
+        # Determine if this score is the Messwertung owner (first score for this team_round)
+        # The owner shows Messwertung values normally; others show them as blue/read-only
+        first_score = Score.query.filter_by(team_round_id=team_round.team_round_id)\
+            .order_by(Score.score_id).first()
+        is_messwertung_owner = (first_score and first_score.score_id == score.score_id)
+
         # Get referer parameters for the back button
         referer_params = {}
         if request.referrer:
@@ -717,7 +735,7 @@ def view_score(score_id):
                 from urllib.parse import urlparse, parse_qs
                 parsed_url = urlparse(request.referrer)
                 query_params = parse_qs(parsed_url.query)
-                
+
                 if 'event_id' in query_params:
                     referer_params['event_id'] = query_params['event_id'][0]
                 if 'round_id' in query_params:
@@ -726,15 +744,16 @@ def view_score(score_id):
                     referer_params['judge_id'] = query_params['judge_id'][0]
             except Exception:
                 logger.warning("Failed to parse referrer URL parameters")
-        
+
         # Pass all objects to the unified template
-        return render_template('scoring/score_form.html', 
-                              score=score, 
+        return render_template('scoring/score_form.html',
+                              score=score,
                               figures=active_figures,
                               score_team_round=team_round,
                               team_round_round=round_obj,
                               team_round_team=team,
                               value_map=value_map,
+                              is_messwertung_owner=is_messwertung_owner,
                               referer_params=referer_params,
                               judges=scoring_service.get_judges(),
                               event=event,

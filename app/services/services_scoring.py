@@ -374,7 +374,7 @@ class ScoringService(BaseService):
                 rounds_with_data.append(round_obj)
         
         if not rounds_with_data:
-            return []
+            return [], []
         
         # Sort rounds by round_number to ensure consistent order
         rounds_with_data.sort(key=lambda r: r.round_number)

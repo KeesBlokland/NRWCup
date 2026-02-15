@@ -213,10 +213,10 @@ def generate():
         
         # Process each round
         for round_obj in rounds_to_process:
-            # Select a center judge for this round (consistent throughout the round)
+            # Use the first judge as center judge for Flugzeit/Ziellandung values
             if judges:
-                center_judge = random.choice(judges)
-                logger.info(f"Selected center judge {center_judge.name} for round {round_obj.round_number}")
+                center_judge = judges[0]
+                logger.info(f"Center judge (first): {center_judge.name} for round {round_obj.round_number}")
             else:
                 center_judge = None
             

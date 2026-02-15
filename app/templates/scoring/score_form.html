@@ -105,8 +105,8 @@
                     <thead>
                         <tr>
                             <th>Figur</th>
-                            <th>Score</th>
-                            <th>K-Faktor</th>
+                            <th>Wertung</th>
+                            <th class="text-end">Punkte</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -175,14 +175,23 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <input type="text" class="form-control form-control-sm text-start points-display" 
-                                           id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}" 
-                                           value="{{ (value * (figure.k_factor or 1)) if value else '' }}" readonly>
+                                    <div class="input-group input-group-sm">
+                                        {% if figure.code == 'SEGZEIT' %}
+                                            <span class="input-group-text" style="font-size: 0.75rem;">*</span>
+                                        {% else %}
+                                            <span class="input-group-text" style="font-size: 0.75rem;">&times;{{ figure.k_factor or 1 }}=</span>
+                                        {% endif %}
+                                        <input type="text" class="form-control form-control-sm text-end points-display"
+                                               id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
+                                               value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+
+                <div class="text-muted" style="font-size: 0.75rem;">* Flugzeit: MAX(0, 300 - ABS(200 - Zeit) &times; 3)</div>
 
                 <!-- Total Points Row -->
                 <div class="row mt-3 pt-2 border-top">
@@ -385,7 +394,7 @@
         }
         
         const points = Math.max(0, maxPoints - (Math.abs(targetTime - parseFloat(actualTime)) * penaltyFactor));
-        document.getElementById('SEGZEIT_points').value = points.toFixed(0);
+        document.getElementById('SEGZEIT_points').value = points.toFixed(1);
         
         // Always update total points after calculation
         updateTotalPoints();
@@ -411,12 +420,12 @@
         if (hiddenElement) {
             hiddenElement.value = (value === 0 || value) ? value : '';
         }
-        
+
         // Update the visible points display field
         const displayId = figureCode + '_points';
         const displayElement = document.getElementById(displayId);
         if (displayElement) {
-            displayElement.value = (value === 0 || value) ? value : '';
+            displayElement.value = (value === 0 || value) ? parseFloat(value).toFixed(1) : '';
         }
     }
     

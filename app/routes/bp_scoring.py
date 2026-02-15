@@ -268,19 +268,22 @@ def score_list():
         # Get rounds for this event
         rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all() if event_id else []
         
-        # Check if we can generate the next round
+        # Check round completion status for the latest round
         can_generate_next_round = False
-        
+        round_status_info = None
         any_round_has_scores = False
+
         if event_id and rounds:
-                for round_obj in rounds:
-                    team_rounds = TeamRound.query.filter_by(round_id=round_obj.round_id).all()
-                    for team_round in team_rounds:
-                        if team_round.raw_score is not None:
-                            any_round_has_scores = True
-                            break
-                    if any_round_has_scores:
-                        break
+            from app.utils.round_status import round_completion_status
+            latest_round = rounds[-1]
+            round_status_info = round_completion_status(latest_round.round_id)
+            any_round_has_scores = round_status_info['scored_teams'] > 0
+            # Can only generate next round when ALL teams in the latest round have scores
+            can_generate_next_round = (
+                round_status_info['total_teams'] > 0 and
+                round_status_info['scored_teams'] == round_status_info['total_teams'] and
+                event.status not in ('Completed', 'Published')
+            )
         
         # Validate round_id belongs to this event; reset if not
         valid_round_ids = [r.round_id for r in rounds]
@@ -407,7 +410,8 @@ def score_list():
                              standings_rounds=standings_rounds,
                              getRawScore=get_raw_score,
                              can_generate_next_round=can_generate_next_round,
-                             any_round_has_scores=any_round_has_scores)
+                             any_round_has_scores=any_round_has_scores,
+                             round_status_info=round_status_info)
     except SQLAlchemyError as e:
         logger.error(f"Database error in list: {str(e)}")
         flash('Fehler beim Laden der Wertungsdaten', 'error')
@@ -807,6 +811,9 @@ def generate_next_round():
             flash('Keine Bewertungen im letzten Durchgang gefunden', 'error')
             return redirect(url_for('scoring.score_list'))
         
+        # Mark previous round as Completed
+        last_round.status = 'Completed'
+
         # Create new round
         new_round_number = highest_round_number + 1
         new_round = Round(

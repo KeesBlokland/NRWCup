@@ -32,9 +32,6 @@
                                     Durchgang {{ round.round_number }} ({{ round.status }})
                                 </option>
                             {% endfor %}
-                            {% if can_generate_next_round %}
-                                <option value="generate_next" class="text-primary fw-bold">→ Durchgang {{ next_round_number }} erstellen</option>
-                            {% endif %}
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -78,37 +75,31 @@
                         {% endfor %}
 
                         {% if event.status not in ['Completed', 'Published'] %}
-                        <form method="POST" action="{{ url_for('scoring.generate_scoresheets') }}">
-                            <input type="hidden" name="event_id" value="{{ event.event_id if event else '' }}">
-                            <input type="hidden" name="round_id" value="{{ selected_round if selected_round else '' }}">
 
-                            <!-- Get directly from the dropdown-->
-                            {% set dropdown_round = None %}
-                            {% set dropdown_round_number = 0 %}
+                        {% if rounds|length == 0 %}
+                            <!-- No rounds yet — allow creating the first one -->
+                            <form method="POST" action="{{ url_for('scoring.generate_scoresheets') }}">
+                                <input type="hidden" name="event_id" value="{{ event.event_id if event else '' }}">
+                                <button type="submit" class="btn btn-warning">Ersten Durchgang erstellen</button>
+                            </form>
+                        {% else %}
+                            <!-- Show round completion progress -->
+                            {% if round_status_info %}
+                                <span class="badge {{ 'bg-success' if can_generate_next_round else 'bg-secondary' }} me-2">
+                                    D{{ rounds[-1].round_number }}: {{ round_status_info.scored_teams }}/{{ round_status_info.total_teams }} Teams bewertet
+                                </span>
+                            {% endif %}
 
-                            {% for r in rounds %}
-                                {% if r.round_id == selected_round %}
-                                    {% set dropdown_round = r %}
-                                    {% set dropdown_round_number = r.round_number %}
-                                {% endif %}
-                            {% endfor %}
-
-                            <button type="submit" class="btn btn-warning">
-                                {% if rounds|length == 0 %}
-                                    Ersten Durchgang erstellen
-                                {% elif dropdown_round and dropdown_round.status == 'Active' %}
-                                    Durchgang {{ dropdown_round_number }} abschließen und Durchgang {{ dropdown_round_number + 1 }} erstellen
-                                {% else %}
-                                    Nächsten Durchgang erstellen
-                                {% endif %}
-                            </button>
-                        </form>
-
-                        {% if any_round_has_scores %}
-                            <button class="btn btn-info" id="generateNextRoundBtn">
-                                <i class="bi bi-arrow-right-circle"></i> Startfolge Nächste Durchgang
-                            </button>
+                            {% if can_generate_next_round %}
+                                <button class="btn btn-warning" onclick="confirmNextRound()">
+                                    Durchgang {{ rounds[-1].round_number }} abschließen und Durchgang {{ rounds[-1].round_number + 1 }} erstellen
+                                </button>
+                                <button class="btn btn-info" id="generateNextRoundBtn">
+                                    Startfolge Nächster Durchgang
+                                </button>
+                            {% endif %}
                         {% endif %}
+
                         {% endif %}
 
                         
@@ -740,11 +731,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function confirmNextRound() {
-    if (confirm('Möchten Sie den nächsten Durchgang erstellen?')) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url_for("scoring.generate_next_round") }}';
-        document.body.appendChild(form);
+    if (confirm('Achtung: Der aktuelle Durchgang wird abgeschlossen.\n\nÄnderungen an Bewertungen dieses Durchgangs sind danach nur noch mit Admin-Zugang möglich.\n\nFortfahren?')) {
+        const form = document.getElementById('nextRoundForm');
+        document.getElementById('nextRoundEventId').value = document.getElementById('eventSelect').value;
         form.submit();
     }
 }

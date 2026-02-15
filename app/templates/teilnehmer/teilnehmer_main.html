@@ -93,15 +93,10 @@
                     </td>
                     <td>
                         <div>
-                            <a href="{{ url_for('teilnehmer.edit', id=teilnehmer.teilnehmer_id) }}" 
+                            <a href="{{ url_for('teilnehmer.edit', id=teilnehmer.teilnehmer_id) }}"
                                class="btn btn-outline-primary">
                                 Bearbeiten
                             </a>
-                            <button type="button" 
-                                    class="btn btn-outline-danger"
-                                    onclick="confirmDelete('{{ teilnehmer.teilnehmer_id }}', '{{ teilnehmer.name }}')">
-                                Löschen
-                            </button>
                         </div>
                     </td>
                 </tr>
@@ -115,34 +110,4 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Teilnehmer Löschen</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                Möchten Sie den Teilnehmer <span id="deleteName"></span> wirklich löschen?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-danger">Löschen</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-
-function confirmDelete(id, name) {
-    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    document.getElementById('deleteName').textContent = name;
-    document.getElementById('deleteForm').action = `{{ url_for('teilnehmer.delete', id=0) }}`.replace('0', id);
-    modal.show();
-}
-</script>
 {% endblock %}

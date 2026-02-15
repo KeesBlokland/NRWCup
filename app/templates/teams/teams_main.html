@@ -84,18 +84,10 @@
             </td>
             <td>
                 <div>
-                    <a href="{{ url_for('teams.edit', team_id=team.team_id) }}" 
+                    <a href="{{ url_for('teams.edit', team_id=team.team_id) }}"
                        class="btn btn-outline-primary">
                         Bearbeiten
                     </a>
-                    
-                    <!-- Status toggle button -->
-                    <form action="{{ url_for('teams.toggle_status', team_id=team.team_id) }}" method="POST"
-                          style="display: inline-block;">
-                        <button type="submit" class="btn {% if team.status == 'active' %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
-                            {% if team.status == 'active' %}Deaktivieren{% else %}Aktivieren{% endif %}
-                        </button>
-                    </form>
                 </div>
             </td>
         </tr>

@@ -29,7 +29,7 @@ class Config:
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'NRWAdmin')
 
     # Email configuration - all from environment variables
-    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.ionos.de')
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', '')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', 465))
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')

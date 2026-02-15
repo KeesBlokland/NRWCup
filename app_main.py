@@ -5,6 +5,9 @@ Created: 2025-01-19
 Last Updated: 2026-02-10
 Description: Main application entry point with streamlined blueprint registration
 """
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 import sys
 import secrets
@@ -35,6 +38,8 @@ app = Flask(__name__,
            static_folder=static_dir)
 
 # Configuration
+from app.config import Config
+app.config.from_object(Config)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

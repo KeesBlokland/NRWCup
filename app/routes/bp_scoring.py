@@ -73,7 +73,6 @@ def admin_logout():
 
 
 @scoring_bp.route('/lock/<int:score_id>', methods=['POST'])
-@admin_required
 def lock_score(score_id):
     """Lock a score after verification"""
     try:

@@ -79,7 +79,10 @@ def generate_scoresheets_for_round(round_id, team_order=None):
         # Now delete team rounds
         TeamRound.query.filter_by(round_id=round_id).delete()
         
-        # Create new team rounds with specified order
+        # Get all judges
+        judges = Teilnehmer.query.filter_by(is_punktwerter=True).all()
+
+        # Create new team rounds with specified order, plus Score records for each judge
         for index, team in enumerate(teams, start=1):
             team_round = TeamRound(
                 round_id=round_id,
@@ -87,11 +90,20 @@ def generate_scoresheets_for_round(round_id, team_order=None):
                 start_order=index,
                 status='Pending'
             )
-            
             db.session.add(team_round)
-        
+            db.session.flush()  # Get team_round_id
+
+            # Create empty Score record for each judge
+            for judge in judges:
+                score = Score(
+                    team_round_id=team_round.team_round_id,
+                    judge_id=judge.teilnehmer_id,
+                    entered_at=datetime.utcnow()
+                )
+                db.session.add(score)
+
         db.session.commit()
-        logger.info(f"Successfully generated scoresheets for round {round_id} with {len(teams)} teams")
+        logger.info(f"Successfully generated scoresheets for round {round_id} with {len(teams)} teams and {len(teams) * len(judges)} score records")
         return True
         
     except Exception as e:

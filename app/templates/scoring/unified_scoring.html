@@ -157,9 +157,12 @@
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-3" id="scoringTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="scores-tab" data-bs-toggle="tab" data-bs-target="#scores" 
+            <button class="nav-link active" id="scores-tab" data-bs-toggle="tab" data-bs-target="#scores"
                     type="button" role="tab" aria-controls="scores" aria-selected="true">
                 Bewertungen
+                <span class="badge bg-secondary ms-1" style="cursor: pointer; font-size: 0.7rem;"
+                      data-bs-toggle="modal" data-bs-target="#scoringInfoModal"
+                      onclick="event.stopPropagation();">?</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -214,10 +217,10 @@
                                             {% if round_obj %}
                                                 {% set key = round_obj.round_id|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
                                                 {% if key in completed_scores %}
-                                                    <!-- Scoresheet exists -->
+                                                    <!-- Scoresheet exists key={{ key }} quality={{ key in has_quality_scores }} -->
                                                     {% set score = completed_scores[key] %}
-                                                    <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}" 
-                                                        class="btn {% if score.locked %}btn-warning{% else %}btn-success{% endif %} judge-btn" 
+                                                    <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}"
+                                                        class="btn {% if score.locked %}btn-warning{% elif key in has_quality_scores %}btn-success{% else %}btn-outline-secondary{% endif %} judge-btn"
                                                         title="Bewertung von {{ judge.name }} {% if score.locked %}(Gesperrt am {{ score.locked_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}">
                                                             {{ judge.name[:3] }}: 
                                                             <span class="raw-score">
@@ -810,6 +813,37 @@ document.getElementById('confirmSendResultsBtn').onclick = function() {
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
                 <button type="button" class="btn btn-success" id="confirmSendResultsBtn">Senden</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scoring Info Modal -->
+<div class="modal fade" id="scoringInfoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Berechnung der Punkte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Qualit&auml;tswertung</strong> (Figuren, 0-10 Punkte):<br>
+                Durchschnitt der 3 Punktrichter &times; K-Faktor = Figurpunkte</p>
+                <p><strong>Messwertung</strong> (Flugzeit, Ziellandung, Seilabwurf):<br>
+                Wird einmalig erfasst und zur Gesamtwertung addiert.</p>
+                <p><strong>Punkte pro Durchgang</strong> =<br>
+                Summe Qualit&auml;tswertung (gemittelt) + Messwerte</p>
+                <p><strong>Normalisierung</strong>:<br>
+                H&ouml;chste Punktzahl im Durchgang = 100%</p>
+                <p><strong>Endstand</strong>:<br>
+                Ab 3 Durchg&auml;ngen: schlechtester Durchgang wird gestrichen.<br>
+                Summe der verbleibenden Prozentwerte = Endstand.</p>
+                <hr>
+                <p class="text-muted small mb-0"><strong>Max. Rohpunkte pro Durchgang:</strong> 1800<br>
+                <strong>Flugzeit:</strong> MAX(0, 300 - |200 - Zeit| &times; 3)</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schlie&szlig;en</button>
             </div>
         </div>
     </div>

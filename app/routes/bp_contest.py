@@ -12,7 +12,7 @@ from app.services.services_contest import ContestService
 from app.services.services_rounds import RoundService  # Import the new service
 from app.utils.utils_base_controller import BaseController
 from sqlalchemy.exc import SQLAlchemyError
-from app.utils.clear_data import clear_all_scores, clear_event_data
+from app.utils.clear_data import clear_event_data
 from app.utils.audit import audit_log
 import logging
 import os
@@ -204,84 +204,31 @@ def delete_event(event_id):
 
 @contest_bp.route('/clear_scores', methods=['POST'])
 def clear_scores():
-    """Clear scores based on selection (by event status or specific event)"""
+    """Clear all data (scores, team_rounds, rounds) for a specific Pending event"""
     try:
         selection = request.form.get('event_id')
-        clear_rounds_too = request.form.get('clear_rounds_too') == 'true'
-        
-        if selection == 'all':
-            # Clear scores for non-completed events only
-            audit_log('scores', None, 'clear_all', None, None)
-            result = clear_all_scores()
 
-            skipped = result.get('events_skipped', 0)
-            skip_msg = f' ({skipped} abgeschlossene(r) Wettbewerb(e) geschützt)' if skipped else ''
-
-            if clear_rounds_too:
-                # Only delete rounds for non-completed events
-                protected_ids = [e.event_id for e in Event.query.filter_by(status='Completed').all()]
-                if protected_ids:
-                    rounds_deleted = Round.query.filter(~Round.event_id.in_(protected_ids)).delete(synchronize_session=False)
-                else:
-                    rounds_deleted = Round.query.delete()
-                db.session.commit()
-
-                flash(f'Bewertungen und Durchgänge gelöscht ({result["scores_deleted"]} Bewertungen, {rounds_deleted} Durchgänge){skip_msg}', 'success')
-            else:
-                flash(f'Bewertungen gelöscht ({result["scores_deleted"]} Bewertungen, {result["team_rounds_deleted"]} Team-Rundenzuordnungen){skip_msg}', 'success')
-            
-        elif selection == 'pending' or selection == 'active':
-            # Clear scores for events with specific status
-            status = 'Pending' if selection == 'pending' else 'Active'
-            affected_events = Event.query.filter_by(status=status).all()
-            events_affected = len(affected_events)
-            
-            if events_affected == 0:
-                flash(f'Keine Wettbewerbe mit Status "{status}" gefunden', 'warning')
-                return redirect(url_for('contest.index'))
-            
-            total_scores_deleted = 0
-            total_rounds_deleted = 0
-            total_team_rounds_deleted = 0
-            
-            for event in affected_events:
-                # Use the utility function
-                result = clear_event_data(event.event_id, clear_scores_only=not clear_rounds_too)
-                total_scores_deleted += result['scores_deleted']
-                total_rounds_deleted += result['rounds_deleted']
-                total_team_rounds_deleted += result['team_rounds_deleted']
-            
-            status_display = 'Geplant' if selection == 'pending' else 'Aktiv'
-            
-            if clear_rounds_too:
-                flash(f'Alle Bewertungen und Durchgänge für Wettbewerbe mit Status "{status_display}" erfolgreich gelöscht ({total_scores_deleted} Bewertungen, {total_rounds_deleted} Durchgänge)', 'success')
-            else:
-                flash(f'Alle Bewertungen für Wettbewerbe mit Status "{status_display}" erfolgreich gelöscht ({total_scores_deleted} Bewertungen, {total_team_rounds_deleted} Team-Rundenzuordnungen entfernt)', 'success')
-            
-        elif selection and selection.isdigit():
-            # Clear scores for a specific event
-            event_id = int(selection)
-            event = Event.query.get(event_id)
-
-            if not event:
-                flash('Wettbewerb nicht gefunden', 'error')
-                return redirect(url_for('contest.index'))
-
-            # Protect completed/published events
-            if event.status in ('Completed', 'Published'):
-                flash(f'Bewertungen für abgeschlossene Wettbewerbe können nicht gelöscht werden ({event.name})', 'error')
-                return redirect(url_for('contest.index'))
-
-            # Use the utility function
-            result = clear_event_data(event_id, clear_scores_only=not clear_rounds_too)
-            
-            if clear_rounds_too:
-                flash(f'Alle Bewertungen und Durchgänge für Wettbewerb "{event.name}" erfolgreich gelöscht ({result["scores_deleted"]} Bewertungen, {result["rounds_deleted"]} Durchgänge)', 'success')
-            else:
-                flash(f'Alle Bewertungen für Wettbewerb "{event.name}" erfolgreich gelöscht ({result["scores_deleted"]} Bewertungen, {result["team_rounds_deleted"]} Team-Rundenzuordnungen entfernt)', 'success')
-        
-        else:
+        if not selection or not selection.isdigit():
             flash('Ungültige Auswahl', 'error')
+            return redirect(url_for('contest.index'))
+
+        event_id = int(selection)
+        event = Event.query.get(event_id)
+
+        if not event:
+            flash('Wettbewerb nicht gefunden', 'error')
+            return redirect(url_for('contest.index'))
+
+        # Only Pending events can be cleared
+        if event.status != 'Pending':
+            flash(f'Nur geplante Wettbewerbe können gelöscht werden. "{event.name}" hat Status: {event.status}', 'error')
+            return redirect(url_for('contest.index'))
+
+        # Clear everything: scores, team_rounds, rounds
+        result = clear_event_data(event_id, clear_scores_only=False)
+        audit_log('scores', event_id, 'clear_all', None, None)
+
+        flash(f'Alle Daten für "{event.name}" gelöscht ({result["scores_deleted"]} Bewertungen, {result["rounds_deleted"]} Durchgänge)', 'success')
             
         logger.info(f"Scores cleared via contest blueprint")
         

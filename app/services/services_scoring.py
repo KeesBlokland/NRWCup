@@ -78,10 +78,20 @@ class ScoringService(BaseService):
         ).first()
         
         if existing:
-            # Update existing score
             score = existing
-            # Delete existing score values
-            ScoreValue.query.filter_by(score_id=score.score_id).delete()
+            # Delete non-Messwerte score values (preserve replicated Messwerte)
+            messwertung_codes = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+            if messwertung_codes & set(score_values.keys()):
+                # Messwerte are being submitted — replace everything
+                ScoreValue.query.filter_by(score_id=score.score_id).delete()
+            else:
+                # Only quality scores — keep Messwerte intact
+                messwertung_type_ids = [t.type_id for t in TaskType.query.filter(
+                    TaskType.code.in_(messwertung_codes)).all()]
+                ScoreValue.query.filter(
+                    ScoreValue.score_id == score.score_id,
+                    ~ScoreValue.task_type_id.in_(messwertung_type_ids)
+                ).delete(synchronize_session='fetch')
         else:
             # Create new score
             score = self.model_class(

@@ -95,11 +95,11 @@ def clear_event_data(event_id, clear_scores_only=True):
             'rounds_deleted': 0
         }
 
-        # PROTECT completed events
+        # PROTECT completed/published/active events — only Pending can be cleared
         event = Event.query.get(event_id)
-        if event and event.status == 'Completed':
-            logger.warning(f"Refused to clear completed event: {event.name}")
-            raise ValueError(f"Abgeschlossener Wettbewerb '{event.name}' kann nicht gelöscht werden")
+        if event and event.status != 'Pending':
+            logger.warning(f"Refused to clear event with status {event.status}: {event.name}")
+            raise ValueError(f"Nur geplante Wettbewerbe können gelöscht werden ('{event.name}' ist {event.status})")
 
         # Get rounds for this event
         rounds = Round.query.filter_by(event_id=event_id).all()

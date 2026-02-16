@@ -324,12 +324,19 @@ def score_list():
         completed_scores = query.all()
         
         # Convert to a dictionary for easier lookup
+        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
         completed_dict = {}
+        has_quality_set = set()  # Track which scores have quality data entered
         for score in completed_scores:
             team_round = TeamRound.query.get(score.team_round_id)
             if team_round:
                 key = f"{team_round.round_id}_{team_round.team_id}_{score.judge_id}"
                 completed_dict[key] = score
+                codes = [sv.task_type.code for sv in score.values if sv.task_type]
+                has_quality = any(c not in MESSWERTUNG_CODES for c in codes)
+                logger.debug(f"Score {score.score_id} judge {score.judge_id}: codes={codes} has_quality={has_quality}")
+                if has_quality:
+                    has_quality_set.add(key)
         
         # Create mapping for team rounds
         team_rounds = {}
@@ -416,6 +423,7 @@ def score_list():
                              teams=teams,
                              team_rounds=team_rounds,
                              completed_scores=completed_dict,
+                             has_quality_scores=has_quality_set,
                              selected_round=round_id,
                              selected_judge=judge_id,
                              standings=standings,
@@ -722,8 +730,9 @@ def view_score(score_id):
                 value_map[value.task_type.code] = value.value
                 logger.debug(f"Mapped {value.task_type.code} -> {value.value}")
         
-        # Determine if this score is the Messwertung owner (first score for this team_round)
-        # The owner shows Messwertung values normally; others show them as blue/read-only
+        # Determine if this score is the Messwertung owner (visual only)
+        # Owner shows Messwertung values normally; others show them in blue
+        # All sheets remain editable — blue is just informational
         first_score = Score.query.filter_by(team_round_id=team_round.team_round_id)\
             .order_by(Score.score_id).first()
         is_messwertung_owner = (first_score and first_score.score_id == score.score_id)

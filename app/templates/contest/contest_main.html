@@ -195,49 +195,39 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Bewertungen Löschen</h5>
+                <h5 class="modal-title">Testdaten L&ouml;schen</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p><strong>Achtung:</strong> Diese Aktion löscht <u>alle</u> Wertungsdaten aus der Datenbank!</p>
-                <p>Dieser Vorgang kann nicht rückgängig gemacht werden. Möchten Sie wirklich fortfahren?</p>
-                
-                <div class="form-group mb-3">
-                    <label for="clearScoresEventSelect" class="form-label">Welche Daten löschen?</label>
-                    <select class="form-select" id="clearScoresEventSelect" name="event_id">
-                        <option value="pending">Alle Wettbewerbe mit Status 'Geplant'</option>
-                        <option value="active">Alle Wettbewerbe mit Status 'Aktiv'</option>
-                        <option value="all">Alle Wertungen (auch abgeschlossene)</option>
-                        <hr>
-                        {% for event in events %}
-                            {% if event.status not in ['Completed', 'Published'] %}
-                            <option value="{{ event.event_id }}">
-                                Nur für: {{ event.name }}
-                                {% if event.status == 'Pending' %}
-                                    (Geplant)
-                                {% elif event.status == 'Active' %}
-                                    (Aktiv)
-                                {% endif %}
-                            </option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="clearRoundsToo" name="clear_rounds_too">
-                    <label class="form-check-label" for="clearRoundsToo">
-                        Auch alle Durchgänge löschen (nicht nur Wertungen)
-                    </label>
-                </div>
+                {% set pending_events = events|selectattr('status', 'equalto', 'Pending')|list %}
+                {% if pending_events %}
+                    <p>L&ouml;scht alle Bewertungen, Durchg&auml;nge und Zuordnungen f&uuml;r den gew&auml;hlten Wettbewerb.</p>
+                    <p class="text-muted small">Nur Wettbewerbe mit Status &laquo;Geplant&raquo; k&ouml;nnen gel&ouml;scht werden.</p>
+
+                    {% if pending_events|length == 1 %}
+                        <p><strong>{{ pending_events[0].name }}</strong></p>
+                    {% else %}
+                        <div class="form-group mb-3">
+                            <label for="clearScoresEventSelect" class="form-label">Wettbewerb</label>
+                            <select class="form-select" id="clearScoresEventSelect">
+                                {% for event in pending_events %}
+                                    <option value="{{ event.event_id }}">{{ event.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">Keine Wettbewerbe mit Status &laquo;Geplant&raquo; vorhanden.</p>
+                {% endif %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <form id="clearScoresForm" method="POST" action="{{ url_for('contest.clear_scores') }}">
-                    <input type="hidden" id="clearEventId" name="event_id" value="all">
-                    <input type="hidden" id="clearRoundsTooHidden" name="clear_rounds_too" value="false">
-                    <button type="submit" class="btn btn-danger">Bewertungen Löschen</button>
-                </form>
+                {% if pending_events %}
+                    <form id="clearScoresForm" method="POST" action="{{ url_for('contest.clear_scores') }}">
+                        <input type="hidden" id="clearEventId" name="event_id" value="{{ pending_events[0].event_id }}">
+                        <button type="submit" class="btn btn-danger">Alle Daten l&ouml;schen</button>
+                    </form>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -314,18 +304,10 @@ function toggleLock() {
 document.addEventListener('DOMContentLoaded', function() {
     const clearScoresEventSelect = document.getElementById('clearScoresEventSelect');
     const clearEventIdInput = document.getElementById('clearEventId');
-    const clearRoundsTooCheckbox = document.getElementById('clearRoundsToo');
-    const clearRoundsTooHidden = document.getElementById('clearRoundsTooHidden');
-    
+
     if (clearScoresEventSelect && clearEventIdInput) {
         clearScoresEventSelect.addEventListener('change', function() {
             clearEventIdInput.value = this.value;
-        });
-    }
-    
-    if (clearRoundsTooCheckbox && clearRoundsTooHidden) {
-        clearRoundsTooCheckbox.addEventListener('change', function() {
-            clearRoundsTooHidden.value = this.checked ? 'true' : 'false';
         });
     }
 });

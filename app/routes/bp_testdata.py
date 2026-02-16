@@ -101,7 +101,11 @@ def index():
 
 @testdata_bp.route('/generate', methods=['POST'])
 def generate():
-    """Generate test scores based on selected options"""
+    """Generate test scores using the same code path as real data entry.
+
+    Uses generate_scoresheets_for_round() to create rounds/team_rounds/empty scores,
+    then ScoringService.create_score() to fill in values — exactly like a user would.
+    """
     try:
         # Get parameters from form
         team_ids = request.form.getlist('team_ids')
@@ -110,31 +114,31 @@ def generate():
         clear_existing = request.form.get('clear_existing') == 'on'
         event_id = request.form.get('event_id')
         specific_round = int(request.form.get('specific_round', 0))  # New parameter
-        
+
         # Get number of rounds
         num_rounds = int(request.form.get('num_rounds', 1))
-        
+
         # If num_rounds is 0, redirect to contest page for clearing all scores
         if num_rounds == 0:
             return redirect(url_for('contest.index'))
-        
+
         # Convert to integers
         team_ids = [int(id) for id in team_ids if id]
         judge_ids = [int(id) for id in judge_ids if id]
-        
+
         # Validation
         if not team_ids:
             flash('Please select at least one team', 'error')
             return redirect(url_for('testdata.index'))
-        
+
         if not judge_ids:
             flash('Please select at least one judge', 'error')
             return redirect(url_for('testdata.index'))
-            
+
         if not event_id:
             flash('Please select an event', 'error')
             return redirect(url_for('testdata.index'))
-        
+
         event_id = int(event_id)
         event = Event.query.get(event_id)
         if not event:
@@ -144,10 +148,10 @@ def generate():
         if event.status in ('Completed', 'Published'):
             flash(f'Testdaten können nicht für abgeschlossene Wettbewerbe generiert werden ({event.name})', 'error')
             return redirect(url_for('testdata.index'))
-        
+
         # Get existing rounds for this event
         existing_rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all()
-        
+
         # Clear existing scores if requested
         if clear_existing:
             try:
@@ -158,14 +162,13 @@ def generate():
                 logger.error(f"Error clearing scores: {str(e)}")
                 flash(f"Error clearing scores: {str(e)}", 'error')
                 return redirect(url_for('testdata.index'))
-        
+
         # Determine rounds to process
         if specific_round > 0:
             # Specific round mode - find or create the requested round
             round_obj = next((r for r in existing_rounds if r.round_number == specific_round), None)
-            
+
             if not round_obj:
-                # Create new round
                 round_obj = Round(
                     event_id=event_id,
                     round_number=specific_round,
@@ -174,19 +177,13 @@ def generate():
                 db.session.add(round_obj)
                 db.session.flush()
                 logger.info(f"Created new round {specific_round} for event {event_id}")
-            
-            # Process just this one round
+
             rounds_to_process = [round_obj]
         else:
-            # Multiple rounds mode
             rounds_to_process = []
-            
             for i in range(1, num_rounds + 1):
-                # Find or create each round
                 round_obj = next((r for r in existing_rounds if r.round_number == i), None)
-                
                 if not round_obj:
-                    # Create new round
                     round_obj = Round(
                         event_id=event_id,
                         round_number=i,
@@ -195,143 +192,119 @@ def generate():
                     db.session.add(round_obj)
                     db.session.flush()
                     logger.info(f"Created new round {i} for event {event_id}")
-                
                 rounds_to_process.append(round_obj)
-        
-        # Get task types
+
+        db.session.commit()
+
+        # Get task types for generating values
         task_types = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
-        
-        # Get teams
-        teams = Team.query.filter(Team.team_id.in_(team_ids)).all()
-        
-        # Get judges
+
+        # Get selected judges
         judges = Teilnehmer.query.filter(Teilnehmer.teilnehmer_id.in_(judge_ids)).all()
-        
-        # Generate scores
+        logger.info(f"TEST GENERATOR: selected judge_ids={judge_ids}, judges={[j.name for j in judges]}")
+
+        # Use the scoring service — same as the real entry form
+        from app.services.services_scoring import ScoringService
+        scoring_service = ScoringService()
+
         rounds_created = 0
         scores_generated = 0
-        
-        # Process each round
+
         for round_obj in rounds_to_process:
-            # Use the first judge as center judge for Flugzeit/Ziellandung values
-            if judges:
-                center_judge = judges[0]
-                logger.info(f"Center judge (first): {center_judge.name} for round {round_obj.round_number}")
+            # Step 1: Ensure TeamRounds + empty Scores exist
+            # Check if team_rounds already exist for this round
+            existing_tr_count = TeamRound.query.filter_by(round_id=round_obj.round_id).count()
+            if existing_tr_count == 0:
+                # First time: create team_rounds and empty score records
+                from app.routes.bp_formular import generate_scoresheets_for_round
+                generate_scoresheets_for_round(round_obj.round_id)
+                logger.info(f"Created scoresheets for round {round_obj.round_number} (was empty)")
             else:
-                center_judge = None
-            
-            # Generate scores for each team
-            for team in teams:
-                # Find or create team round
-                team_round = TeamRound.query.filter_by(
-                    round_id=round_obj.round_id,
-                    team_id=team.team_id
-                ).first()
-                
-                if not team_round:
-                    team_round = TeamRound(
-                        round_id=round_obj.round_id,
-                        team_id=team.team_id,
-                        status='Pending',
-                        start_order=team.team_nummer
-                    )
-                    db.session.add(team_round)
-                    db.session.flush()
-                
+                logger.info(f"Round {round_obj.round_number} already has {existing_tr_count} team_rounds — NOT wiping")
+
+            # Step 2: For each team, generate score values and submit via create_score()
+            team_rounds = TeamRound.query.filter_by(round_id=round_obj.round_id).all()
+
+            for team_round in team_rounds:
+                # Skip teams not in our selected list
+                if team_round.team_id not in team_ids:
+                    continue
+
                 # Select which variant each team uses (same for all judges)
                 chosen_variants = handle_mutually_exclusive_figures(task_types)
-                
-                # For flight time (SEGZEIT) and landing zones (LANDGM, LANS, SEILZ)
-                # Generate a single value that will be used by the center judge
-                segzeit_value = random.randint(170, 230)
-                landing_values = {
-                    'LANDGM': generate_landing_score(),
-                    'LANS': generate_landing_score(),
-                    'SEILZ': generate_landing_score()
-                }
-                
-                # Generate scores for each judge
+
+                # Messwerte: generated once by judge 1 (first in list), never regenerated
+                # Check if this team_round already has Messwerte from a previous run
+                messwertung_codes = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ']
+                has_messwerte = db.session.query(ScoreValue).join(Score).join(TaskType).filter(
+                    Score.team_round_id == team_round.team_round_id,
+                    TaskType.code.in_(messwertung_codes)
+                ).first() is not None
+
+                if not has_messwerte:
+                    segzeit_value = random.randint(170, 230)
+                    landing_values = {
+                        'LANDGM': generate_landing_score(),
+                        'LANS': generate_landing_score(),
+                        'SEILZ': generate_landing_score()
+                    }
+
+                # Apply score variability
+                std_dev = score_variability / 100 * 3
+
                 for judge in judges:
-                    # Create new score
-                    score = Score(
-                        team_round_id=team_round.team_round_id,
-                        judge_id=judge.teilnehmer_id,
-                        entered_at=datetime.now(),
-                        notes="Test data generated score"
-                    )
-                    db.session.add(score)
-                    db.session.flush()
-                    
-                    # Apply score variability
-                    std_dev = score_variability / 100 * 3  # Convert to standard deviation
-                    
-                    # Generate values for each task type
+                    score_values = {}
+
                     for task_type in task_types:
-                        # For landing zones and flight time, only the center judge creates entries
-                        if task_type.code in ['LANDGM', 'LANS', 'SEILZ', 'SEGZEIT']:
-                            # Skip creating entries for non-center judges
-                            if judge.teilnehmer_id != center_judge.teilnehmer_id:
-                                continue
-                                
-                            # Set value for center judge
-                            if task_type.code == 'SEGZEIT':
-                                value = segzeit_value
-                            else:
-                                value = landing_values[task_type.code]
-                        elif 'Platzrunde' in task_type.name_de:
-                            # For Platzrunde variants
+                        if task_type.code in messwertung_codes:
+                            # Messwerte: only on first judge, only if not already present
+                            if not has_messwerte and judge == judges[0]:
+                                if task_type.code == 'SEGZEIT':
+                                    score_values[task_type.code] = segzeit_value
+                                else:
+                                    score_values[task_type.code] = landing_values[task_type.code]
+                        elif task_type.name_de and 'Platzrunde' in task_type.name_de:
                             if 'platzrunde' in chosen_variants and task_type.type_id == chosen_variants['platzrunde']:
                                 value = generate_gaussian_score(std_dev=std_dev)
                             else:
                                 value = 0.0
-                        elif 'berflug' in task_type.name_de:
-                            # For Platzüberflug variants
+                            score_values[task_type.code] = value
+                        elif task_type.name_de and 'berflug' in task_type.name_de:
                             if 'platzu' in chosen_variants and task_type.type_id == chosen_variants['platzu']:
                                 value = generate_gaussian_score(std_dev=std_dev)
                             else:
                                 value = 0.0
+                            score_values[task_type.code] = value
                         else:
-                            # Standard scores centered around 7
                             value = generate_gaussian_score(std_dev=std_dev)
-                            
-                        # If task has max_value set, respect it
-                        if value is not None and task_type.max_value is not None:
-                            value = min(value, task_type.max_value)
-                        
-                        # Create score value
-                        score_value = ScoreValue(
-                            score_id=score.score_id,
-                            task_type_id=task_type.type_id,
-                            value=value
-                        )
-                        db.session.add(score_value)
-                    
+                            if task_type.max_value is not None:
+                                value = min(value, task_type.max_value)
+                            score_values[task_type.code] = value
+
+                    # Submit via create_score() — same as the real form
+                    scoring_service.create_score(
+                        team_round_id=team_round.team_round_id,
+                        judge_id=judge.teilnehmer_id,
+                        score_values=score_values,
+                        notes="Test data generated score"
+                    )
                     scores_generated += 1
-                    
-                # Calculate team_round raw score and normalized score
-                from app.services.services_scoring import ScoringService
-                scoring_service = ScoringService()
-                scoring_service.update_team_round_scores(team_round.team_round_id)
-            
+
             rounds_created += 1
-        
-        # Commit all changes
-        db.session.commit()
-        
+
         if specific_round > 0:
-            logger.info(f"Generated scores for round {specific_round}: {len(teams) * len(judges)} team-judge combinations")
+            logger.info(f"Generated scores for round {specific_round}: {scores_generated} scores via create_score()")
             flash(f'Successfully generated {scores_generated} scores for round {specific_round}', 'success')
         else:
-            logger.info(f"Generated scores for {len(teams) * len(judges) * len(rounds_to_process)} team-judge-round combinations")
+            logger.info(f"Generated {scores_generated} scores across {rounds_created} rounds via create_score()")
             flash(f'Successfully created {rounds_created} rounds and generated {scores_generated} scores', 'success')
-        
-        # Direct to the event page but handle potential errors on the report page
+
         try:
             return redirect(url_for('reports.standings', event_id=event_id))
         except Exception as e:
             logger.error(f"Error redirecting to standings: {str(e)}")
             return redirect(url_for('reports.index'))
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error generating test data: {str(e)}")

@@ -217,7 +217,7 @@
                                             {% if round_obj %}
                                                 {% set key = round_obj.round_id|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
                                                 {% if key in completed_scores %}
-                                                    <!-- Scoresheet exists key={{ key }} quality={{ key in has_quality_scores }} -->
+                                                    <!-- Scoresheet exists -->
                                                     {% set score = completed_scores[key] %}
                                                     <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}"
                                                         class="btn {% if score.locked %}btn-warning{% elif key in has_quality_scores %}btn-success{% else %}btn-outline-secondary{% endif %} judge-btn"

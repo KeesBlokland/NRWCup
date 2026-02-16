@@ -201,8 +201,6 @@ def generate():
 
         # Get selected judges
         judges = Teilnehmer.query.filter(Teilnehmer.teilnehmer_id.in_(judge_ids)).all()
-        logger.info(f"TEST GENERATOR: selected judge_ids={judge_ids}, judges={[j.name for j in judges]}")
-
         # Use the scoring service — same as the real entry form
         from app.services.services_scoring import ScoringService
         scoring_service = ScoringService()

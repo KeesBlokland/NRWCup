@@ -332,9 +332,10 @@ def score_list():
             if team_round:
                 key = f"{team_round.round_id}_{team_round.team_id}_{score.judge_id}"
                 completed_dict[key] = score
-                codes = [sv.task_type.code for sv in score.values if sv.task_type]
-                has_quality = any(c not in MESSWERTUNG_CODES for c in codes)
-                logger.debug(f"Score {score.score_id} judge {score.judge_id}: codes={codes} has_quality={has_quality}")
+                has_quality = any(
+                    sv.task_type and sv.task_type.code not in MESSWERTUNG_CODES
+                    for sv in score.values
+                )
                 if has_quality:
                     has_quality_set.add(key)
         

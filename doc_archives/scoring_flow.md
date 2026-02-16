@@ -110,12 +110,18 @@ The test generator follows the exact same code path as real data entry:
 
 ## Display
 
-- On the scoresheet form, Messwerte that were replicated (not originally entered on this
-  sheet) are shown with a light blue background as visual indicator
-- The `is_messwertung_owner` flag determines this: the first Score by ID for a TeamRound
-  is considered the "owner" — purely visual, no functional difference
-- All Messwerte fields remain editable on all sheets — correcting a value and saving
-  triggers replication to update all other judges
+### Scoresheet Form
+- The first judge to enter Messwerte is the "owner" (`is_messwertung_owner` = first Score by ID)
+- Owner's Messwerte fields: normal appearance, editable — can correct values
+- Other judges' Messwerte fields: light blue background (`#e8f4fd`), **read-only** (disabled/readonly)
+- This prevents accidental changes to Messwerte from non-owner sheets
+- Info text: "Messwerte werden automatisch übertragen und können nur auf dem Originalbogen geändert werden"
+
+### Scoring List (Judge Buttons)
+- **Grey** (`btn-outline-secondary`): Score record exists but no quality scores entered (Messwerte-only from replication don't count)
+- **Green** (`btn-success`): Quality scores have been entered
+- **Yellow** (`btn-warning`): Score is locked
+- The `has_quality_scores` set in the backend tracks which scores have non-Messwerte ScoreValues
 
 ## Event Status Protection
 

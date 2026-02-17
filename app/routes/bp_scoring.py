@@ -778,6 +778,16 @@ def view_score(score_id):
                     break
             kuer_choices[group] = chosen
 
+        # Build prev/next judge navigation for the same team_round
+        sibling_scores = []
+        current_index = None
+        for idx, s in enumerate(all_scores_for_tr):
+            sibling_scores.append({'score_id': s.score_id, 'judge_name': s.judge.name if s.judge else f'R{idx+1}'})
+            if s.score_id == score.score_id:
+                current_index = idx
+        prev_score_id = sibling_scores[current_index - 1]['score_id'] if current_index and current_index > 0 else None
+        next_score_id = sibling_scores[current_index + 1]['score_id'] if current_index is not None and current_index < len(sibling_scores) - 1 else None
+
         # Get referer parameters for the back button
         referer_params = {}
         if request.referrer:
@@ -808,7 +818,11 @@ def view_score(score_id):
                               referer_params=referer_params,
                               judges=scoring_service.get_judges(),
                               event=event,
-                              active_event=active_event)
+                              active_event=active_event,
+                              prev_score_id=prev_score_id,
+                              next_score_id=next_score_id,
+                              sibling_scores=sibling_scores,
+                              current_score_index=current_index)
     except Exception as e:
         logger.error(f"Error viewing score: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")

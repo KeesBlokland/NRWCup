@@ -100,6 +100,37 @@
                     </div>
                 </div>
 
+                <!-- Action Buttons (top) -->
+                <div class="d-flex justify-content-between align-items-center mb-2 py-1 border-bottom">
+                    <div>
+                        {% if score %}
+                            {% if prev_score_id %}
+                                <a href="{{ url_for('scoring.view_score', score_id=prev_score_id) }}" class="btn btn-outline-secondary btn-sm" title="Vorheriger Punktwerter">&laquo; Voriger</a>
+                            {% endif %}
+                            {% if next_score_id %}
+                                <a href="{{ url_for('scoring.view_score', score_id=next_score_id) }}" class="btn btn-outline-secondary btn-sm" title="Nächster Punktwerter">Nächster &raquo;</a>
+                            {% endif %}
+                            {% if not prev_score_id and not next_score_id %}
+                                <span class="text-muted small">Einzelbewertung</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if score and not score.locked %}
+                            <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
+                            {% if referer_params %}
+                                <a href="{{ url_for('scoring.score_list', event_id=referer_params.get('event_id'), round_id=referer_params.get('round_id'), judge_id=referer_params.get('judge_id')) }}" class="btn btn-secondary btn-sm">Zurück</a>
+                            {% else %}
+                                <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary btn-sm">Zurück</a>
+                            {% endif %}
+                        {% elif score and score.locked and not session.get('is_admin') %}
+                            <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary btn-sm">Zurück</a>
+                        {% elif score and score.locked and session.get('is_admin') %}
+                            <button type="submit" class="btn btn-primary btn-sm">Speichern (Admin)</button>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <!-- Score Values Table -->
                 <table class="table table-sm">
                     <thead>
@@ -253,54 +284,46 @@
                 </div>
                 {% endif %}
 
-                <!-- Form Actions -->
-                <!-- Form Actions -->
-                <div class="text-center mt-3">
+                <!-- Form Actions (bottom) -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        {% if score %}
+                            {% if prev_score_id %}
+                                <a href="{{ url_for('scoring.view_score', score_id=prev_score_id) }}" class="btn btn-outline-secondary btn-sm">&laquo; Voriger</a>
+                            {% endif %}
+                            {% if next_score_id %}
+                                <a href="{{ url_for('scoring.view_score', score_id=next_score_id) }}" class="btn btn-outline-secondary btn-sm">Nächster &raquo;</a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div>
                     {% if score and not score.locked %}
-                        <button type="submit" class="btn btn-primary">
-                            Speichern
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="fillAllZeros()">
-                            Werte auf 0 setzen
-                        </button>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
                         <form action="{{ url_for('scoring.lock_score', score_id=score.score_id) }}" method="POST" style="display: inline;">
                             <input type="hidden" name="redirect" value="{{ url_for('scoring.view_score', score_id=score.score_id) }}">
                             <button type="button" class="btn btn-warning" onclick="lockScore({{ score.score_id }})" style="display: inline;">
                                 Sperren
                             </button>
                         </form>
+                        {% if referer_params %}
+                            <a href="{{ url_for('scoring.score_list', event_id=referer_params.get('event_id'), round_id=referer_params.get('round_id'), judge_id=referer_params.get('judge_id')) }}" class="btn btn-secondary">Zurück</a>
+                        {% else %}
+                            <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück</a>
+                        {% endif %}
                     {% elif score and score.locked and session.get('is_admin') %}
-                        <button type="submit" class="btn btn-primary">
-                            Speichern (Admin)
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="fillAllZeros()">
-                            Werte auf 0 setzen
-                        </button>
+                        <button type="submit" class="btn btn-primary">Speichern (Admin)</button>
                         <form action="{{ url_for('scoring.unlock_score', score_id=score.score_id) }}" method="POST" style="display: inline;">
                             <button type="button" class="btn btn-danger" onclick="unlockScore({{ score.score_id }})">
                                 Entsperren (Admin)
                             </button>
                         </form>
                     {% elif score and score.locked %}
-                        <!-- Display for locked scores (non-admin users) - ONLY ONE BACK BUTTON HERE -->
                         <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück zur Liste</a>
                     {% else %}
-                        <button type="submit" class="btn btn-primary">
-                            Bewertung Speichern
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="fillAllZeros()">
-                            Alle Werte auf 0 setzen
-                        </button>
+                        <button type="submit" class="btn btn-primary">Bewertung Speichern</button>
                         <button type="reset" class="btn btn-secondary ms-2" onclick="clearAllFields()">Zurücksetzen</button>
                     {% endif %}
-                    
-                    {% if score and not score.locked %}
-                        {% if referer_params %}
-                            <a href="{{ url_for('scoring.score_list', event_id=referer_params.get('event_id'), round_id=referer_params.get('round_id'), judge_id=referer_params.get('judge_id')) }}" class="btn btn-secondary">Zurück zur Liste</a>
-                        {% else %}
-                            <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück zur Liste</a>
-                        {% endif %}
-                    {% endif %}
+                    </div>
                 </div>
             </form>
         </div>
@@ -328,81 +351,6 @@
         document.querySelectorAll('select.landing-score').forEach(select => {
             select.value = '';
         });
-    }
-    
-    function fillAllZeros() {
-        // Set all numeric inputs to zero
-        document.querySelectorAll('input.figure-score').forEach(input => {
-            if (!input.readOnly) {
-                input.value = '0';
-                
-                // Update corresponding points display
-                const figureCode = input.getAttribute('data-figure-code');
-                const kFactor = document.querySelector(`#${figureCode}_points`).getAttribute('data-kfactor') || 1;
-                
-                // Special case for Seglerzeit
-                if (figureCode === 'SEGZEIT') {
-                    calculateSeglerzeit(0);
-                } else {
-                    updatePoints(input, kFactor, `${figureCode}_points`);
-                }
-            }
-        });
-        
-        // Set all landing zone dropdowns to zero
-        document.querySelectorAll('select.landing-score').forEach(select => {
-            if (!select.disabled) {
-                select.value = '0';
-                
-                // Update corresponding points
-                const figureCode = select.name.replace('score_', '');
-                updateLandingPoints(figureCode, 0);
-            }
-        });
-        
-        // For mutual exclusion groups, ensure only one in each group has a value
-        // For Platzrunde group
-        const platzrundeInputs = document.querySelectorAll('input[data-group="platzrunde"]');
-        if (platzrundeInputs.length > 0) {
-            // Set the first one to 0, clear the others
-            platzrundeInputs[0].value = '0';
-            const figureCode = platzrundeInputs[0].getAttribute('data-figure-code');
-            const kFactor = document.querySelector(`#${figureCode}_points`).getAttribute('data-kfactor') || 1;
-            updatePoints(platzrundeInputs[0], kFactor, `${figureCode}_points`);
-            
-            // Clear the others
-            for (let i = 1; i < platzrundeInputs.length; i++) {
-                platzrundeInputs[i].value = '';
-                const fc = platzrundeInputs[i].getAttribute('data-figure-code');
-                document.querySelector(`#${fc}_points`).value = '';
-            }
-        }
-        
-        // For Platzüberflug group
-        const platzuInputs = document.querySelectorAll('input[data-group="platzueberflug"]');
-        if (platzuInputs.length > 0) {
-            // Set the first one to 0, clear the others
-            platzuInputs[0].value = '0';
-            const figureCode = platzuInputs[0].getAttribute('data-figure-code');
-            const kFactor = document.querySelector(`#${figureCode}_points`).getAttribute('data-kfactor') || 1;
-            updatePoints(platzuInputs[0], kFactor, `${figureCode}_points`);
-            
-            // Clear the others
-            for (let i = 1; i < platzuInputs.length; i++) {
-                platzuInputs[i].value = '';
-                const fc = platzuInputs[i].getAttribute('data-figure-code');
-                document.querySelector(`#${fc}_points`).value = '';
-            }
-        }
-        
-        // Update total after setting all to zero
-        updateTotalPoints();
-        
-        // Highlight that this is an all-zero scoresheet
-        document.getElementById('total_points').style.backgroundColor = '#ffeeee';
-        
-        // Show confirmation
-        alert('Alle Werte wurden auf 0 gesetzt.');
     }
     
     function calculateSeglerzeit(actualTime) {
@@ -665,18 +613,6 @@
             
             return hasValues && allZero;
         };
-    });
-
-    // Calculate initial total points when the page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        // Calculate initial total points
-        updateTotalPoints();
-        
-        // Check if this is an all-zeros score sheet on load
-        if (checkAllZeros()) {
-            // Highlight to the user that this is an all-zero scoresheet
-            document.getElementById('total_points').style.backgroundColor = '#ffeeee';
-        }
     });
 
 function lockScore(scoreId) {

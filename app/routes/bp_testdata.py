@@ -6,7 +6,7 @@ Updated: 2025-04-15
 Description: Test data generation with complete TeamRound deletion
 """
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from app.models import db, Team, Round, Teilnehmer, Event, Score, ScoreValue, TaskType, TeamRound
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.clear_data import clear_all_scores, clear_event_data
@@ -324,3 +324,155 @@ def clear_all():
         logger.error(f"Error redirecting to contest page: {str(e)}")
         flash(f'Error redirecting to contest page: {str(e)}', 'error')
         return redirect(url_for('testdata.index'))
+
+
+@testdata_bp.route('/demo_setup', methods=['POST'])
+def demo_setup():
+    """Prepare demo mode: ensure round exists with TeamRounds and empty scores.
+    Returns the list of steps (team/judge combinations) as JSON."""
+    try:
+        data = request.get_json()
+        event_id = int(data.get('event_id'))
+        team_ids = [int(x) for x in data.get('team_ids', [])]
+        judge_ids = [int(x) for x in data.get('judge_ids', [])]
+        round_number = int(data.get('round_number', 1))
+        variability = int(data.get('variability', 20))
+
+        event = Event.query.get(event_id)
+        if not event or event.status != 'Pending':
+            return jsonify({'error': 'Event nicht gefunden oder nicht im Status Geplant'}), 400
+
+        # Find or create round
+        round_obj = Round.query.filter_by(event_id=event_id, round_number=round_number).first()
+        if not round_obj:
+            round_obj = Round(event_id=event_id, round_number=round_number, status='Active')
+            db.session.add(round_obj)
+            db.session.flush()
+
+        # Ensure TeamRounds + empty Scores exist
+        existing_tr_count = TeamRound.query.filter_by(round_id=round_obj.round_id).count()
+        if existing_tr_count == 0:
+            from app.routes.bp_formular import generate_scoresheets_for_round
+            generate_scoresheets_for_round(round_obj.round_id)
+
+        db.session.commit()
+
+        # Build step list: for each team, for each judge
+        team_rounds = TeamRound.query.filter_by(round_id=round_obj.round_id)\
+            .join(Team).order_by(Team.team_nummer).all()
+
+        judges = Teilnehmer.query.filter(Teilnehmer.teilnehmer_id.in_(judge_ids)).all()
+        judge_map = {j.teilnehmer_id: j.name for j in judges}
+
+        # Pre-generate chosen variants per team (consistent across judges)
+        task_types = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
+
+        steps = []
+        for tr in team_rounds:
+            if tr.team_id not in team_ids:
+                continue
+            team = Team.query.get(tr.team_id)
+            chosen = handle_mutually_exclusive_figures(task_types)
+            for jid in judge_ids:
+                steps.append({
+                    'team_round_id': tr.team_round_id,
+                    'team_id': tr.team_id,
+                    'team_nummer': team.team_nummer,
+                    'team_name': f"{team.schlepper_pilot.name if team.schlepper_pilot else '?'} / {team.segler_pilot.name if team.segler_pilot else '?'}",
+                    'judge_id': jid,
+                    'judge_name': judge_map.get(jid, '?'),
+                    'chosen_platzrunde': chosen.get('platzrunde'),
+                    'chosen_platzu': chosen.get('platzu'),
+                })
+
+        return jsonify({
+            'steps': steps,
+            'round_id': round_obj.round_id,
+            'round_number': round_number,
+            'event_name': event.name,
+            'variability': variability,
+            'total_steps': len(steps),
+        })
+
+    except Exception as e:
+        logger.error(f"Demo setup error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@testdata_bp.route('/demo_step', methods=['POST'])
+def demo_step():
+    """Execute one demo step: generate and save scores for one judge + one team.
+    Uses the same create_score() as real data entry."""
+    try:
+        data = request.get_json()
+        team_round_id = int(data['team_round_id'])
+        judge_id = int(data['judge_id'])
+        chosen_platzrunde = data.get('chosen_platzrunde')
+        chosen_platzu = data.get('chosen_platzu')
+        variability = int(data.get('variability', 20))
+        is_first_judge = data.get('is_first_judge', False)
+
+        task_types = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
+        messwertung_codes = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ']
+        std_dev = variability / 100 * 3
+
+        # Check if Messwerte already exist for this team_round
+        has_messwerte = db.session.query(ScoreValue).join(Score).join(TaskType).filter(
+            Score.team_round_id == team_round_id,
+            TaskType.code.in_(messwertung_codes)
+        ).first() is not None
+
+        # Generate Messwerte if needed (first judge only)
+        if not has_messwerte and is_first_judge:
+            segzeit_value = random.randint(170, 230)
+            landing_values = {
+                'LANDGM': generate_landing_score(),
+                'LANS': generate_landing_score(),
+                'SEILZ': generate_landing_score()
+            }
+
+        score_values = {}
+        for task_type in task_types:
+            if task_type.code in messwertung_codes:
+                if not has_messwerte and is_first_judge:
+                    if task_type.code == 'SEGZEIT':
+                        score_values[task_type.code] = segzeit_value
+                    else:
+                        score_values[task_type.code] = landing_values[task_type.code]
+            elif task_type.name_de and 'Platzrunde' in task_type.name_de:
+                if chosen_platzrunde and task_type.type_id == chosen_platzrunde:
+                    score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
+                else:
+                    score_values[task_type.code] = 0.0
+            elif task_type.name_de and 'berflug' in task_type.name_de:
+                if chosen_platzu and task_type.type_id == chosen_platzu:
+                    score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
+                else:
+                    score_values[task_type.code] = 0.0
+            else:
+                value = generate_gaussian_score(std_dev=std_dev)
+                if task_type.max_value is not None:
+                    value = min(value, task_type.max_value)
+                score_values[task_type.code] = value
+
+        from app.services.services_scoring import ScoringService
+        scoring_service = ScoringService()
+        scoring_service.create_score(
+            team_round_id=team_round_id,
+            judge_id=judge_id,
+            score_values=score_values,
+            notes="Demo mode generated score"
+        )
+
+        # Get updated team_round info
+        tr = TeamRound.query.get(team_round_id)
+        return jsonify({
+            'success': True,
+            'raw_score': float(tr.raw_score) if tr.raw_score is not None else None,
+            'normalized_score': float(tr.normalized_score) if tr.normalized_score is not None else None,
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Demo step error: {e}")
+        return jsonify({'error': str(e)}), 500

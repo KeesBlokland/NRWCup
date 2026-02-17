@@ -131,9 +131,59 @@
 
                 <div class="mt-4 text-center">
                     <button type="submit" class="btn btn-primary">Testwertungen Generieren</button>
-                    <a href="{{ url_for('testdata.clear_all') }}" class="btn btn-danger">Zur Löschseite</a>
+                    <button type="button" class="btn btn-outline-info" onclick="startDemo()">Demo-Modus</button>
+                    <a href="{{ url_for('testdata.clear_all') }}" class="btn btn-outline-danger">Zur Löschseite</a>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Demo Mode Panel -->
+    <div class="card mt-4 d-none" id="demoPanel">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Demo-Modus</h3>
+            <div>
+                <span class="badge bg-secondary" id="demoProgress">0 / 0</span>
+                <button class="btn btn-outline-secondary btn-sm ms-2" onclick="stopDemo()">Beenden</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Current step info -->
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <div id="demoStatus" class="fs-5">
+                        <span class="text-muted">Bereit...</span>
+                    </div>
+                    <div id="demoDetail" class="text-muted small"></div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="demoNextBtn" onclick="demoNext()" disabled>
+                            Nächster Schritt
+                        </button>
+                        <button class="btn btn-outline-primary" id="demoAutoBtn" onclick="toggleAutoPlay()">
+                            Auto
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Speed control -->
+            <div class="row mb-3" id="demoSpeedRow">
+                <div class="col-md-4">
+                    <label class="form-label small">Geschwindigkeit</label>
+                    <input type="range" class="form-range" id="demoSpeed" min="500" max="5000" value="2000" step="250">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Schnell</small>
+                        <small class="text-muted" id="demoSpeedLabel">2.0s</small>
+                        <small class="text-muted">Langsam</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress log -->
+            <div class="border rounded p-2" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85rem;" id="demoLog">
+            </div>
         </div>
     </div>
 </div>
@@ -141,6 +191,189 @@
 <script>
     function updateVariabilityValue(value) {
         document.getElementById('variabilityValue').textContent = value;
+    }
+
+    // Demo mode state
+    let demoSteps = [];
+    let demoCurrentStep = 0;
+    let demoAutoInterval = null;
+    let demoRunning = false;
+    let demoEventName = '';
+
+    document.getElementById('demoSpeed').addEventListener('input', function() {
+        document.getElementById('demoSpeedLabel').textContent = (this.value / 1000).toFixed(1) + 's';
+    });
+
+    function startDemo() {
+        // Gather form values
+        const eventId = document.getElementById('event_id').value;
+        if (!eventId) { alert('Bitte Veranstaltung auswählen'); return; }
+
+        const teamIds = [...document.querySelectorAll('input[name="team_ids"]:checked')].map(c => c.value);
+        const judgeIds = [...document.querySelectorAll('input[name="judge_ids"]:checked')].map(c => c.value);
+        if (!teamIds.length || !judgeIds.length) { alert('Bitte Teams und Punktrichter auswählen'); return; }
+
+        const variability = document.getElementById('score_variability').value;
+        const roundNum = parseInt(document.getElementById('specific_round').value) || parseInt(document.getElementById('num_rounds').value) || 1;
+
+        document.getElementById('demoPanel').classList.remove('d-none');
+        document.getElementById('demoLog').innerHTML = '';
+        logDemo('Vorbereitung...', 'text-muted');
+
+        fetch('/testdata/demo_setup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                event_id: eventId,
+                team_ids: teamIds,
+                judge_ids: judgeIds,
+                round_number: roundNum,
+                variability: variability
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { logDemo('Fehler: ' + data.error, 'text-danger'); return; }
+
+            demoSteps = data.steps;
+            demoCurrentStep = 0;
+            demoEventName = data.event_name;
+            demoRunning = true;
+
+            document.getElementById('demoNextBtn').disabled = false;
+            document.getElementById('demoProgress').textContent = `0 / ${demoSteps.length}`;
+            logDemo(`${data.event_name} — Durchgang ${data.round_number}`, 'fw-bold');
+            logDemo(`${demoSteps.length} Schritte: ${teamIds.length} Teams × ${judgeIds.length} Punktrichter`, 'text-muted');
+            logDemo('─'.repeat(50), 'text-muted');
+            updateDemoStatus();
+        })
+        .catch(err => logDemo('Fehler: ' + err.message, 'text-danger'));
+    }
+
+    function updateDemoStatus() {
+        if (demoCurrentStep >= demoSteps.length) {
+            document.getElementById('demoStatus').innerHTML = '<span class="text-success fw-bold">Fertig!</span>';
+            document.getElementById('demoDetail').textContent = `Alle ${demoSteps.length} Bewertungen eingegeben.`;
+            document.getElementById('demoNextBtn').disabled = true;
+            stopAutoPlay();
+            return;
+        }
+        const step = demoSteps[demoCurrentStep];
+        const judgeNum = (demoCurrentStep % getJudgeCount()) + 1;
+        document.getElementById('demoStatus').innerHTML =
+            `<strong>Team ${step.team_nummer}</strong> — Punktrichter ${judgeNum}: ${step.judge_name}`;
+        document.getElementById('demoDetail').textContent = step.team_name;
+    }
+
+    function getJudgeCount() {
+        // Count unique judges from first team's steps
+        if (!demoSteps.length) return 1;
+        const firstTeamId = demoSteps[0].team_id;
+        return demoSteps.filter(s => s.team_id === firstTeamId).length;
+    }
+
+    function demoNext() {
+        if (!demoRunning || demoCurrentStep >= demoSteps.length) return;
+
+        const step = demoSteps[demoCurrentStep];
+        const judgeNum = (demoCurrentStep % getJudgeCount()) + 1;
+        const isFirstJudge = judgeNum === 1;
+
+        document.getElementById('demoNextBtn').disabled = true;
+
+        fetch('/testdata/demo_step', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                team_round_id: step.team_round_id,
+                judge_id: step.judge_id,
+                chosen_platzrunde: step.chosen_platzrunde,
+                chosen_platzu: step.chosen_platzu,
+                variability: document.getElementById('score_variability').value,
+                is_first_judge: isFirstJudge
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                logDemo(`  ✗ Fehler: ${data.error}`, 'text-danger');
+                document.getElementById('demoNextBtn').disabled = false;
+                return;
+            }
+
+            // Log the step
+            let msg = `Team ${step.team_nummer} · R${judgeNum} ${step.judge_name}`;
+            if (isFirstJudge) {
+                msg += ' (+Messwerte)';
+            }
+            if (data.raw_score !== null) {
+                msg += ` → ${data.raw_score.toFixed(1)} Pkt`;
+            }
+            if (judgeNum === getJudgeCount() && data.normalized_score !== null) {
+                msg += ` (${(data.normalized_score / 10).toFixed(1)}%)`;
+            }
+            logDemo(msg, judgeNum === getJudgeCount() ? 'text-success' : '');
+
+            // Separator between teams
+            if (judgeNum === getJudgeCount() && demoCurrentStep < demoSteps.length - 1) {
+                logDemo('', '');
+            }
+
+            demoCurrentStep++;
+            document.getElementById('demoProgress').textContent = `${demoCurrentStep} / ${demoSteps.length}`;
+            document.getElementById('demoProgress').className =
+                demoCurrentStep >= demoSteps.length ? 'badge bg-success' : 'badge bg-primary';
+
+            updateDemoStatus();
+            document.getElementById('demoNextBtn').disabled = false;
+        })
+        .catch(err => {
+            logDemo(`  ✗ ${err.message}`, 'text-danger');
+            document.getElementById('demoNextBtn').disabled = false;
+        });
+    }
+
+    function toggleAutoPlay() {
+        if (demoAutoInterval) {
+            stopAutoPlay();
+        } else {
+            const speed = parseInt(document.getElementById('demoSpeed').value);
+            document.getElementById('demoAutoBtn').textContent = 'Stop';
+            document.getElementById('demoAutoBtn').classList.replace('btn-outline-primary', 'btn-warning');
+            demoAutoInterval = setInterval(() => {
+                if (demoCurrentStep >= demoSteps.length) {
+                    stopAutoPlay();
+                    return;
+                }
+                demoNext();
+            }, speed);
+        }
+    }
+
+    function stopAutoPlay() {
+        if (demoAutoInterval) {
+            clearInterval(demoAutoInterval);
+            demoAutoInterval = null;
+        }
+        document.getElementById('demoAutoBtn').textContent = 'Auto';
+        document.getElementById('demoAutoBtn').classList.replace('btn-warning', 'btn-outline-primary');
+    }
+
+    function stopDemo() {
+        stopAutoPlay();
+        demoRunning = false;
+        demoSteps = [];
+        demoCurrentStep = 0;
+        document.getElementById('demoPanel').classList.add('d-none');
+    }
+
+    function logDemo(msg, cssClass) {
+        const log = document.getElementById('demoLog');
+        const line = document.createElement('div');
+        if (cssClass) line.className = cssClass;
+        line.textContent = msg;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
     }
 
     document.addEventListener('DOMContentLoaded', function() {

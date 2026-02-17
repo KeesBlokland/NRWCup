@@ -25,13 +25,14 @@ class RoundService(BaseService):
     
     def update_event_rounds(self, event_id, estimated_rounds):
         """
-        Update rounds for an event based on estimated_rounds.
-        Creates missing rounds and removes excess rounds.
-        
+        Store the estimated number of rounds for an event.
+        Rounds are created one at a time via generate_next_round, not pre-created.
+        This value is only an indication for the contest director.
+
         Args:
             event_id: Event ID
-            estimated_rounds: Number of rounds to ensure exist
-            
+            estimated_rounds: Estimated number of rounds (informational only)
+
         Returns:
             True if successful, False otherwise
         """
@@ -40,39 +41,11 @@ class RoundService(BaseService):
             if not event:
                 logger.error(f"Event {event_id} not found")
                 return False
-                
-            # Get existing rounds
-            existing_rounds = Round.query.filter_by(event_id=event_id).all()
-            existing_round_numbers = {r.round_number for r in existing_rounds}
-            
-            # Create missing rounds
-            for i in range(1, estimated_rounds + 1):
-                if i not in existing_round_numbers:
-                    logger.info(f"Creating round {i} for event {event_id}")
-                    new_round = Round(
-                        event_id=event_id,
-                        round_number=i,
-                        status='Active'
-                    )
-                    db.session.add(new_round)
-            
-            # Remove excess rounds if estimated_rounds has decreased
-            for round_obj in existing_rounds:
-                if round_obj.round_number > estimated_rounds:
-                    logger.info(f"Removing excess round {round_obj.round_number} for event {event_id}")
-                    
-                    # Use the utility function to clear round data
-                    clear_round_data(round_obj.round_id)
-                    
-                    # Now delete the round
-                    db.session.delete(round_obj)
-            
-            # Update event's estimated_rounds
+
             event.estimated_rounds = estimated_rounds
-            
             db.session.commit()
             return True
-            
+
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error updating event rounds: {str(e)}")

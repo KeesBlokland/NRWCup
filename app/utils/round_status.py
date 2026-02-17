@@ -82,14 +82,21 @@ def round_completion_status(round_id):
         # Build lookup maps for task types
         all_types = {t.code: t.type_id for t in TaskType.query.filter_by(is_active=True).all()}
         MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
-        MANDATORY_CODES = {'STRT', 'PLZU', 'HKURV', 'AUSKL', 'VKURV',
-                           'SEILW', 'LANM', 'LANDM', 'LANDGS', 'LANDS', 'ERSCH'}
-        KUER_GROUPS = [
-            {'PLTZ-M', 'PLTZ-MK'},     # Platzrunde variants
-            {'PLTZ-1OV', 'PLTZ-2KR'},   # Platzueberflug variants
+        # 9 always-mandatory figures (not part of any exclusive group)
+        ALWAYS_MANDATORY = {'STRT', 'AUSKL', 'VKURV', 'SEILW', 'LANM', 'LANDM', 'LANDGS', 'LANDS', 'ERSCH'}
+        # Exclusive groups: exactly ONE from each group must be scored
+        # Platzrunde: base OR M OR M-K
+        # Platzueberflug: base OR Oval OR Kreis
+        EXCLUSIVE_GROUPS = [
+            {'PLTZR', 'PLTZR-M', 'PLTZR-MK'},     # Platzrunde (one of three)
+            {'PLTZU', 'PLTZU-OV', 'PLTZU-KR'},     # Platzueberflug (one of three)
         ]
         messwertung_type_ids = {all_types[c] for c in MESSWERTUNG_CODES if c in all_types}
-        mandatory_type_ids = {all_types[c] for c in MANDATORY_CODES if c in all_types}
+        always_mandatory_ids = {all_types[c] for c in ALWAYS_MANDATORY if c in all_types}
+        exclusive_group_ids = [
+            {all_types[c] for c in group if c in all_types}
+            for group in EXCLUSIVE_GROUPS
+        ]
 
         for team_round in team_rounds:
             scores = Score.query.filter_by(team_round_id=team_round.team_round_id).all()
@@ -109,47 +116,45 @@ def round_completion_status(round_id):
             if not has_messwerte:
                 continue
 
-            # Check 2: All 3 judges have all mandatory quality figures
+            # Check 2: All 3 judges have all mandatory figures + one from each exclusive group
             all_judges_complete = True
-            judge_kuer_choices = []  # track per judge for consistency check
+            judge_exclusive_choices = []  # track per judge for consistency
             for score in scores:
-                # Get all score value type_ids for this judge
-                sv_type_ids = {sv.task_type_id for sv in
-                               ScoreValue.query.filter_by(score_id=score.score_id).all()}
+                all_svs = ScoreValue.query.filter_by(score_id=score.score_id).all()
+                sv_type_ids = {sv.task_type_id for sv in all_svs}
+                # For exclusive groups, only count non-zero values (zero = unchosen leftover)
+                sv_nonzero_type_ids = {sv.task_type_id for sv in all_svs if sv.value and sv.value > 0}
 
-                # All mandatory figures present?
-                if not mandatory_type_ids.issubset(sv_type_ids):
+                # All always-mandatory figures present?
+                if not always_mandatory_ids.issubset(sv_type_ids):
                     all_judges_complete = False
                     break
 
-                # Track Kuer choices for this judge
-                kuer_choices = {}
-                for group in KUER_GROUPS:
-                    chosen = None
-                    for code in group:
-                        if code in all_types and all_types[code] in sv_type_ids:
-                            sv = ScoreValue.query.filter_by(
-                                score_id=score.score_id,
-                                task_type_id=all_types[code]
-                            ).first()
-                            if sv and sv.value and sv.value > 0:
-                                chosen = code
-                    kuer_choices[frozenset(group)] = chosen
-                judge_kuer_choices.append(kuer_choices)
+                # Exactly one from each exclusive group with a non-zero value?
+                choices = {}
+                for group, group_ids in zip(EXCLUSIVE_GROUPS, exclusive_group_ids):
+                    scored_in_group = group_ids & sv_nonzero_type_ids
+                    if not scored_in_group:
+                        all_judges_complete = False
+                        break
+                    choices[frozenset(group)] = scored_in_group
+                if not all_judges_complete:
+                    break
+                judge_exclusive_choices.append(choices)
 
             if not all_judges_complete:
                 continue
 
-            # Check 3: Kuer choices consistent across all judges
-            kuer_consistent = True
-            for group in KUER_GROUPS:
+            # Check 3: Exclusive group choices consistent across all judges
+            choices_consistent = True
+            for group in EXCLUSIVE_GROUPS:
                 key = frozenset(group)
-                choices = [jc[key] for jc in judge_kuer_choices]
-                if len(set(choices)) > 1:
-                    kuer_consistent = False
+                all_choices = [jc[key] for jc in judge_exclusive_choices]
+                if len(set(map(frozenset, all_choices))) > 1:
+                    choices_consistent = False
                     break
 
-            if kuer_consistent:
+            if choices_consistent:
                 result['scored_teams'] += 1
                 
         # Calculate completion percentage

@@ -139,6 +139,10 @@ class ScoringService(BaseService):
         # Replicate Messwertung values to all other judges for this team_round
         self.replicate_messwertung_values(team_round_id, score.score_id)
 
+        # Fix Kür mismatches: if judge 1 has chosen a variant, move any
+        # conflicting entries on this score to the correct variant
+        self.fix_kuer_mismatches(team_round_id, score.score_id)
+
         # Calculate and update raw score in team_round
         self.update_team_round_scores(team_round_id)
 
@@ -198,7 +202,85 @@ class ScoringService(BaseService):
         db.session.commit()
         logger.info(f"Replicated Messwertung values from score {source_score_id} to {len(other_scores)} other scores for team_round {team_round_id}")
 
-    
+    def fix_kuer_mismatches(self, team_round_id, saved_score_id):
+        """
+        Fix Kür variant mismatches. The first judge (by score_id order) to enter
+        a non-zero Kür value sets the chosen variant for the group. Any subsequent
+        judge who scored the wrong variant gets their value moved to the correct one.
+        """
+        KUER_GROUPS = [
+            ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
+            ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+        ]
+
+        # Get all scores for this team_round, ordered by score_id (judge #1 first)
+        all_scores = Score.query.filter_by(team_round_id=team_round_id)\
+            .order_by(Score.score_id).all()
+        if len(all_scores) < 2:
+            return
+
+        for group_codes in KUER_GROUPS:
+            # Find the first score that has a non-zero choice for this group
+            chosen_code = None
+            authority_score_id = None
+            for score in all_scores:
+                for sv in score.values:
+                    if sv.task_type and sv.task_type.code in group_codes:
+                        if sv.value and sv.value > 0:
+                            chosen_code = sv.task_type.code
+                            authority_score_id = score.score_id
+                            break
+                if chosen_code:
+                    break
+
+            if not chosen_code:
+                continue  # No one has chosen yet
+
+            unchosen_codes = [c for c in group_codes if c != chosen_code]
+
+            # Fix all OTHER scores that have the wrong variant
+            for score in all_scores:
+                if score.score_id == authority_score_id:
+                    continue
+
+                score_vals = {}
+                for sv in score.values:
+                    if sv.task_type and sv.task_type.code in group_codes:
+                        score_vals[sv.task_type.code] = sv
+
+                for wrong_code in unchosen_codes:
+                    if wrong_code in score_vals and score_vals[wrong_code].value and score_vals[wrong_code].value > 0:
+                        wrong_value = score_vals[wrong_code].value
+                        logger.warning(
+                            f"Kür mismatch: score {score.score_id} has {wrong_code}={wrong_value}, "
+                            f"but {chosen_code} is the chosen variant. Moving value."
+                        )
+
+                        correct_type = TaskType.query.filter_by(code=chosen_code).first()
+                        if not correct_type:
+                            continue
+
+                        # Move value to correct variant
+                        existing_correct = ScoreValue.query.filter_by(
+                            score_id=score.score_id,
+                            task_type_id=correct_type.type_id
+                        ).first()
+
+                        if existing_correct:
+                            if not existing_correct.value or existing_correct.value == 0:
+                                existing_correct.value = wrong_value
+                        else:
+                            db.session.add(ScoreValue(
+                                score_id=score.score_id,
+                                task_type_id=correct_type.type_id,
+                                value=wrong_value
+                            ))
+
+                        # Zero the wrong variant
+                        score_vals[wrong_code].value = 0
+
+        db.session.commit()
+
     def get_score_details(self, score_id):
         """
         Get detailed information about a score.

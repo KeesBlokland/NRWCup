@@ -758,6 +758,26 @@ def view_score(score_id):
             .order_by(Score.score_id).first()
         is_messwertung_owner = (first_score and first_score.score_id == score.score_id)
 
+        # Determine Kür choices for visual guidance
+        # First score (by score_id) with a non-zero Kür value sets the variant
+        KUER_GROUPS = {
+            'platzrunde': ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
+            'platzueberflug': ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+        }
+        kuer_choices = {}  # group -> chosen code (or None if not yet chosen)
+        all_scores_for_tr = Score.query.filter_by(team_round_id=team_round.team_round_id)\
+            .order_by(Score.score_id).all()
+        for group, codes in KUER_GROUPS.items():
+            chosen = None
+            for s in all_scores_for_tr:
+                for sv in s.values:
+                    if sv.task_type and sv.task_type.code in codes and sv.value and sv.value > 0:
+                        chosen = sv.task_type.code
+                        break
+                if chosen:
+                    break
+            kuer_choices[group] = chosen
+
         # Get referer parameters for the back button
         referer_params = {}
         if request.referrer:
@@ -784,6 +804,7 @@ def view_score(score_id):
                               team_round_team=team,
                               value_map=value_map,
                               is_messwertung_owner=is_messwertung_owner,
+                              kuer_choices=kuer_choices,
                               referer_params=referer_params,
                               judges=scoring_service.get_judges(),
                               event=event,

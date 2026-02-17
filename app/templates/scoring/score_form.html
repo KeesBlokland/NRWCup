@@ -117,6 +117,15 @@
                                 {% set value = None %}
                             {% endif %}
                             {% set is_messwertung_blue = figure.code in ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'] and score and value is not none and not is_messwertung_owner %}
+                            {# Kür variant blue: on non-owner sheets, disable the unchosen variant #}
+                            {% set is_kuer_disabled = false %}
+                            {% if not is_messwertung_owner and kuer_choices %}
+                                {% if figure.code in ['PLTZR', 'PLTZR-M', 'PLTZR-MK'] and kuer_choices.get('platzrunde') and kuer_choices.get('platzrunde') != figure.code %}
+                                    {% set is_kuer_disabled = true %}
+                                {% elif figure.code in ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'] and kuer_choices.get('platzueberflug') and kuer_choices.get('platzueberflug') != figure.code %}
+                                    {% set is_kuer_disabled = true %}
+                                {% endif %}
+                            {% endif %}
                             <tr>
                                 <td>{{ figure.name_de }}
                                     <!-- Store figure code and limits for validation -->
@@ -148,23 +157,25 @@
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% elif 'Platzrunde' in figure.name_de %}
                                         <!-- Platzrunde variants (mutually exclusive) -->
-                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score" 
-                                               name="score_{{ figure.code }}" value="{{ value }}" 
-                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}" 
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score"
+                                               name="score_{{ figure.code }}" value="{{ value }}"
+                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
                                                step="0.5"
                                                data-figure-code="{{ figure.code }}"
                                                data-group="platzrunde"
                                                oninput="handleMutualExclusion(this, 'platzrunde'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
+                                               {% if is_kuer_disabled %}style="background-color: #e8f4fd" readonly{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% elif 'berflug' in figure.name_de %}
                                         <!-- Platzüberflug variants (mutually exclusive) -->
-                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score" 
-                                               name="score_{{ figure.code }}" value="{{ value }}" 
-                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}" 
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score"
+                                               name="score_{{ figure.code }}" value="{{ value }}"
+                                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
                                                step="0.5"
                                                data-figure-code="{{ figure.code }}"
                                                data-group="platzueberflug"
                                                oninput="handleMutualExclusion(this, 'platzueberflug'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
+                                               {% if is_kuer_disabled %}style="background-color: #e8f4fd" readonly{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% else %}
                                         <!-- Standard figures -->

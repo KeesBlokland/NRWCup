@@ -276,7 +276,8 @@
                                                 {% else %}
                                                     <span class="badge bg-info fs-6">{{ "%.1f"|format(team_round.raw_score) }}</span>
                                                 {% endif %}  -->
-                                                <span class="badge bg-info fs-6">{{ "%.1f"|format(total_raw if judge_count > 0 else team_round.raw_score) }}</span>
+                                                <a href="{{ url_for('scoring.team_results', event_id=event.event_id, round_id=selected_round, team_id=team.team_id) }}"
+                                                   class="badge bg-info fs-6 text-decoration-none" title="Ergebnisse anzeigen">{{ "%.1f"|format(total_raw if judge_count > 0 else team_round.raw_score) }}</a>
                                            {% else %}
                                                -
                                            {% endif %}

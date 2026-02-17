@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}TEST - Team Ergebnisse{% endblock %}
+{% block title %}Team Ergebnisse{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: calc(100% - 5cm); margin: 0 2.5cm;">
@@ -163,32 +163,25 @@
                             {% endfor %}
                         </tr>
                         
-                        <!-- Grand Total row -->
+                        <!-- Raw score row (calculated by system) -->
+                        {% if team_data.team_round and team_data.team_round.raw_score is not none %}
                         <tr class="table-success fw-bold">
-                            <td>TOTAL</td>
+                            <td>Rohwertung</td>
                             <td></td>
                             <td class="text-center" colspan="{{ team_data.scores|length }}">
-                                {% set grand_total = [] %}
-                                {% for score in team_data.scores %}
-                                    {% for score_value in score.values %}
-                                        {% if score_value.value is not none %}
-                                            {% if score_value.task_type.code == 'SEGZEIT' %}
-                                                {% set target_time = 200 %}
-                                                {% set max_points = 300 %}
-                                                {% set penalty_factor = 3 %}
-                                                {% set time_diff = (target_time - score_value.value)|abs %}
-                                                {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
-                                                {% set _ = grand_total.append(segzeit_points) %}
-                                            {% else %}
-                                                {% set k_factor = score_value.task_type.k_factor or 1 %}
-                                                {% set _ = grand_total.append(score_value.value * k_factor) %}
-                                            {% endif %}
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endfor %}
-                                {{ grand_total|sum|round(1) }}
+                                {{ "%.1f"|format(team_data.team_round.raw_score) }}
                             </td>
                         </tr>
+                        {% endif %}
+                        {% if team_data.team_round and team_data.team_round.normalized_score is not none %}
+                        <tr class="table-info fw-bold">
+                            <td>Normalisiert</td>
+                            <td></td>
+                            <td class="text-center" colspan="{{ team_data.scores|length }}">
+                                {{ "%.1f%%"|format(team_data.team_round.normalized_score / 10) }}
+                            </td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>

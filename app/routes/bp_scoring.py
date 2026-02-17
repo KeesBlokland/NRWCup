@@ -1115,11 +1115,12 @@ def team_results():
                         db.joinedload(Score.values).joinedload(ScoreValue.task_type),
                         db.joinedload(Score.judge)
                     ).filter_by(team_round_id=team_round.team_round_id).all()
-                    
+
                     team_data = {
                         'team': team,
                         'figures': figures,
-                        'scores': scores
+                        'scores': scores,
+                        'team_round': team_round
                     }
         
         return render_template('scoring/team_results.html',

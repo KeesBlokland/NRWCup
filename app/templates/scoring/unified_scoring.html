@@ -144,13 +144,13 @@
                     </a>
 
                     <!-- Email Results -->
-                    <button type="button" class="btn btn-primary" onclick="showResultsRecipients({{ event.event_id }})">
+                    <button type="button" class="btn btn-outline-info" onclick="showResultsRecipients({{ event.event_id }})">
                         <i class="bi bi-envelope"></i> Mailen
                     </button>
 
                     <!-- Excel Export -->
                     <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}"
-                       class="btn btn-success">
+                       class="btn btn-outline-success">
                         <i class="bi bi-file-earmark-excel"></i> Excel
                     </a>
                 </div>
@@ -415,10 +415,10 @@
            </div>
            <div class="modal-footer">
                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-               <button type="button" class="btn btn-success" id="emailNextRoundBtn">
+               <button type="button" class="btn btn-outline-info" id="emailNextRoundBtn">
                    Email Startliste
                </button>
-               <button type="button" class="btn btn-primary" id="printNextRoundBtn">Drucken</button>
+               <button type="button" class="btn btn-outline-secondary" id="printNextRoundBtn">Drucken</button>
            </div>
        </div>
    </div>
@@ -437,7 +437,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-success" id="confirmSendEmailBtn">
+                <button type="button" class="btn btn-outline-info" id="confirmSendEmailBtn">
                     Senden
                 </button>
             </div>
@@ -818,7 +818,7 @@ document.getElementById('confirmSendResultsBtn').onclick = function() {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-success" id="confirmSendResultsBtn">Senden</button>
+                <button type="button" class="btn btn-outline-info" id="confirmSendResultsBtn">Senden</button>
             </div>
         </div>
     </div>

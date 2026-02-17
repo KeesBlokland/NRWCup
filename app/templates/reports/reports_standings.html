@@ -33,7 +33,7 @@ Description: Corrected raw score display and dropped rounds logic
                     <i class="bi bi-printer"></i> Ergebnisse drucken
                 </a>
                 <!-- Email Results Button -->
-                <button type="button" class="btn btn-primary" onclick="showResultsRecipients({{ event.event_id }})">
+                <button type="button" class="btn btn-outline-info" onclick="showResultsRecipients({{ event.event_id }})">
                     <i class="bi bi-envelope"></i> Ergebnisse mailen
                 </button>
                 <!-- New print button - added for direct printing -->
@@ -333,7 +333,7 @@ function printRoundData(roundId) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-success" id="confirmSendResultsBtn">Senden</button>
+                <button type="button" class="btn btn-outline-info" id="confirmSendResultsBtn">Senden</button>
             </div>
         </div>
     </div>

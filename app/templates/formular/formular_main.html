@@ -34,11 +34,11 @@
                     </div>
                     <!-- Second row -->
                     <div class="text-center">
-                        <button type="button" class="btn btn-success me-2" id="emailStartListBtn" {% if not active_event %}disabled{% endif %} title="Startliste per Email versenden">
+                        <button type="button" class="btn btn-outline-info me-2" id="emailStartListBtn" {% if not active_event %}disabled{% endif %} title="Startliste per Email versenden">
                             <i class="bi bi-envelope"></i> Email Startliste
                         </button>
                         <button type="button" class="btn btn-primary me-2" id="printBtn" {% if not active_event %}disabled{% endif %}>PDF erstellen</button>
-                        <button type="button" class="btn btn-success me-2" id="exportLabelsBtn" {% if not active_event %}disabled{% endif %} title="Excel für Niimbot D11 Labels">
+                        <button type="button" class="btn btn-outline-success me-2" id="exportLabelsBtn" {% if not active_event %}disabled{% endif %} title="Excel für Niimbot D11 Labels">
                             <i class="bi bi-tags"></i> Labels Excel
                         </button>
                         <a href="{{ url_for('formular.print_scoresheets') }}" class="btn btn-info me-2" title="Leere Bewertungsbögen drucken">
@@ -129,7 +129,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-success" id="downloadLabelsBtn">
+                <button type="button" class="btn btn-outline-success" id="downloadLabelsBtn">
                     <i class="bi bi-download"></i> Excel Datei herunterladen
                 </button>
             </div>
@@ -472,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-success" id="confirmSendFormularBtn">Senden</button>
+                <button type="button" class="btn btn-outline-info" id="confirmSendFormularBtn">Senden</button>
             </div>
         </div>
     </div>

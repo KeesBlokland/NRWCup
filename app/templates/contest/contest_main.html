@@ -100,7 +100,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title mb-0">Wettbewerbe</h3>
                 <div>
-                    <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#clearScoresModal">
+                    <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#clearScoresModal">
                         Bewertungen Löschen
                     </button>
                     <button class="btn btn-primary" onclick="toggleForm(true)">Neuer Wettbewerb</button>
@@ -183,7 +183,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
                 <form id="deleteForm" method="POST" action="">
-                    <button type="submit" class="btn btn-danger">Löschen</button>
+                    <button type="submit" class="btn btn-outline-danger">Löschen</button>
                 </form>
             </div>
         </div>
@@ -225,7 +225,7 @@
                 {% if pending_events %}
                     <form id="clearScoresForm" method="POST" action="{{ url_for('contest.clear_scores') }}">
                         <input type="hidden" id="clearEventId" name="event_id" value="{{ pending_events[0].event_id }}">
-                        <button type="submit" class="btn btn-danger">Alle Daten l&ouml;schen</button>
+                        <button type="submit" class="btn btn-outline-danger">Alle Daten l&ouml;schen</button>
                     </form>
                 {% endif %}
             </div>

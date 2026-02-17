@@ -464,13 +464,7 @@ def demo_step():
             notes="Demo mode generated score"
         )
 
-        # Get updated team_round info
-        tr = TeamRound.query.get(team_round_id)
-        return jsonify({
-            'success': True,
-            'raw_score': float(tr.raw_score) if tr.raw_score is not None else None,
-            'normalized_score': float(tr.normalized_score) if tr.normalized_score is not None else None,
-        })
+        return jsonify({'success': True})
 
     except Exception as e:
         db.session.rollback()

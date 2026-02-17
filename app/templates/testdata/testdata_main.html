@@ -214,7 +214,8 @@
         if (!teamIds.length || !judgeIds.length) { alert('Bitte Teams und Punktrichter auswählen'); return; }
 
         const variability = document.getElementById('score_variability').value;
-        const roundNum = parseInt(document.getElementById('specific_round').value) || parseInt(document.getElementById('num_rounds').value) || 1;
+        const specificRound = parseInt(document.getElementById('specific_round').value) || 0;
+        const roundNum = specificRound > 0 ? specificRound : 1;  // Demo always starts at round 1 unless specific round set
 
         document.getElementById('demoPanel').classList.remove('d-none');
         document.getElementById('demoLog').innerHTML = '';
@@ -301,17 +302,12 @@
                 return;
             }
 
-            // Log the step
+            // Log the step — progress only, no scores (those are on the scorecards)
             let msg = `Team ${step.team_nummer} · R${judgeNum} ${step.judge_name}`;
             if (isFirstJudge) {
                 msg += ' (+Messwerte)';
             }
-            if (data.raw_score !== null) {
-                msg += ` → ${data.raw_score.toFixed(1)} Pkt`;
-            }
-            if (judgeNum === getJudgeCount() && data.normalized_score !== null) {
-                msg += ` (${(data.normalized_score / 10).toFixed(1)}%)`;
-            }
+            msg += ' ✓';
             logDemo(msg, judgeNum === getJudgeCount() ? 'text-success' : '');
 
             // Separator between teams

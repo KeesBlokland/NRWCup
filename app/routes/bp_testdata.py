@@ -87,12 +87,19 @@ def index():
         events = Event.query.filter(
             Event.status.notin_(['Completed', 'Published'])
         ).order_by(Event.event_date.desc()).all()
-        
-        return render_template('testdata/testdata_main.html', 
+
+        # Auto-select: if only one event with status Geplant/Pending, use it
+        active_event = None
+        pending_events = [e for e in events if e.status in ('Geplant', 'Pending', 'Active')]
+        if len(pending_events) == 1:
+            active_event = pending_events[0]
+
+        return render_template('testdata/testdata_main.html',
                               task_types=task_types,
                               teams=teams,
                               judges=judges,
-                              events=events)
+                              events=events,
+                              active_event=active_event)
                               
     except SQLAlchemyError as e:
         logger.error(f"Database error in testdata.index: {str(e)}")

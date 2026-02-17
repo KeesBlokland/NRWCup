@@ -62,8 +62,8 @@
                         <h4>Teams auswählen</h4>
                         {% for team in teams %}
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="team_ids" 
-                                       value="{{ team.team_id }}" id="team_{{ team.team_id }}">
+                                <input class="form-check-input" type="checkbox" name="team_ids"
+                                       value="{{ team.team_id }}" id="team_{{ team.team_id }}" checked>
                                 <label class="form-check-label" for="team_{{ team.team_id }}">
                                     Team {{ team.team_nummer }} 
                                     ({{ team.schlepper_pilot.name if team.schlepper_pilot else '-' }} / 
@@ -81,8 +81,8 @@
                         <h4>Punktrichter auswählen</h4>
                         {% for judge in judges %}
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="judge_ids" 
-                                       value="{{ judge.teilnehmer_id }}" id="judge_{{ judge.teilnehmer_id }}">
+                                <input class="form-check-input" type="checkbox" name="judge_ids"
+                                       value="{{ judge.teilnehmer_id }}" id="judge_{{ judge.teilnehmer_id }}" checked>
                                 <label class="form-check-label" for="judge_{{ judge.teilnehmer_id }}">
                                     {{ judge.name }}
                                 </label>

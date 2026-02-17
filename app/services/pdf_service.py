@@ -201,8 +201,59 @@ class PdfService:
         ]))
         
         elements.append(table)
-        
+
         # Build PDF
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer
+
+    def generate_start_order_pdf(self, round_id):
+        """Generate start order PDF for a round"""
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+        elements = []
+
+        styles = getSampleStyleSheet()
+
+        round_obj = Round.query.get(round_id)
+        if not round_obj:
+            return None
+
+        event = Event.query.get(round_obj.event_id)
+        event_year = event.event_date.year if event and event.event_date else datetime.now().year
+
+        elements.append(Paragraph(f"NRW Cup {event_year} — Startfolge Durchgang {round_obj.round_number}", styles['Heading2']))
+        if event and event.event_date:
+            elements.append(Paragraph(event.event_date.strftime('%d.%m.%Y'), styles['Normal']))
+        elements.append(Spacer(1, 20))
+
+        team_rounds = TeamRound.query.filter_by(round_id=round_id)\
+            .order_by(TeamRound.start_order).all()
+
+        data = [['Start Nr.', 'Team', 'Schlepper', 'Segler']]
+        for tr in team_rounds:
+            team = Team.query.get(tr.team_id)
+            if not team:
+                continue
+            data.append([
+                tr.start_order,
+                f"Team {team.team_nummer}",
+                team.schlepper_pilot.name if team.schlepper_pilot else '-',
+                team.segler_pilot.name if team.segler_pilot else '-'
+            ])
+
+        table = Table(data, colWidths=[70, 80, 180, 180])
+        table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ]))
+
+        elements.append(table)
         doc.build(elements)
         buffer.seek(0)
         return buffer

@@ -7,7 +7,7 @@ Created: 2025-05-18
 Description: Utility functions for round status management
 """
 
-from app.models import db, Round, TeamRound, Event, Team
+from app.models import db, Round, TeamRound, Event, Team, Score, ScoreValue, TaskType
 import logging
 
 # Configure logger
@@ -79,9 +79,22 @@ def round_completion_status(round_id):
         if result['total_teams'] == 0:
             return result
             
-        # Count teams with scores
+        # Count teams where ALL 3 judges have quality scores (not just Messwerte)
+        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+        messwertung_type_ids = {t.type_id for t in TaskType.query.filter(
+            TaskType.code.in_(MESSWERTUNG_CODES)).all()}
+
         for team_round in team_rounds:
-            if team_round.raw_score is not None:
+            scores = Score.query.filter_by(team_round_id=team_round.team_round_id).all()
+            judges_with_quality = 0
+            for score in scores:
+                has_quality = ScoreValue.query.filter(
+                    ScoreValue.score_id == score.score_id,
+                    ~ScoreValue.task_type_id.in_(messwertung_type_ids)
+                ).first() is not None
+                if has_quality:
+                    judges_with_quality += 1
+            if judges_with_quality >= 3:
                 result['scored_teams'] += 1
                 
         # Calculate completion percentage

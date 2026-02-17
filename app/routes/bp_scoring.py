@@ -268,22 +268,40 @@ def score_list():
         # Get rounds for this event
         rounds = Round.query.filter_by(event_id=event_id).order_by(Round.round_number).all() if event_id else []
         
-        # Check round completion status for the latest round
+        # Check round completion status
         can_generate_next_round = False
         round_status_info = None
         any_round_has_scores = False
+        selected_round_obj = None
+        next_round_number = None
 
         if event_id and rounds:
             from app.utils.round_status import round_completion_status
             latest_round = rounds[-1]
+            selected_round_obj = latest_round
             round_status_info = round_completion_status(latest_round.round_id)
             any_round_has_scores = round_status_info['scored_teams'] > 0
-            # Can only generate next round when ALL teams in the latest round have scores
-            can_generate_next_round = (
-                round_status_info['total_teams'] > 0 and
-                round_status_info['scored_teams'] == round_status_info['total_teams'] and
-                event.status not in ('Completed', 'Published')
-            )
+
+            if event.status not in ('Completed', 'Published'):
+                latest_complete = (
+                    round_status_info['total_teams'] > 0 and
+                    round_status_info['scored_teams'] == round_status_info['total_teams']
+                )
+                if latest_complete:
+                    # Latest round fully scored — show button, next round may or may not exist yet
+                    can_generate_next_round = True
+                    next_round_number = latest_round.round_number + 1
+                elif len(rounds) >= 2:
+                    # Latest round has no scores — check if previous round is complete
+                    prev_round = rounds[-2]
+                    prev_status = round_completion_status(prev_round.round_id)
+                    if (prev_status['total_teams'] > 0 and
+                            prev_status['scored_teams'] == prev_status['total_teams']):
+                        # Previous round complete, next round already created — button for print
+                        can_generate_next_round = True
+                        next_round_number = latest_round.round_number
+                        selected_round_obj = prev_round
+                        round_status_info = prev_status
         
         # Validate round_id belongs to this event; reset if not
         valid_round_ids = [r.round_id for r in rounds]
@@ -432,7 +450,9 @@ def score_list():
                              getRawScore=get_raw_score,
                              can_generate_next_round=can_generate_next_round,
                              any_round_has_scores=any_round_has_scores,
-                             round_status_info=round_status_info)
+                             round_status_info=round_status_info,
+                             status_round=selected_round_obj,
+                             next_round_number=next_round_number)
     except SQLAlchemyError as e:
         logger.error(f"Database error in list: {str(e)}")
         flash('Fehler beim Laden der Wertungsdaten', 'error')
@@ -797,41 +817,52 @@ def generate_next_round():
             flash('Keine Durchgänge für diese Veranstaltung gefunden', 'error')
             return redirect(url_for('scoring.score_list'))
         
-        # Find the highest round number
+        # Find the highest round number with scores (the "source" round)
         highest_round_number = max(r.round_number for r in rounds)
         last_round = next((r for r in rounds if r.round_number == highest_round_number), None)
-        
+
         if not last_round:
             flash('Letzter Durchgang nicht gefunden', 'error')
             return redirect(url_for('scoring.score_list'))
-        
-        # Calculate raw and normalized scores for all team rounds in the last round
-        team_rounds = TeamRound.query.filter_by(round_id=last_round.round_id).all()
+
+        # If the latest round has no scores, the source is the previous round
+        source_round = last_round
+        tr_count = TeamRound.query.filter_by(round_id=last_round.round_id).filter(TeamRound.raw_score != None).count()
+        if tr_count == 0 and len(rounds) >= 2:
+            source_round = rounds[-2]
+
+        # Check if next round after source already exists
+        next_round_number = source_round.round_number + 1
+        existing_next = next((r for r in rounds if r.round_number == next_round_number), None)
+
+        if existing_next:
+            # Next round already exists — idempotent, just go to it
+            return redirect(url_for('scoring.score_list', event_id=event_id, round_id=existing_next.round_id))
+
+        # Calculate raw and normalized scores for the source round
+        team_rounds = TeamRound.query.filter_by(round_id=source_round.round_id).all()
         for team_round in team_rounds:
             raw_score = scoring_service.aggregate_judge_scores(team_round.team_round_id)
             team_round.raw_score = raw_score
-        
-        # Calculate normalized scores
+
         db.session.flush()
-        normalized_scores = scoring_service.normalize_round_scores(last_round.round_id)
-        
-        # Update team rounds with normalized scores and ranks
+        normalized_scores = scoring_service.normalize_round_scores(source_round.round_id)
+
         team_rounds_with_scores = []
         for team_round in team_rounds:
             if team_round.team_id in normalized_scores:
                 team_round.normalized_score = normalized_scores[team_round.team_id]
                 if team_round.raw_score is not None:
                     team_rounds_with_scores.append(team_round)
-        
-        # Sort by raw score (lowest first) and assign ranks
+
         team_rounds_with_scores.sort(key=lambda tr: tr.raw_score)
         for rank, team_round in enumerate(team_rounds_with_scores, 1):
             team_round.rank = rank
-        
+
         db.session.commit()
-        
+
         # Get team rounds sorted by score (lowest score starts first)
-        scored_team_rounds = TeamRound.query.filter_by(round_id=last_round.round_id)\
+        scored_team_rounds = TeamRound.query.filter_by(round_id=source_round.round_id)\
             .filter(TeamRound.raw_score != None)\
             .order_by(TeamRound.raw_score.asc())\
             .all()
@@ -840,26 +871,25 @@ def generate_next_round():
             flash('Keine Bewertungen im letzten Durchgang gefunden', 'error')
             return redirect(url_for('scoring.score_list'))
 
-        # Teams without scores (missed the round) — start last
+        # Teams without scores — start last
         scored_team_ids = {tr.team_id for tr in scored_team_rounds}
-        unscored_team_rounds = TeamRound.query.filter_by(round_id=last_round.round_id)\
+        unscored_team_rounds = TeamRound.query.filter_by(round_id=source_round.round_id)\
             .filter(TeamRound.team_id.notin_(scored_team_ids))\
             .all()
 
-        # Mark previous round as Completed
-        last_round.status = 'Completed'
+        # Mark source round as Completed
+        source_round.status = 'Completed'
 
         # Create new round
-        new_round_number = highest_round_number + 1
         new_round = Round(
             event_id=event_id,
-            round_number=new_round_number,
+            round_number=next_round_number,
             status='Active'
         )
         db.session.add(new_round)
         db.session.flush()
 
-        # Create team order: scored teams first (lowest first), then unscored teams last
+        # Team order: scored teams (lowest first), then unscored teams
         team_order = []
         for team_round in scored_team_rounds:
             team = Team.query.get(team_round.team_id)
@@ -869,18 +899,18 @@ def generate_next_round():
             team = Team.query.get(team_round.team_id)
             if team:
                 team_order.append(team.team_nummer)
-        
-        # Generate scoresheets for the new round using the formular function
+
         from app.routes.bp_formular import generate_scoresheets_for_round
-        
+
         if generate_scoresheets_for_round(new_round.round_id, team_order):
             db.session.commit()
-            flash(f'Durchgang {new_round_number} erfolgreich erstellt mit Startfolge basierend auf Durchgang {highest_round_number}', 'success')
+            flash(f'Durchgang {next_round_number} erstellt — Startfolge basierend auf D{source_round.round_number}', 'success')
+            return redirect(url_for('scoring.score_list', event_id=event_id, round_id=new_round.round_id))
         else:
             db.session.rollback()
             flash('Fehler beim Erstellen der Bewertungsbögen', 'error')
-        
-        return redirect(url_for('scoring.score_list', event_id=event_id, round_id=new_round.round_id))
+
+        return redirect(url_for('scoring.score_list', event_id=event_id))
         
     except Exception as e:
         db.session.rollback()

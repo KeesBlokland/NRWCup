@@ -171,10 +171,10 @@
         Durchgang {{ round_obj.round_number }} - {{ judge_count }} Punktrichter
     </div>
 
-    <!-- Print button (only visible on screen) -->
+    <!-- Buttons (only visible on screen) -->
     <div class="no-print" style="margin-top: 20px;">
-        <button onclick="window.print()" class="btn btn-primary">Drucken</button>
-        <a href="{{ url_for('scoring.team_results') }}" class="btn btn-secondary">Zurück</a>
+        <button onclick="window.print()" style="padding: 6px 16px; font-size: 11pt; cursor: pointer;">Drucken</button>
+        <button onclick="window.close(); if(!window.closed) history.back();" style="padding: 6px 16px; font-size: 11pt; cursor: pointer; margin-left: 8px;">Schließen</button>
     </div>
 </body>
 </html>

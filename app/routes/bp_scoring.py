@@ -1328,8 +1328,23 @@ def team_scoresheet_pdf(team_id, round_id):
         # Define Messwertung codes
         messwertung_codes = {'LANDGM', 'LANS', 'SEILZ', 'SEGZEIT'}
         
-        # Separate figures
-        qualitaet_figures = [f for f in figures if f.code not in messwertung_codes]
+        # Find unchosen exclusive group figures (all judges have 0 or missing)
+        EXCLUSIVE_CODES = {'PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'}
+        unchosen_codes = set()
+        for code in EXCLUSIVE_CODES:
+            has_nonzero = False
+            for score in scores:
+                for sv in score.values:
+                    if sv.task_type and sv.task_type.code == code and sv.value and sv.value > 0:
+                        has_nonzero = True
+                        break
+                if has_nonzero:
+                    break
+            if not has_nonzero:
+                unchosen_codes.add(code)
+
+        # Separate figures, skip unchosen exclusive variants
+        qualitaet_figures = [f for f in figures if f.code not in messwertung_codes and f.code not in unchosen_codes]
         messwertung_figures = [f for f in figures if f.code in messwertung_codes]
         
         # Build judge scores matrix for Qualitätswertung - SHOW ALL FIGURES

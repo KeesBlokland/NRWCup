@@ -95,7 +95,23 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% set EXCLUSIVE_CODES = ['PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'] %}
+                    {% set unchosen = [] %}
+                    {% for code in EXCLUSIVE_CODES %}
+                        {% set has_value = [] %}
+                        {% for score in team_data.scores %}
+                            {% for sv in score.values %}
+                                {% if sv.task_type and sv.task_type.code == code and sv.value and sv.value > 0 %}
+                                    {% set _ = has_value.append(1) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        {% if has_value|length == 0 %}
+                            {% set _ = unchosen.append(code) %}
+                        {% endif %}
+                    {% endfor %}
                     {% for figure in team_data.figures %}
+                        {% if figure.code not in unchosen %}
                         <tr>
                             <td>{{ figure.name_de }}</td>
                             <td>{{ figure.k_factor or 1 }}</td>
@@ -131,61 +147,62 @@
                                 </td>
                             {% endfor %}
                         </tr>
+                        {% endif %}
                     {% endfor %}
-                    
-                    <!-- Totals row -->
+
+                    {# Quality totals per judge (excluding Messwerte) #}
+                    {% set MESS_CODES = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'] %}
                     <tr class="table-warning fw-bold">
-                        <td>GESAMT</td>
+                        <td>Qualität</td>
                         <td></td>
+                        {% set quality_totals = [] %}
                         {% for score in team_data.scores %}
                             <td>
-                                {% set total = [] %}
+                                {% set qtotal = [] %}
                                 {% for score_value in score.values %}
-                                    {% if score_value.value is not none %}
-                                        {% if score_value.task_type.code == 'SEGZEIT' %}
-                                            {% set target_time = 200 %}
-                                            {% set max_points = 300 %}
-                                            {% set penalty_factor = 3 %}
-                                            {% set time_diff = (target_time - score_value.value)|abs %}
-                                            {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
-                                            {% set _ = total.append(segzeit_points) %}
-                                        {% else %}
-                                            {% set k_factor = score_value.task_type.k_factor or 1 %}
-                                            {% set _ = total.append(score_value.value * k_factor) %}
-                                        {% endif %}
+                                    {% if score_value.value is not none and score_value.task_type.code not in MESS_CODES %}
+                                        {% set k_factor = score_value.task_type.k_factor or 1 %}
+                                        {% set _ = qtotal.append(score_value.value * k_factor) %}
                                     {% endif %}
                                 {% endfor %}
-                                {{ total|sum|round(1) }}
+                                {{ qtotal|sum|round(1) }}
+                                {% set _ = quality_totals.append(qtotal|sum) %}
                             </td>
                         {% endfor %}
                     </tr>
-                    
-                    <!-- Grand Total row -->
-                    <tr class="table-success fw-bold">
-                        <td>TOTAL</td>
+
+                    {# Messwerte — once (same for all judges) #}
+                    {% set mess_total = [] %}
+                    {% for score_value in team_data.scores[0].values %}
+                        {% if score_value.value is not none and score_value.task_type.code in MESS_CODES %}
+                            {% if score_value.task_type.code == 'SEGZEIT' %}
+                                {% set time_diff = (200 - score_value.value)|abs %}
+                                {% set _ = mess_total.append([0, 300 - (time_diff * 3)]|max) %}
+                            {% else %}
+                                {% set _ = mess_total.append(score_value.value) %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    <tr style="background-color: #e2e3e5; font-weight: bold;">
+                        <td>Messwerte</td>
                         <td></td>
                         <td colspan="{{ team_data.scores|length }}">
-                            {% set grand_total = [] %}
-                            {% for score in team_data.scores %}
-                                {% for score_value in score.values %}
-                                    {% if score_value.value is not none %}
-                                        {% if score_value.task_type.code == 'SEGZEIT' %}
-                                            {% set target_time = 200 %}
-                                            {% set max_points = 300 %}
-                                            {% set penalty_factor = 3 %}
-                                            {% set time_diff = (target_time - score_value.value)|abs %}
-                                            {% set segzeit_points = [0, max_points - (time_diff * penalty_factor)]|max %}
-                                            {% set _ = grand_total.append(segzeit_points) %}
-                                        {% else %}
-                                            {% set k_factor = score_value.task_type.k_factor or 1 %}
-                                            {% set _ = grand_total.append(score_value.value * k_factor) %}
-                                        {% endif %}
-                                    {% endif %}
-                                {% endfor %}
-                            {% endfor %}
-                            {{ grand_total|sum|round(1) }}
+                            {{ mess_total|sum|round(1) }}
                         </td>
                     </tr>
+
+                    {# Ergebnis = avg(quality) + Messwerte #}
+                    {% if quality_totals|length > 0 %}
+                    <tr class="table-success fw-bold">
+                        <td>Ergebnis</td>
+                        <td></td>
+                        <td colspan="{{ team_data.scores|length }}">
+                            {% set avg_quality = quality_totals|sum / quality_totals|length %}
+                            {{ (avg_quality + mess_total|sum)|round(1) }}
+                            <small class="text-muted">(Ø {{ avg_quality|round(1) }} + {{ mess_total|sum|round(1) }})</small>
+                        </td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
 

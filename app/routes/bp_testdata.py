@@ -83,16 +83,15 @@ def index():
         # Get judges
         judges = Teilnehmer.query.filter_by(is_punktwerter=True).all()
         
-        # Get events for template dropdown — exclude completed/published events
-        events = Event.query.filter(
-            Event.status.notin_(['Completed', 'Published'])
-        ).order_by(Event.event_date.desc()).all()
+        # Get events for template dropdown — ONLY Geplant events are safe for test data
+        events = Event.query.filter_by(status='Geplant').order_by(Event.event_date.desc()).all()
 
-        # Auto-select: if only one event with status Geplant/Pending, use it
+        # Auto-select: if only one Geplant event, use it as default
+        # ONLY Geplant is safe for test data — Pending/Active are real competitions
         active_event = None
-        pending_events = [e for e in events if e.status in ('Geplant', 'Pending', 'Active')]
-        if len(pending_events) == 1:
-            active_event = pending_events[0]
+        geplant_events = [e for e in events if e.status == 'Geplant']
+        if len(geplant_events) == 1:
+            active_event = geplant_events[0]
 
         return render_template('testdata/testdata_main.html',
                               task_types=task_types,
@@ -152,8 +151,8 @@ def generate():
             flash('Selected event not found', 'error')
             return redirect(url_for('testdata.index'))
 
-        if event.status in ('Completed', 'Published'):
-            flash(f'Testdaten können nicht für abgeschlossene Wettbewerbe generiert werden ({event.name})', 'error')
+        if event.status != 'Geplant':
+            flash(f'Testdaten nur für Wettbewerbe mit Status "Geplant" erlaubt (aktuell: {event.status})', 'error')
             return redirect(url_for('testdata.index'))
 
         # Get existing rounds for this event

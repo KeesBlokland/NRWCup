@@ -295,6 +295,11 @@ function toggleLock() {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/contest/toggle_lock/${eventId}`;
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        form.appendChild(csrf);
         document.body.appendChild(form);
         form.submit();
     }

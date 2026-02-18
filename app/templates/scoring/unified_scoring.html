@@ -47,7 +47,7 @@
                     </div>
                 </div>
             </form>
-            
+
             <!-- Title and Action Buttons -->
             <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
                 <div>
@@ -57,67 +57,42 @@
                     {% endif %}
                 </div>
                 <div>
-
-
-
                     {% if event %}
-                        {% set button_round_number = 1 %}
-                        {% set current_event_id = event.event_id if event else 0 %}
-
-                        {% for r in rounds %}
-                            {% if r.status == 'Active' and r.event_id == current_event_id %}
-                                {% if selected_round and r.round_id == selected_round %}
-                                    {% set button_round_number = r.round_number %}
-                                {% elif not selected_round or button_round_number == 1 %}
-                                    {% set button_round_number = r.round_number %}
+                        {% if event.status not in ['Completed', 'Published'] %}
+                            {% if rounds|length == 0 %}
+                                <!-- No rounds yet — allow creating the first one -->
+                                <form method="POST" action="{{ url_for('scoring.generate_scoresheets') }}">
+                                    <input type="hidden" name="event_id" value="{{ event.event_id }}">
+                                    <button type="submit" class="btn btn-warning">Ersten Durchgang erstellen</button>
+                                </form>
+                            {% else %}
+                                <!-- Show round completion progress -->
+                                {% if round_status_info and status_round %}
+                                    <span class="badge {{ 'bg-success' if can_generate_next_round else 'bg-secondary' }} me-2">
+                                        D{{ status_round.round_number }}: {{ round_status_info.scored_teams }}/{{ round_status_info.total_teams }} Teams bewertet
+                                    </span>
+                                {% endif %}
+                                {% if can_generate_next_round %}
+                                    <form method="POST" action="{{ url_for('scoring.generate_next_round') }}" class="d-inline">
+                                        <input type="hidden" name="event_id" value="{{ event.event_id }}">
+                                        <button type="submit" class="btn btn-warning btn-sm">
+                                            D{{ next_round_number }} erstellen
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {% if selected_round %}
+                                    <a href="{{ url_for('start_order.print_start_order', round_id=selected_round) }}" class="btn btn-outline-secondary btn-sm">
+                                        Startfolge drucken
+                                    </a>
                                 {% endif %}
                             {% endif %}
-                        {% endfor %}
-
-                        {% if event.status not in ['Completed', 'Published'] %}
-
-                        {% if rounds|length == 0 %}
-                            <!-- No rounds yet — allow creating the first one -->
-                            <form method="POST" action="{{ url_for('scoring.generate_scoresheets') }}">
-                                <input type="hidden" name="event_id" value="{{ event.event_id if event else '' }}">
-                                <button type="submit" class="btn btn-warning">Ersten Durchgang erstellen</button>
-                            </form>
-                        {% else %}
-                            <!-- Show round completion progress -->
-                            {% if round_status_info and status_round %}
-                                <span class="badge {{ 'bg-success' if can_generate_next_round else 'bg-secondary' }} me-2">
-                                    D{{ status_round.round_number }}: {{ round_status_info.scored_teams }}/{{ round_status_info.total_teams }} Teams bewertet
-                                </span>
-                            {% endif %}
-
-                            {% if can_generate_next_round %}
-                                <form method="POST" action="{{ url_for('scoring.generate_next_round') }}" class="d-inline">
-                                    <input type="hidden" name="event_id" value="{{ event.event_id }}">
-                                    <button type="submit" class="btn btn-warning btn-sm">
-                                        D{{ next_round_number }} erstellen
-                                    </button>
-                                </form>
-                            {% endif %}
-                            {% if selected_round %}
-                                <a href="{{ url_for('start_order.print_start_order', round_id=selected_round) }}" class="btn btn-outline-secondary btn-sm">
-                                    Startfolge drucken
-                                </a>
-                            {% endif %}
                         {% endif %}
-
-                        {% endif %}
-
-                        
-                        
-                        
                     {% endif %}
-                    
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add this section after the filter form and before the tabs -->
     {% if event %}
     <div class="card mb-3 bg-light">
         <div class="card-body py-2">
@@ -126,7 +101,6 @@
                     <small class="text-muted fw-bold">AKTIONEN:</small>
                 </div>
                 <div class="col">
-                    <!-- Admin Login/Logout -->
                     {% if session.get('is_admin') %}
                         <a href="{{ url_for('scoring.admin_logout') }}" class="btn btn-danger">
                             <i class="bi bi-unlock"></i> Admin Logout
@@ -136,21 +110,13 @@
                             <i class="bi bi-lock"></i> Admin Login
                         </a>
                     {% endif %}
-
-                    <!-- Print Results -->
-                    <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}"
-                       class="btn btn-secondary">
+                    <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" class="btn btn-secondary">
                         <i class="bi bi-printer"></i> Drucken
                     </a>
-
-                    <!-- Email Results -->
                     <button type="button" class="btn btn-outline-info" onclick="showResultsRecipients({{ event.event_id }})">
                         <i class="bi bi-envelope"></i> Mailen
                     </button>
-
-                    <!-- Excel Export -->
-                    <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}"
-                       class="btn btn-outline-success">
+                    <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}" class="btn btn-outline-success">
                         <i class="bi bi-file-earmark-excel"></i> Excel
                     </a>
                 </div>
@@ -171,7 +137,7 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings" 
+            <button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings"
                     type="button" role="tab" aria-controls="standings" aria-selected="false">
                 Wettkampfstände
             </button>
@@ -197,10 +163,9 @@
                         {% for team in teams %}
                             <tr>
                                 <td>{{ team.team_nummer }}</td>
-                                <!-- Updated Piloten column section from unified_scoring.html -->
                                 <td>
-                                    <a href="{{ url_for('scoring.team_results', event_id=event.event_id if event else '', round_id=selected_round if selected_round else '', team_id=team.team_id) }}" 
-                                    class="text-decoration-none text-dark" 
+                                    <a href="{{ url_for('scoring.team_results', event_id=event.event_id if event else '', round_id=selected_round if selected_round else '', team_id=team.team_id) }}"
+                                    class="text-decoration-none text-dark"
                                     title="Team {{ team.team_nummer }} Ergebnisse anzeigen">
                                         {% if team.schlepper_pilot and team.segler_pilot %}
                                             {{ team.schlepper_pilot.name }}/{{ team.segler_pilot.name }}
@@ -213,34 +178,27 @@
                                         {% endif %}
                                     </a>
                                 </td>
-                                <!-- End Piloten column section -->
-                               <td>
+                                <td>
                                     <div class="d-flex flex-wrap gap-2">
                                         {% set filtered_judges = judges if not selected_judge else judges|selectattr('teilnehmer_id', 'equalto', selected_judge)|list %}
+                                        {% set round_obj = rounds|selectattr('round_id', 'equalto', selected_round)|first if selected_round else None %}
                                         {% for judge in filtered_judges %}
-                                            {% set round_obj = rounds|selectattr('round_id', 'equalto', selected_round)|first if selected_round else None %}
                                             {% if round_obj %}
                                                 {% set key = round_obj.round_id|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
                                                 {% if key in completed_scores %}
-                                                    <!-- Scoresheet exists -->
                                                     {% set score = completed_scores[key] %}
                                                     <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}"
                                                         class="btn {% if score.locked %}btn-warning{% elif key in has_quality_scores %}btn-success{% else %}btn-outline-secondary{% endif %} judge-btn"
                                                         title="Bewertung von {{ judge.name }} {% if score.locked %}(Gesperrt am {{ score.locked_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}">
-                                                            {{ judge.name[:3] }}: 
+                                                            {{ judge.name[:3] }}:
                                                             <span class="raw-score">
                                                                 {% set raw_value = getRawScore(score) %}
                                                                 {{ "%.1f"|format(raw_value) if raw_value != None else "-" }}
                                                             </span>
-                                                            {% if score.locked %}
-                                                                🔒
-                                                            {% endif %}
+                                                            {% if score.locked %}🔒{% endif %}
                                                     </a>
                                                 {% else %}
-                                                    <!-- Scoresheet needs to be created - FIXED TO PASS PARAMETERS CORRECTLY -->
-                                                    {% set team_round_key = round_obj.round_id|string + '_' + team.team_id|string %}
-                                                    {% set team_round_id = team_rounds[team_round_key].team_round_id if team_round_key in team_rounds else none %}
-                                                    <a href="{{ url_for('scoring.scoresheet', round_id=round_obj.round_id, team_id=team.team_id, judge_id=judge.teilnehmer_id) }}" 
+                                                    <a href="{{ url_for('scoring.scoresheet', round_id=round_obj.round_id, team_id=team.team_id, judge_id=judge.teilnehmer_id) }}"
                                                     class="btn btn-outline-secondary" title="Neue Bewertung von {{ judge.name }}">
                                                         {{ judge.name[:3] }}
                                                     </a>
@@ -249,179 +207,156 @@
                                         {% endfor %}
                                     </div>
                                 </td>
-                               <td class="text-center">
-                                   {% if selected_round %}
-                                       {% set team_round_key = selected_round|string + '_' + team.team_id|string %}
-                                       {% if team_round_key in team_rounds %}
-                                           {% set team_round = team_rounds[team_round_key] %}
-                                           {% if team_round.raw_score is not none %}
-                                               {% set filtered_judges = judges if not selected_judge else judges|selectattr('teilnehmer_id', 'equalto', selected_judge)|list %}
-                                               {% set judge_count = 0 %}
-                                               {% set total_raw = 0 %}
-                                               
-                                               {% for judge in filtered_judges %}
-                                                   {% set key = selected_round|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
-                                                   {% if key in completed_scores %}
-                                                       {% set score = completed_scores[key] %}
-                                                       {% set raw_value = getRawScore(score) %}
-                                                       {% if raw_value is not none %}
-                                                           {% set total_raw = total_raw + raw_value %}
-                                                           {% set judge_count = judge_count + 1 %}
-                                                       {% endif %}
-                                                   {% endif %}
-                                               {% endfor %}
-                                               
-                                               <!--{% if judge_count > 0 %}
-                                                    <span class="badge bg-info fs-6">{{ "%.1f"|format(total_raw) }}</span>
-                                                {% else %}
-                                                    <span class="badge bg-info fs-6">{{ "%.1f"|format(team_round.raw_score) }}</span>
-                                                {% endif %}  -->
+                                <td class="text-center">
+                                    {% if selected_round %}
+                                        {% set team_round_key = selected_round|string + '_' + team.team_id|string %}
+                                        {% if team_round_key in team_rounds %}
+                                            {% set team_round = team_rounds[team_round_key] %}
+                                            {% if team_round.raw_score is not none %}
+                                                {% set judge_count = 0 %}
+                                                {% set total_raw = 0 %}
+                                                {% for judge in filtered_judges %}
+                                                    {% set key = selected_round|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
+                                                    {% if key in completed_scores %}
+                                                        {% set score = completed_scores[key] %}
+                                                        {% set raw_value = getRawScore(score) %}
+                                                        {% if raw_value is not none %}
+                                                            {% set total_raw = total_raw + raw_value %}
+                                                            {% set judge_count = judge_count + 1 %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
                                                 <a href="{{ url_for('scoring.team_results', event_id=event.event_id, round_id=selected_round, team_id=team.team_id) }}"
                                                    class="badge bg-info fs-6 text-decoration-none" title="Ergebnisse anzeigen">{{ "%.1f"|format(total_raw if judge_count > 0 else team_round.raw_score) }}</a>
-                                           {% else %}
-                                               -
-                                           {% endif %}
-                                       {% else %}
-                                           -
-                                       {% endif %}
-                                   {% else %}
-                                       <!-- Display total raw score across all rounds when no specific round is selected -->
-                                       {% set team_total_raw = 0 %}
-                                       {% set has_scores = false %}
-                                       {% for round_obj in rounds %}
-                                           {% set team_round_key = round_obj.round_id|string + '_' + team.team_id|string %}
-                                           {% if team_round_key in team_rounds %}
-                                               {% set team_round = team_rounds[team_round_key] %}
-                                               {% if team_round.raw_score is not none %}
-                                                   {% set team_total_raw = team_total_raw + team_round.raw_score %}
-                                                   {% set has_scores = true %}
-                                               {% endif %}
-                                           {% endif %}
-                                       {% endfor %}
-                                       {% if has_scores %}
-                                           <span class="badge bg-info fs-6">{{ "%.1f"|format(team_total_raw) }}</span>
-                                       {% else %}
-                                           -
-                                       {% endif %}
-                                   {% endif %}
-                               </td>
-                               <td class="text-center">
-                                   {% if selected_round %}
-                                       {% set team_round_key = selected_round|string + '_' + team.team_id|string %}
-                                       {% if team_round_key in team_rounds %}
-                                           {% set team_round = team_rounds[team_round_key] %}
-                                           {% if team_round.normalized_score is not none %}
-                                               <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(team_round.normalized_score / 10) }}</span>
-                                           {% else %}
-                                               -
-                                           {% endif %}
-                                       {% else %}
-                                           -
-                                       {% endif %}
-                                   {% else %}
-                                       <!-- Display total normalized score when no specific round is selected -->
-                                       {% set team_found = false %}
-                                       {% for standing in standings %}
-                                           {% if standing.team.team_id == team.team_id %}
-                                               <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(standing.score / 10) }}</span>
-                                               {% set team_found = true %}
-                                           {% endif %}
-                                       {% endfor %}
-                                       {% if not team_found %}
-                                           -
-                                       {% endif %}
-                                   {% endif %}
-                               </td>
-                           </tr>
-                       {% endfor %}
-                   </tbody>
-               </table>
-           </div>
-       </div>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% else %}
+                                        {% set team_total_raw = 0 %}
+                                        {% set has_scores = false %}
+                                        {% for round_obj in rounds %}
+                                            {% set team_round_key = round_obj.round_id|string + '_' + team.team_id|string %}
+                                            {% if team_round_key in team_rounds %}
+                                                {% set team_round = team_rounds[team_round_key] %}
+                                                {% if team_round.raw_score is not none %}
+                                                    {% set team_total_raw = team_total_raw + team_round.raw_score %}
+                                                    {% set has_scores = true %}
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if has_scores %}
+                                            <span class="badge bg-info fs-6">{{ "%.1f"|format(team_total_raw) }}</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if selected_round %}
+                                        {% set team_round_key = selected_round|string + '_' + team.team_id|string %}
+                                        {% if team_round_key in team_rounds %}
+                                            {% set team_round = team_rounds[team_round_key] %}
+                                            {% if team_round.normalized_score is not none %}
+                                                <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(team_round.normalized_score / 10) }}</span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    {% else %}
+                                        {% set team_found = false %}
+                                        {% for standing in standings %}
+                                            {% if standing.team.team_id == team.team_id %}
+                                                <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(standing.score / 10) }}</span>
+                                                {% set team_found = true %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not team_found %}-{% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-       <!-- Wettkampfstände Tab -->
-       <div class="tab-pane fade" id="standings" role="tabpanel" aria-labelledby="standings-tab">
-           {% if standings %}
-               <div class="table-responsive">
-                   <table class="table table-striped align-middle">
-                       <tr class="table-dark-header">
-                           <th class="text-center">Rang</th>
-                           <th>Team</th>
-                           <th>Piloten</th>
-
-                           {% for round_obj in standings_rounds %}
-                               <th class="text-center">D{{ round_obj.round_number }}</th>
-                           {% endfor %}
-
-                           <th class="text-center">Endstand</th>
-                       </tr>
-
-                       {% for standing in standings %}
-                           <tr>
-                               <td class="text-center fw-bold">{{ standing.rank }}</td>
-                               <td>Team {{ standing.team.team_nummer }}</td>
-                               <td>
-                                   <div>
-                                       {% if standing.team.schlepper_pilot %}
-                                           <div><small>{{ standing.team.schlepper_pilot.name }}</small></div>
-                                       {% endif %}
-                                       {% if standing.team.segler_pilot %}
-                                           <div><small>{{ standing.team.segler_pilot.name }}</small></div>
-                                       {% endif %}
-                                   </div>
-                               </td>
-
-                               {% for i in range(standings_rounds|length) %}
-                                   <td class="text-center">
-                                       {% if i < standing.round_scores|length %}
-                                           {% set score = standing.round_scores[i] %}
-                                           {% if i in standing.dropped_indices %}
-                                               <span class="text-muted text-decoration-line-through">{{ "%.1f%%"|format(score / 10) }}</span>
-                                           {% else %}
-                                               {{ "%.1f%%"|format(score / 10) }}
-                                           {% endif %}
-                                       {% else %}
-                                           -
-                                       {% endif %}
-                                   </td>
-                               {% endfor %}
-                               
-                               <td class="text-center fw-bold">{{ "%.1f%%"|format(standing.score / 10) }}</td>
-                           </tr>
-                       {% endfor %}
-                   </table>
-               </div>
-           {% else %}
-               <div class="alert alert-info">
-                   Noch keine Ergebnisse für diese Veranstaltung verfügbar.
-               </div>
-           {% endif %}
-       </div>
-   </div>
+        <!-- Wettkampfstände Tab -->
+        <div class="tab-pane fade" id="standings" role="tabpanel" aria-labelledby="standings-tab">
+            {% if standings %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <tr class="table-dark-header">
+                            <th class="text-center">Rang</th>
+                            <th>Team</th>
+                            <th>Piloten</th>
+                            {% for round_obj in standings_rounds %}
+                                <th class="text-center">D{{ round_obj.round_number }}</th>
+                            {% endfor %}
+                            <th class="text-center">Endstand</th>
+                        </tr>
+                        {% for standing in standings %}
+                            <tr>
+                                <td class="text-center fw-bold">{{ standing.rank }}</td>
+                                <td>Team {{ standing.team.team_nummer }}</td>
+                                <td>
+                                    {% if standing.team.schlepper_pilot %}
+                                        <div><small>{{ standing.team.schlepper_pilot.name }}</small></div>
+                                    {% endif %}
+                                    {% if standing.team.segler_pilot %}
+                                        <div><small>{{ standing.team.segler_pilot.name }}</small></div>
+                                    {% endif %}
+                                </td>
+                                {% for i in range(standings_rounds|length) %}
+                                    <td class="text-center">
+                                        {% if i < standing.round_scores|length %}
+                                            {% set score = standing.round_scores[i] %}
+                                            {% if i in standing.dropped_indices %}
+                                                <span class="text-muted text-decoration-line-through">{{ "%.1f%%"|format(score / 10) }}</span>
+                                            {% else %}
+                                                {{ "%.1f%%"|format(score / 10) }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                <td class="text-center fw-bold">{{ "%.1f%%"|format(standing.score / 10) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Noch keine Ergebnisse für diese Veranstaltung verfügbar.
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <!-- Next Round Modal -->
 <div class="modal fade" id="nextRoundModal" tabindex="-1">
-   <div class="modal-dialog modal-lg">
-       <div class="modal-content">
-           <div class="modal-header">
-               <h5 class="modal-title">Startfolge für nächsten Durchgang</h5>
-               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-           </div>
-           <div class="modal-body">
-               <div id="startListContent">
-                   <p>Laden...</p>
-               </div>
-           </div>
-           <div class="modal-footer">
-               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-               <button type="button" class="btn btn-outline-info" id="emailNextRoundBtn">
-                   Email Startliste
-               </button>
-               <button type="button" class="btn btn-outline-secondary" id="printNextRoundBtn">Drucken</button>
-           </div>
-       </div>
-   </div>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Startfolge für nächsten Durchgang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="startListContent"><p>Laden...</p></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                <button type="button" class="btn btn-outline-info" id="emailNextRoundBtn">Email Startliste</button>
+                <button type="button" class="btn btn-outline-secondary" id="printNextRoundBtn">Drucken</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Email Recipient Selection Modal -->
@@ -432,344 +367,14 @@
                 <h5 class="modal-title">Email-Empfänger auswählen</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="emailRecipientsBody">
-                <p>Laden...</p>
-            </div>
+            <div class="modal-body" id="emailRecipientsBody"><p>Laden...</p></div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-outline-info" id="confirmSendEmailBtn">
-                    Senden
-                </button>
+                <button type="button" class="btn btn-outline-info" id="confirmSendEmailBtn">Senden</button>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-document.getElementById('confirmSendEmailBtn').onclick = function() {
-    const checked = document.querySelectorAll('#recipientList input:checked');
-    const selected = Array.from(checked).map(c => c.value);
-
-    if (!selected.length) {
-        alert('Keine Empfänger ausgewählt');
-        return;
-    }
-
-    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
-
-    const payload = window._emailPayload;
-    payload.recipients = selected;
-    payload.next_round = true;
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    fetch('/formular/email-startlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-        body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(result => {
-        bootstrap.Modal.getInstance(document.getElementById('emailRecipientsModal')).hide();
-        if (result.success) {
-            alert('Startliste an ' + selected.length + ' Empfänger versendet');
-        } else {
-            alert('Fehler: ' + result.message);
-        }
-    })
-    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
-};
-</script>
-
-<!-- Hidden form for next round generation -->
-<form id="nextRoundForm" method="POST" action="{{ url_for('scoring.generate_next_round') }}" class="d-none">
-   <input type="hidden" name="event_id" id="nextRoundEventId">
-</form>
-
-
-
-<script>
-function checkForNextRoundGeneration(selectElement) {
-    if (selectElement.value === 'generate_next') {
-        if (confirm('Möchten Sie Durchgang {{ next_round_number }} erstellen und Bewertungsbögen generieren?')) {
-            const form = document.getElementById('nextRoundForm');
-            document.getElementById('nextRoundEventId').value = document.getElementById('eventSelect').value;
-            form.submit();
-        } else {
-            selectElement.value = '{{ selected_round or "" }}';
-        }
-    } else {
-        selectElement.form.submit();
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-    
-    // Add tooltips to specific buttons
-    const adminButton = document.querySelector('a[href*="admin_login"], a[href*="admin_logout"]');
-    if (adminButton) {
-        adminButton.setAttribute('data-bs-toggle', 'tooltip');
-        adminButton.setAttribute('data-bs-placement', 'bottom');
-        adminButton.setAttribute('title', 'Administratorzugang für das Entsperren von gesperrten Bewertungen.');
-    }
-    
-    const scoreSheetsButton = document.querySelector('button[type="submit"].btn-warning');
-    if (scoreSheetsButton) {
-        scoreSheetsButton.setAttribute('data-bs-toggle', 'tooltip');
-        scoreSheetsButton.setAttribute('data-bs-placement', 'bottom');
-        scoreSheetsButton.setAttribute('title', 'Erstellt leere Bewertungsbögen für den nächsten Durchgang.');
-    }
-    
-    const printResultsButton = document.querySelector('.btn-secondary:has(i.bi-printer), a[href*="print_results"]');
-    if (printResultsButton) {
-        printResultsButton.setAttribute('data-bs-toggle', 'tooltip');
-        printResultsButton.setAttribute('data-bs-placement', 'bottom');
-        printResultsButton.setAttribute('title', 'Generiert eine PDF-Datei mit den aktuellen Ergebnissen.');
-    } else {
-        const allButtons = document.querySelectorAll('a.btn');
-        allButtons.forEach(btn => {
-            if (btn.textContent.includes('Ergebnisse drucken') || 
-                (btn.querySelector('i.bi-printer') && btn.classList.contains('btn-secondary'))) {
-                btn.setAttribute('data-bs-toggle', 'tooltip');
-                btn.setAttribute('data-bs-placement', 'bottom');
-                btn.setAttribute('title', 'Generiert eine PDF-Datei mit den aktuellen Ergebnissen.');
-            }
-        });
-    }
-    
-    const nextRoundButton = document.getElementById('generateNextRoundBtn');
-    if (nextRoundButton) {
-        nextRoundButton.setAttribute('data-bs-toggle', 'tooltip');
-        nextRoundButton.setAttribute('data-bs-placement', 'bottom');
-        nextRoundButton.setAttribute('title', 'Erstellt die Startliste für den nächsten Durchgang basierend auf den Ergebnissen des aktuellen Durchgangs.');
-    }
-    
-    // Handle next round display button functionality
-    if (nextRoundButton) {
-        nextRoundButton.addEventListener('click', function() {
-            const eventId = document.getElementById('eventSelect').value;
-            if (!eventId) {
-                alert('Bitte wählen Sie eine Veranstaltung aus');
-                return;
-            }
-            
-            // Show modal with loading indicator
-            const modal = new bootstrap.Modal(document.getElementById('nextRoundModal'));
-            modal.show();
-            
-            // Call the API to display next round order
-            fetch('/formular/api/next-round-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ event_id: eventId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Build start list table
-                    let html = `
-                        <div class="alert alert-success">
-                            <h6>Startfolge für nächsten Durchgang</h6>
-                            <p>Basierend auf den Ergebnissen von Durchgang ${data.source_round}</p>
-                        </div>
-                        <table class="table" id="nextRoundTable">
-                            <thead>
-                                <tr>
-                                    <th>Start Nr.</th>
-                                    <th>Team</th>
-                                    <th>Piloten</th>
-                                    <th>Vorherige Punktzahl</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-                    
-                    // Add teams with scores first
-                    data.round_data.forEach((team, index) => {
-                        html += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td>Team ${team.team_nummer}</td>
-                                <td>${team.schlepper_pilot} / ${team.segler_pilot}</td>
-                                <td>${team.raw_score ? team.raw_score.toFixed(1) : '-'}</td>
-                            </tr>`;
-                    });
-                    
-                    // Add teams without scores
-                    data.teams_without_scores.forEach((team, index) => {
-                        const position = data.round_data.length + index + 1;
-                        html += `
-                            <tr>
-                                <td>${position}</td>
-                                <td>Team ${team.team_nummer}</td>
-                                <td>${team.schlepper_pilot} / ${team.segler_pilot}</td>
-                                <td>-</td>
-                            </tr>`;
-                    });
-                    
-                    html += `</tbody></table>`;
-                    
-                    // Update modal content
-                    document.getElementById('startListContent').innerHTML = html;
-                    
-                    // Setup print button
-                    document.getElementById('printNextRoundBtn').onclick = function() {
-                        const printWin = window.open('', '_blank');
-                        printWin.document.write(`
-                            <html>
-                            <head>
-                                <title>Startliste nächster Durchgang</title>
-                                <style>
-                                    body { font-family: Arial, sans-serif; }
-                                    table { width: 100%; border-collapse: collapse; }
-                                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                                    th { background-color: #f2f2f2; }
-                                </style>
-                            </head>
-                            <body>
-                                <h2>NRW Cup ${new Date().getFullYear()} - Startliste</h2>
-                                <h3>Nächster Durchgang</h3>
-                                ${document.getElementById('nextRoundTable').outerHTML}
-                            </body>
-                            </html>
-                        `);
-                        printWin.document.close();
-                        printWin.focus();
-                        printWin.print();
-                    };
-                    
-                    // Setup email button — show recipient selection first
-                    document.getElementById('emailNextRoundBtn').onclick = async function() {
-                        const available = await checkEmailAvailable();
-                        if (!available) return;
-                        const eventId = document.getElementById('eventSelect').value;
-                        const teamOrder = [];
-                        const nextRoundData = data.round_data.concat(data.teams_without_scores);
-                        nextRoundData.forEach(team => { teamOrder.push(team.team_nummer); });
-
-                        // Store for later send
-                        window._emailPayload = { event_id: parseInt(eventId), team_order: teamOrder };
-
-                        // Fetch recipients list
-                        fetch('/formular/email-startlist-recipients', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
-                            body: JSON.stringify({ event_id: parseInt(eventId) })
-                        })
-                        .then(r => r.json())
-                        .then(result => {
-                            if (!result.success || !result.recipients.length) {
-                                alert('Keine Email-Adressen gefunden');
-                                return;
-                            }
-                            // Build recipient list
-                            let html = '<div class="mb-3">' +
-                                '<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll(\'#recipientList input\').forEach(c=>c.checked=true)">Alle</button>' +
-                                '<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll(\'#recipientList input\').forEach(c=>c.checked=false)">Keine</button>' +
-                                '</div><div id="recipientList">';
-                            result.recipients.forEach(r => {
-                                html += `<div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="${r.email}" id="rcpt_${r.email}" checked>
-                                    <label class="form-check-label" for="rcpt_${r.email}">
-                                        <strong>${r.name}</strong> — ${r.email} <small class="text-muted">(${r.role})</small>
-                                    </label>
-                                </div>`;
-                            });
-                            html += '</div>';
-                            document.getElementById('emailRecipientsBody').innerHTML = html;
-                            new bootstrap.Modal(document.getElementById('emailRecipientsModal')).show();
-                        })
-                        .catch(error => { alert('Fehler: ' + error.message); });
-                    };
-                } else {
-                    document.getElementById('startListContent').innerHTML = `
-                        <div class="alert alert-danger">
-                            ${data.message || 'Error displaying next round order'}
-                        </div>`;
-                }
-            })
-            .catch(error => {
-                console.error('Error getting next round order:', error);
-                document.getElementById('startListContent').innerHTML = `
-                    <div class="alert alert-danger">
-                        Error: ${error.message || 'Failed to get next round order'}
-                    </div>`;
-            });
-        });
-    }
-});
-
-function confirmNextRound() {
-    if (confirm('Achtung: Der aktuelle Durchgang wird abgeschlossen.\n\nÄnderungen an Bewertungen dieses Durchgangs sind danach nur noch mit Admin-Zugang möglich.\n\nFortfahren?')) {
-        const form = document.getElementById('nextRoundForm');
-        document.getElementById('nextRoundEventId').value = document.getElementById('eventSelect').value;
-        form.submit();
-    }
-}
-
-// === Results Email Recipient Selection ===
-var _resultsEventId = null;
-
-async function showResultsRecipients(eventId) {
-    const available = await checkEmailAvailable();
-    if (!available) return;
-    _resultsEventId = eventId;
-    fetch('/reports/email_results_recipients/' + eventId, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
-    })
-    .then(r => r.json())
-    .then(result => {
-        if (!result.success || !result.recipients.length) {
-            alert('Keine Email-Adressen gefunden');
-            return;
-        }
-        let html = '<div class="mb-3">' +
-            '<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll(\'#resultsRcptList input\').forEach(c=>c.checked=true)">Alle</button>' +
-            '<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll(\'#resultsRcptList input\').forEach(c=>c.checked=false)">Keine</button>' +
-            '</div><div id="resultsRcptList">';
-        result.recipients.forEach(r => {
-            html += `<div class="form-check">
-                <input class="form-check-input" type="checkbox" value="${r.email}" id="rrcpt_${r.email}" checked>
-                <label class="form-check-label" for="rrcpt_${r.email}">
-                    <strong>${r.name}</strong> — ${r.email} <small class="text-muted">(${r.role})</small>
-                </label>
-            </div>`;
-        });
-        html += '</div>';
-        document.getElementById('resultsRecipientsBody').innerHTML = html;
-        new bootstrap.Modal(document.getElementById('resultsRecipientsModal')).show();
-    })
-    .catch(error => { alert('Fehler: ' + error.message); });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-document.getElementById('confirmSendResultsBtn').onclick = function() {
-    const checked = document.querySelectorAll('#resultsRcptList input:checked');
-    const selected = Array.from(checked).map(c => c.value);
-    if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
-    if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
-
-    fetch('/reports/email_results/' + _resultsEventId, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
-        body: JSON.stringify({ recipients: selected })
-    })
-    .then(r => r.json())
-    .then(result => {
-        bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
-        alert(result.success ? result.message : 'Fehler: ' + result.message);
-    })
-    .catch(error => { alert('Fehler beim Senden: ' + error.message); });
-};
-});
-</script>
 
 <!-- Results Email Recipient Selection Modal -->
 <div class="modal fade" id="resultsRecipientsModal" tabindex="-1">
@@ -779,9 +384,7 @@ document.getElementById('confirmSendResultsBtn').onclick = function() {
                 <h5 class="modal-title">Email-Empfänger auswählen</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="resultsRecipientsBody">
-                <p>Laden...</p>
-            </div>
+            <div class="modal-body" id="resultsRecipientsBody"><p>Laden...</p></div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
                 <button type="button" class="btn btn-outline-info" id="confirmSendResultsBtn">Senden</button>
@@ -820,5 +423,144 @@ document.getElementById('confirmSendResultsBtn').onclick = function() {
         </div>
     </div>
 </div>
+
+<!-- Hidden form for next round generation -->
+<form id="nextRoundForm" method="POST" action="{{ url_for('scoring.generate_next_round') }}" class="d-none">
+    <input type="hidden" name="event_id" id="nextRoundEventId">
+</form>
+
+<script>
+function buildRecipientListHTML(recipients, containerId, idPrefix) {
+    let html = `<div class="mb-3">` +
+        `<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll('#${containerId} input').forEach(c=>c.checked=true)">Alle</button>` +
+        `<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('#${containerId} input').forEach(c=>c.checked=false)">Keine</button>` +
+        `</div><div id="${containerId}">`;
+    recipients.forEach(r => {
+        html += `<div class="form-check">
+            <input class="form-check-input" type="checkbox" value="${r.email}" id="${idPrefix}${r.email}" checked>
+            <label class="form-check-label" for="${idPrefix}${r.email}">
+                <strong>${r.name}</strong> — ${r.email} <small class="text-muted">(${r.role})</small>
+            </label>
+        </div>`;
+    });
+    return html + '</div>';
+}
+
+function checkForNextRoundGeneration(selectElement) {
+    if (selectElement.value === 'generate_next') {
+        if (confirm('Möchten Sie Durchgang {{ next_round_number }} erstellen und Bewertungsbögen generieren?')) {
+            const form = document.getElementById('nextRoundForm');
+            document.getElementById('nextRoundEventId').value = document.getElementById('eventSelect').value;
+            form.submit();
+        } else {
+            selectElement.value = '{{ selected_round or "" }}';
+        }
+    } else {
+        selectElement.form.submit();
+    }
+}
+
+// === Results Email Recipient Selection ===
+var _resultsEventId = null;
+
+async function showResultsRecipients(eventId) {
+    const available = await checkEmailAvailable();
+    if (!available) return;
+    _resultsEventId = eventId;
+    fetch('/reports/email_results_recipients/' + eventId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success || !result.recipients.length) {
+            alert('Keine Email-Adressen gefunden');
+            return;
+        }
+        document.getElementById('resultsRecipientsBody').innerHTML = buildRecipientListHTML(result.recipients, 'resultsRcptList', 'rrcpt_');
+        new bootstrap.Modal(document.getElementById('resultsRecipientsModal')).show();
+    })
+    .catch(error => { alert('Fehler: ' + error.message); });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+
+    // Add tooltips to specific buttons
+    const adminButton = document.querySelector('a[href*="admin_login"], a[href*="admin_logout"]');
+    if (adminButton) {
+        adminButton.setAttribute('data-bs-toggle', 'tooltip');
+        adminButton.setAttribute('data-bs-placement', 'bottom');
+        adminButton.setAttribute('title', 'Administratorzugang für das Entsperren von gesperrten Bewertungen.');
+    }
+
+    const scoreSheetsButton = document.querySelector('button[type="submit"].btn-warning');
+    if (scoreSheetsButton) {
+        scoreSheetsButton.setAttribute('data-bs-toggle', 'tooltip');
+        scoreSheetsButton.setAttribute('data-bs-placement', 'bottom');
+        scoreSheetsButton.setAttribute('title', 'Erstellt leere Bewertungsbögen für den nächsten Durchgang.');
+    }
+
+    const printResultsButton = document.querySelector('.btn-secondary:has(i.bi-printer), a[href*="print_results"]');
+    if (printResultsButton) {
+        printResultsButton.setAttribute('data-bs-toggle', 'tooltip');
+        printResultsButton.setAttribute('data-bs-placement', 'bottom');
+        printResultsButton.setAttribute('title', 'Generiert eine PDF-Datei mit den aktuellen Ergebnissen.');
+    } else {
+        document.querySelectorAll('a.btn').forEach(btn => {
+            if (btn.textContent.includes('Ergebnisse drucken') ||
+                (btn.querySelector('i.bi-printer') && btn.classList.contains('btn-secondary'))) {
+                btn.setAttribute('data-bs-toggle', 'tooltip');
+                btn.setAttribute('data-bs-placement', 'bottom');
+                btn.setAttribute('title', 'Generiert eine PDF-Datei mit den aktuellen Ergebnissen.');
+            }
+        });
+    }
+
+    document.getElementById('confirmSendEmailBtn').onclick = function() {
+        const checked = document.querySelectorAll('#recipientList input:checked');
+        const selected = Array.from(checked).map(c => c.value);
+        if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
+        if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+
+        const payload = window._emailPayload;
+        payload.recipients = selected;
+        payload.next_round = true;
+
+        fetch('/formular/email-startlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(result => {
+            bootstrap.Modal.getInstance(document.getElementById('emailRecipientsModal')).hide();
+            alert(result.success ? 'Startliste an ' + selected.length + ' Empfänger versendet' : 'Fehler: ' + result.message);
+        })
+        .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+    };
+
+    document.getElementById('confirmSendResultsBtn').onclick = function() {
+        const checked = document.querySelectorAll('#resultsRcptList input:checked');
+        const selected = Array.from(checked).map(c => c.value);
+        if (!selected.length) { alert('Keine Empfänger ausgewählt'); return; }
+        if (!confirm('Email an ' + selected.length + ' Empfänger senden?')) return;
+
+        fetch('/reports/email_results/' + _resultsEventId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+            body: JSON.stringify({ recipients: selected })
+        })
+        .then(r => r.json())
+        .then(result => {
+            bootstrap.Modal.getInstance(document.getElementById('resultsRecipientsModal')).hide();
+            alert(result.success ? result.message : 'Fehler: ' + result.message);
+        })
+        .catch(error => { alert('Fehler beim Senden: ' + error.message); });
+    };
+});
+</script>
 
 {% endblock %}

@@ -201,8 +201,7 @@
     let demoRunning = false;
     let demoEventName = '';
     let demoRoundNumber = 0;
-    let demoBusy = false;  // true while a step is in progress (filling + submitting)
-    let demoCh = null;     // BroadcastChannel
+    let demoBusy = false;  // true while a step fetch is in progress
 
     document.getElementById('demoSpeed').addEventListener('input', function() {
         document.getElementById('demoSpeedLabel').textContent = (this.value / 1000).toFixed(1) + 's';
@@ -220,15 +219,6 @@
         const variability = document.getElementById('score_variability').value;
         const specificRound = parseInt(document.getElementById('specific_round').value) || 0;
         const roundNum = specificRound > 0 ? specificRound : 1;
-
-        // Set up BroadcastChannel
-        if (demoCh) demoCh.close();
-        demoCh = new BroadcastChannel('nrwcup_demo');
-        demoCh.onmessage = function(ev) {
-            if (ev.data.type === 'step_done') {
-                onStepDone();
-            }
-        };
 
         document.getElementById('demoPanel').classList.remove('d-none');
         document.getElementById('demoLog').innerHTML = '';
@@ -259,7 +249,7 @@
             document.getElementById('demoProgress').textContent = `0 / ${demoSteps.length}`;
             logDemo(`${data.event_name} — Durchgang ${data.round_number}`, 'fw-bold');
             logDemo(`${demoSteps.length} Schritte: ${teamIds.length} Teams × ${judgeIds.length} Punktrichter`, 'text-muted');
-            logDemo('Bitte einen Bewertungsbogen in einem zweiten Tab öffnen.', 'text-info');
+            logDemo('Andere Bildschirme aktualisieren um Änderungen zu sehen.', 'text-info');
             logDemo('─'.repeat(50), 'text-muted');
             updateDemoStatus();
         })
@@ -319,15 +309,7 @@
                 document.getElementById('demoNextBtn').disabled = false;
                 return;
             }
-
-            // 2. Send values to the score form tab via BroadcastChannel
-            const fieldDelay = Math.max(150, parseInt(document.getElementById('demoSpeed').value) / 5);
-            demoCh.postMessage({
-                type: 'fill',
-                score_id: data.score_id,
-                values: data.score_values,
-                delay: fieldDelay
-            });
+            onStepDone();
         })
         .catch(err => {
             logDemo(`  ✗ ${err.message}`, 'text-danger');
@@ -391,7 +373,6 @@
         demoBusy = false;
         demoSteps = [];
         demoCurrentStep = 0;
-        if (demoCh) { demoCh.close(); demoCh = null; }
         document.getElementById('demoPanel').classList.add('d-none');
     }
 

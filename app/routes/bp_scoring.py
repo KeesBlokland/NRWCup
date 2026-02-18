@@ -521,6 +521,7 @@ def api_score(score_id):
         logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
     
+
 @scoring_bp.route('/enter_score', methods=['POST'])
 def enter_score():
     logger.info("=== SCORE SUBMISSION STARTED ===")
@@ -713,6 +714,7 @@ def update_score(score_id):
         flash(f'Fehler beim Aktualisieren der Bewertung: {str(e)}', 'error')
     
     return redirect(url_for('scoring.score_list'))
+
 
 @scoring_bp.route('/view/<int:score_id>')
 def view_score(score_id):

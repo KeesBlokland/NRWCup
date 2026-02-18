@@ -10,7 +10,6 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Bewertungen</h4>
                     <div>
-                        <button id="autoRefreshBtn" class="btn btn-outline-secondary btn-sm me-2" onclick="toggleAutoRefresh()">⟳ Auto-Refresh</button>
                         <a href="{{ url_for('scoring.scoresheet') }}" class="btn btn-primary">Neue Bewertung</a>
                     </div>
                 </div>
@@ -226,19 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-let autoRefreshInterval = null;
-function toggleAutoRefresh() {
-    const btn = document.getElementById('autoRefreshBtn');
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-        autoRefreshInterval = null;
-        btn.classList.replace('btn-success', 'btn-outline-secondary');
-        btn.textContent = '⟳ Auto-Refresh';
-    } else {
-        autoRefreshInterval = setInterval(function() { location.reload(); }, 4000);
-        btn.classList.replace('btn-outline-secondary', 'btn-success');
-        btn.textContent = '⟳ Aktiv (4s)';
-    }
-}
+
 </script>
 {% endblock %}

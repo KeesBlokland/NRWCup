@@ -186,6 +186,7 @@
             </div>
         </div>
     </div>
+
 </div>
 
 <script>
@@ -196,9 +197,12 @@
     // Demo mode state
     let demoSteps = [];
     let demoCurrentStep = 0;
-    let demoAutoInterval = null;
+    let demoAutoPlay = false;
     let demoRunning = false;
     let demoEventName = '';
+    let demoRoundNumber = 0;
+    let demoBusy = false;  // true while a step is in progress (filling + submitting)
+    let demoCh = null;     // BroadcastChannel
 
     document.getElementById('demoSpeed').addEventListener('input', function() {
         document.getElementById('demoSpeedLabel').textContent = (this.value / 1000).toFixed(1) + 's';
@@ -215,7 +219,16 @@
 
         const variability = document.getElementById('score_variability').value;
         const specificRound = parseInt(document.getElementById('specific_round').value) || 0;
-        const roundNum = specificRound > 0 ? specificRound : 1;  // Demo always starts at round 1 unless specific round set
+        const roundNum = specificRound > 0 ? specificRound : 1;
+
+        // Set up BroadcastChannel
+        if (demoCh) demoCh.close();
+        demoCh = new BroadcastChannel('nrwcup_demo');
+        demoCh.onmessage = function(ev) {
+            if (ev.data.type === 'step_done') {
+                onStepDone();
+            }
+        };
 
         document.getElementById('demoPanel').classList.remove('d-none');
         document.getElementById('demoLog').innerHTML = '';
@@ -239,12 +252,14 @@
             demoSteps = data.steps;
             demoCurrentStep = 0;
             demoEventName = data.event_name;
+            demoRoundNumber = data.round_number;
             demoRunning = true;
 
             document.getElementById('demoNextBtn').disabled = false;
             document.getElementById('demoProgress').textContent = `0 / ${demoSteps.length}`;
             logDemo(`${data.event_name} — Durchgang ${data.round_number}`, 'fw-bold');
             logDemo(`${demoSteps.length} Schritte: ${teamIds.length} Teams × ${judgeIds.length} Punktrichter`, 'text-muted');
+            logDemo('Bitte einen Bewertungsbogen in einem zweiten Tab öffnen.', 'text-info');
             logDemo('─'.repeat(50), 'text-muted');
             updateDemoStatus();
         })
@@ -267,21 +282,23 @@
     }
 
     function getJudgeCount() {
-        // Count unique judges from first team's steps
         if (!demoSteps.length) return 1;
         const firstTeamId = demoSteps[0].team_id;
         return demoSteps.filter(s => s.team_id === firstTeamId).length;
     }
 
     function demoNext() {
-        if (!demoRunning || demoCurrentStep >= demoSteps.length) return;
+        if (!demoRunning || demoCurrentStep >= demoSteps.length || demoBusy) return;
+        demoBusy = true;
 
         const step = demoSteps[demoCurrentStep];
         const judgeNum = (demoCurrentStep % getJudgeCount()) + 1;
         const isFirstJudge = judgeNum === 1;
 
         document.getElementById('demoNextBtn').disabled = true;
+        logDemo(`Team ${step.team_nummer} · R${judgeNum} ${step.judge_name}${isFirstJudge ? ' (+Messwerte)' : ''} ...`, 'text-muted');
 
+        // 1. Get generated values from backend (no save)
         fetch('/testdata/demo_step', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -298,59 +315,72 @@
         .then(data => {
             if (data.error) {
                 logDemo(`  ✗ Fehler: ${data.error}`, 'text-danger');
+                demoBusy = false;
                 document.getElementById('demoNextBtn').disabled = false;
                 return;
             }
 
-            // Log the step — progress only, no scores (those are on the scorecards)
-            let msg = `Team ${step.team_nummer} · R${judgeNum} ${step.judge_name}`;
-            if (isFirstJudge) {
-                msg += ' (+Messwerte)';
-            }
-            msg += ' ✓';
-            logDemo(msg, judgeNum === getJudgeCount() ? 'text-success' : '');
-
-            // Separator between teams
-            if (judgeNum === getJudgeCount() && demoCurrentStep < demoSteps.length - 1) {
-                logDemo('', '');
-            }
-
-            demoCurrentStep++;
-            document.getElementById('demoProgress').textContent = `${demoCurrentStep} / ${demoSteps.length}`;
-            document.getElementById('demoProgress').className =
-                demoCurrentStep >= demoSteps.length ? 'badge bg-success' : 'badge bg-primary';
-
-            updateDemoStatus();
-            document.getElementById('demoNextBtn').disabled = false;
+            // 2. Send values to the score form tab via BroadcastChannel
+            const fieldDelay = Math.max(150, parseInt(document.getElementById('demoSpeed').value) / 5);
+            demoCh.postMessage({
+                type: 'fill',
+                score_id: data.score_id,
+                values: data.score_values,
+                delay: fieldDelay
+            });
         })
         .catch(err => {
             logDemo(`  ✗ ${err.message}`, 'text-danger');
+            demoBusy = false;
             document.getElementById('demoNextBtn').disabled = false;
         });
     }
 
-    function toggleAutoPlay() {
-        if (demoAutoInterval) {
-            stopAutoPlay();
-        } else {
+    function onStepDone() {
+        // Called when the score form has submitted successfully
+        const step = demoSteps[demoCurrentStep];
+        const judgeNum = (demoCurrentStep % getJudgeCount()) + 1;
+
+        // Update log: replace "..." with checkmark
+        logDemo(`  ✓ gespeichert`, judgeNum === getJudgeCount() ? 'text-success' : '');
+
+        // Separator between teams
+        if (judgeNum === getJudgeCount() && demoCurrentStep < demoSteps.length - 1) {
+            logDemo('', '');
+        }
+
+        demoCurrentStep++;
+        demoBusy = false;
+        document.getElementById('demoProgress').textContent = `${demoCurrentStep} / ${demoSteps.length}`;
+        document.getElementById('demoProgress').className =
+            demoCurrentStep >= demoSteps.length ? 'badge bg-success' : 'badge bg-primary';
+
+        updateDemoStatus();
+        document.getElementById('demoNextBtn').disabled = false;
+
+        // If auto-play is on, trigger next step after a pause
+        if (demoAutoPlay && demoCurrentStep < demoSteps.length) {
             const speed = parseInt(document.getElementById('demoSpeed').value);
-            document.getElementById('demoAutoBtn').textContent = 'Stop';
-            document.getElementById('demoAutoBtn').classList.replace('btn-outline-primary', 'btn-warning');
-            demoAutoInterval = setInterval(() => {
-                if (demoCurrentStep >= demoSteps.length) {
-                    stopAutoPlay();
-                    return;
-                }
-                demoNext();
+            setTimeout(function() {
+                if (demoAutoPlay && demoRunning) demoNext();
             }, speed);
         }
     }
 
-    function stopAutoPlay() {
-        if (demoAutoInterval) {
-            clearInterval(demoAutoInterval);
-            demoAutoInterval = null;
+    function toggleAutoPlay() {
+        if (demoAutoPlay) {
+            stopAutoPlay();
+        } else {
+            demoAutoPlay = true;
+            document.getElementById('demoAutoBtn').textContent = 'Stop';
+            document.getElementById('demoAutoBtn').classList.replace('btn-outline-primary', 'btn-warning');
+            // Kick off the first step if not already busy
+            if (!demoBusy) demoNext();
         }
+    }
+
+    function stopAutoPlay() {
+        demoAutoPlay = false;
         document.getElementById('demoAutoBtn').textContent = 'Auto';
         document.getElementById('demoAutoBtn').classList.replace('btn-warning', 'btn-outline-primary');
     }
@@ -358,8 +388,10 @@
     function stopDemo() {
         stopAutoPlay();
         demoRunning = false;
+        demoBusy = false;
         demoSteps = [];
         demoCurrentStep = 0;
+        if (demoCh) { demoCh.close(); demoCh = null; }
         document.getElementById('demoPanel').classList.add('d-none');
     }
 

@@ -401,8 +401,8 @@ def demo_setup():
 
 @testdata_bp.route('/demo_step', methods=['POST'])
 def demo_step():
-    """Execute one demo step: generate and save scores for one judge + one team.
-    Uses the same create_score() as real data entry."""
+    """Generate score values for one judge + one team and return them.
+    Does NOT save — the real score form will submit via the normal path."""
     try:
         data = request.get_json()
         team_round_id = int(data['team_round_id'])
@@ -455,16 +455,16 @@ def demo_step():
                     value = min(value, task_type.max_value)
                 score_values[task_type.code] = value
 
-        from app.services.services_scoring import ScoringService
-        scoring_service = ScoringService()
-        scoring_service.create_score(
-            team_round_id=team_round_id,
-            judge_id=judge_id,
-            score_values=score_values,
-            notes="Demo mode generated score"
-        )
+        # Look up the pre-created Score record for this team_round + judge
+        score = Score.query.filter_by(team_round_id=team_round_id, judge_id=judge_id).first()
+        if not score:
+            return jsonify({'error': 'Score record not found — run Demo-Setup first'}), 400
 
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'score_values': score_values,
+            'score_id': score.score_id,
+        })
 
     except Exception as e:
         db.session.rollback()

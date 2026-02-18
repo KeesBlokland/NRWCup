@@ -267,17 +267,13 @@ def generate():
                                 else:
                                     score_values[task_type.code] = landing_values[task_type.code]
                         elif task_type.name_de and 'Platzrunde' in task_type.name_de:
+                            # Only score the chosen variant — leave others absent (like a real judge)
                             if 'platzrunde' in chosen_variants and task_type.type_id == chosen_variants['platzrunde']:
-                                value = generate_gaussian_score(std_dev=std_dev)
-                            else:
-                                value = 0.0
-                            score_values[task_type.code] = value
+                                score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
                         elif task_type.name_de and 'berflug' in task_type.name_de:
+                            # Only score the chosen variant — leave others absent (like a real judge)
                             if 'platzu' in chosen_variants and task_type.type_id == chosen_variants['platzu']:
-                                value = generate_gaussian_score(std_dev=std_dev)
-                            else:
-                                value = 0.0
-                            score_values[task_type.code] = value
+                                score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
                         else:
                             value = generate_gaussian_score(std_dev=std_dev)
                             if task_type.max_value is not None:
@@ -441,15 +437,13 @@ def demo_step():
                     else:
                         score_values[task_type.code] = landing_values[task_type.code]
             elif task_type.name_de and 'Platzrunde' in task_type.name_de:
+                # Only score the chosen variant — leave others absent (like a real judge)
                 if chosen_platzrunde and task_type.type_id == chosen_platzrunde:
                     score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
-                else:
-                    score_values[task_type.code] = 0.0
             elif task_type.name_de and 'berflug' in task_type.name_de:
+                # Only score the chosen variant — leave others absent (like a real judge)
                 if chosen_platzu and task_type.type_id == chosen_platzu:
                     score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
-                else:
-                    score_values[task_type.code] = 0.0
             else:
                 value = generate_gaussian_score(std_dev=std_dev)
                 if task_type.max_value is not None:

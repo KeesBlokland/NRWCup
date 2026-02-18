@@ -1,7 +1,8 @@
 <!--
 File: app/templates/reports/reports_standings.html
-Version: 2.2.0
+Version: 2.3.0
 Created: 2025-04-21
+Last Updated: 2026-02-18
 Description: Corrected raw score display and dropped rounds logic
 -->
 
@@ -93,17 +94,17 @@ Description: Corrected raw score display and dropped rounds logic
                     <!-- Table with forced explicit header row -->
                     <table class="table table-striped align-middle">
                         <!-- Explicit header row with strong styling -->
-                        <tr style="background-color: #343a40; color: white; font-weight: bold;">
-                            <th style="text-align: center; padding: 10px;">Rang</th>
-                            <th style="padding: 10px;">Team</th>
-                            <th style="padding: 10px;">Piloten</th>
-                            
+                        <tr class="table-dark-header">
+                            <th class="text-center">Rang</th>
+                            <th>Team</th>
+                            <th>Piloten</th>
+
                             <!-- Only display columns for rounds with actual data -->
                             {% for i in range(rounds|length) %}
-                                <th style="text-align: center; padding: 10px;">D{{ rounds[i].round_number }}</th>
+                                <th class="text-center">D{{ rounds[i].round_number }}</th>
                             {% endfor %}
-                            
-                            <th style="text-align: center; padding: 10px;">Endstand</th>
+
+                            <th class="text-center">Endstand</th>
                         </tr>
                         
                         <!-- Table body -->
@@ -131,7 +132,7 @@ Description: Corrected raw score display and dropped rounds logic
                                             {% set round_obj = rounds[i] %}
                                             
                                             {% if i in standing.dropped_indices %}
-                                                <del class="text-muted">{{ "%.1f%%"|format(score / 10) }}</del>
+                                                <del class="text-muted dropped-score">{{ "%.1f%%"|format(score / 10) }}</del>
                                             {% else %}
                                                 {{ "%.1f%%"|format(score / 10) }}
                                             {% endif %}
@@ -191,17 +192,17 @@ Description: Corrected raw score display and dropped rounds logic
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <!-- Forced explicit header styling -->
-                                        <tr style="background-color: #343a40; color: white; font-weight: bold;">
-                                            <th style="padding: 8px; text-align: center;">Start Nr.</th>
-                                            <th style="padding: 8px;">Team</th>
-                                            <th style="padding: 8px;">Piloten</th>
-                                            <th style="padding: 8px; text-align: center;">Punkte</th>
+                                        <tr class="table-dark-header">
+                                            <th class="text-center">Start Nr.</th>
+                                            <th>Team</th>
+                                            <th>Piloten</th>
+                                            <th class="text-center">Punkte</th>
                                         </tr>
                                         <tbody>
                                             {% set sorted_scores = (round_standings[round.round_id]|sort(attribute='score')) %}
                                             {% for score in sorted_scores %}
                                                 <tr>
-                                                    <td style="text-align: center;">{{ loop.index }}</td>
+                                                    <td class="text-center">{{ loop.index }}</td>
                                                     <td>Team {{ score.team.team_nummer }}</td>
                                                     <td>
                                                         <div>
@@ -216,7 +217,7 @@ Description: Corrected raw score display and dropped rounds logic
                                                             {% endif %}
                                                         </div>
                                                     </td>
-                                                    <td style="text-align: center;">{{ "%.1f"|format(score.score) }}</td>
+                                                    <td class="text-center">{{ "%.1f"|format(score.score) }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -236,7 +237,7 @@ Description: Corrected raw score display and dropped rounds logic
 </div>
 
 <!-- Printable Start List - removed inaccurate dropping rules -->
-<div id="printable-start-list" style="display: none;">
+<div id="printable-start-list" class="d-none">
     <div class="print-container">
         <!-- Single line title with smaller font size, no date -->
         <h2 class="print-title">NRW Cup {{ current_year }} - Startliste für Durchgang <span id="print-round-number"></span></h2>

@@ -1,14 +1,15 @@
+{# File: app/templates/scoring/score_view.html | Last Updated: 2026-02-18 #}
 {% extends "base.html" %}
 
 {% block title %}NRW Cup {{ current_year }} - Bewertung Bearbeiten{% endblock %}
 
 {% block content %}
-<div class="container-sm" style="max-width: 600px;">
+<div class="container-sm scoresheet-container">
     <div class="card">
         <div class="card-header py-1">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">NRW Cup {{ current_year }} - Bewertungsbogen</h5>
-                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" style="height: 40px;">
+                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" class="club-logo">
             </div>
         </div>
         <div class="card-body p-3">

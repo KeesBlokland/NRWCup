@@ -1,9 +1,10 @@
+{# File: app/templates/scoring/team_results.html | Last Updated: 2026-02-18 #}
 {% extends "base.html" %}
 
 {% block title %}Team Ergebnisse{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: calc(100% - 5cm); margin: 0 2.5cm;">
+<div class="container team-results-container">
     <!-- Selection (hidden on print) -->
     <div class="card mb-4 no-print">
         <div class="card-body">
@@ -188,9 +189,7 @@
         </div>
     {% endif %}
 
-    <div class="text-center mt-3">
-        <small class="text-muted">Ideen von Kees, Code von Claude</small>
-    </div>
+   
 </div>
 
 <style>

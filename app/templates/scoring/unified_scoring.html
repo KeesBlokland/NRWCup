@@ -1,4 +1,4 @@
-{# File: app/templates/scoring/unified_scoring.html #}
+{# File: app/templates/scoring/unified_scoring.html | Last Updated: 2026-02-18 #}
 
 {% extends "base.html" %}
 
@@ -165,7 +165,7 @@
             <button class="nav-link active" id="scores-tab" data-bs-toggle="tab" data-bs-target="#scores"
                     type="button" role="tab" aria-controls="scores" aria-selected="true">
                 Bewertungen
-                <span class="badge bg-secondary ms-1" style="cursor: pointer; font-size: 0.7rem;"
+                <span class="badge bg-secondary ms-1 badge-info-sm"
                       data-bs-toggle="modal" data-bs-target="#scoringInfoModal"
                       onclick="event.stopPropagation();">?</span>
             </button>
@@ -344,16 +344,16 @@
            {% if standings %}
                <div class="table-responsive">
                    <table class="table table-striped align-middle">
-                       <tr style="background-color: #343a40; color: white; font-weight: bold;">
-                           <th style="text-align: center; padding: 10px;">Rang</th>
-                           <th style="padding: 10px;">Team</th>
-                           <th style="padding: 10px;">Piloten</th>
-                           
+                       <tr class="table-dark-header">
+                           <th class="text-center">Rang</th>
+                           <th>Team</th>
+                           <th>Piloten</th>
+
                            {% for round_obj in standings_rounds %}
-                               <th style="text-align: center; padding: 10px;">D{{ round_obj.round_number }}</th>
+                               <th class="text-center">D{{ round_obj.round_number }}</th>
                            {% endfor %}
 
-                           <th style="text-align: center; padding: 10px;">Endstand</th>
+                           <th class="text-center">Endstand</th>
                        </tr>
 
                        {% for standing in standings %}
@@ -481,44 +481,10 @@ document.getElementById('confirmSendEmailBtn').onclick = function() {
 </script>
 
 <!-- Hidden form for next round generation -->
-<form id="nextRoundForm" method="POST" action="{{ url_for('scoring.generate_next_round') }}" style="display: none;">
+<form id="nextRoundForm" method="POST" action="{{ url_for('scoring.generate_next_round') }}" class="d-none">
    <input type="hidden" name="event_id" id="nextRoundEventId">
 </form>
 
-<style>
-.judge-btn {
-   margin: 2px;
-   padding: 3px 8px;
-}
-
-@media print {
-   .no-print, .nav-tabs, .card-header, .btn-group, .form-select, .form-label, 
-   header, nav, footer, .container > .card:first-child {
-       display: none !important;
-   }
-   
-   .tab-pane {
-       display: block !important;
-       opacity: 1 !important;
-       visibility: visible !important;
-   }
-   
-   body {
-       font-size: 12pt;
-   }
-   
-   table {
-       width: 100%;
-       page-break-inside: avoid;
-   }
-   
-   th {
-       background-color: #f0f0f0 !important;
-       color: black !important;
-       font-weight: bold !important;
-   }
-}
-</style>
 
 
 <script>

@@ -2,7 +2,7 @@
     File: app/templates/teams/teams_main.html
     Version: 2.0.0
     Created: 2024-12-05
-    Last Updated: 2025-04-19
+    Last Updated: 2026-02-18
 -->
 {% extends "base.html" %}
 {% block title %}NRW Cup {{ current_year }} - Teams{% endblock %}
@@ -16,7 +16,7 @@
                 Neues Team
             </a>
             
-            <form action="{{ url_for('teams.renumber') }}" method="POST" style="display: inline-block;" 
+            <form action="{{ url_for('teams.renumber') }}" method="POST" class="d-inline-block"
                   onsubmit="return confirm('Möchten Sie alle Teams neu nummerieren? Dies ändert die Nummern aller aktiven Teams und entfernt Lücken in der Nummerierung.');">
                 <button type="submit" class="btn btn-warning">
                     Teams neu nummerieren

@@ -1,4 +1,4 @@
-{# File: app/templates/flugzeuge/flugzeuge_edit.html - Updated span label #}
+{# File: app/templates/flugzeuge/flugzeuge_edit.html | Last Updated: 2026-02-18 #}
 
 {% extends "base.html" %}
 
@@ -147,7 +147,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                                    <form action="{{ url_for('flugzeuge.delete', id=aircraft.flugzeug_id) }}" method="POST" style="display: inline;">
+                                    <form action="{{ url_for('flugzeuge.delete', id=aircraft.flugzeug_id) }}" method="POST" class="d-inline">
                                         <button type="submit" class="btn btn-outline-danger">Löschen</button>
                                     </form>
                                 </div>

@@ -1,9 +1,10 @@
+{# File: app/templates/scoring/score_form.html | Last Updated: 2026-02-18 #}
 {% extends "base.html" %}
 
 {% block title %}NRW Cup {{ current_year }} - Bewertungsbogen{% endblock %}
 
 {% block content %}
-<div class="container-sm" style="max-width: 600px;">
+<div class="container-sm scoresheet-container">
     <div class="card">
         <div class="card-header py-1">
             <div class="d-flex justify-content-between align-items-center">
@@ -16,7 +17,7 @@
                         NRW Cup {{ current_year }} - Bewertungsbogen
                     {% endif %}
                 </h5>
-                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" style="height: 40px;">
+                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" class="club-logo">
             </div>
         </div>
         <div class="card-body p-3">
@@ -166,10 +167,10 @@
                                 <td>
                                     {% if figure.code in ['LANDGM', 'LANS', 'SEILZ'] %}
                                         <!-- Landing zones with radio buttons -->
-                                        <select class="form-select form-select-sm landing-score"
+                                        <select class="form-select form-select-sm landing-score{% if is_messwertung_blue %} score-input-readonly{% endif %}"
                                                name="score_{{ figure.code }}"
                                                onchange="updateLandingPoints('{{ figure.code }}', this.value); updateTotalPoints()"
-                                               {% if is_messwertung_blue %}style="background-color: #e8f4fd" disabled{% endif %}
+                                               {% if is_messwertung_blue %}disabled{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}disabled{% endif %}>
                                             <option value="">-</option>
                                             {% for val in [0, 5, 10, 20, 30] %}
@@ -179,34 +180,34 @@
                                         <input type="hidden" class="landing-points-hidden" id="{{ figure.code }}_points_hidden" data-kfactor="1" value="{{ value }}">
                                     {% elif figure.code == 'SEGZEIT' %}
                                         <!-- Segler Flugzeit -->
-                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score"
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score{% if is_messwertung_blue %} score-input-readonly{% endif %}"
                                                name="score_{{ figure.code }}" value="{{ value }}"
                                                min="0" max="300" step="1"
                                                data-figure-code="{{ figure.code }}"
                                                oninput="calculateSeglerzeit(this.value); updateTotalPoints()"
-                                               {% if is_messwertung_blue %}style="background-color: #e8f4fd" readonly{% endif %}
+                                               {% if is_messwertung_blue %}readonly{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% elif 'Platzrunde' in figure.name_de %}
                                         <!-- Platzrunde variants (mutually exclusive) -->
-                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score"
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score{% if is_kuer_disabled %} score-input-readonly{% endif %}"
                                                name="score_{{ figure.code }}" value="{{ value }}"
                                                min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
                                                step="0.5"
                                                data-figure-code="{{ figure.code }}"
                                                data-group="platzrunde"
                                                oninput="handleMutualExclusion(this, 'platzrunde'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
-                                               {% if is_kuer_disabled %}style="background-color: #e8f4fd" readonly{% endif %}
+                                               {% if is_kuer_disabled %}readonly{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% elif 'berflug' in figure.name_de %}
                                         <!-- Platzüberflug variants (mutually exclusive) -->
-                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score"
+                                        <input type="number" class="form-control form-control-sm decimal-dot figure-score{% if is_kuer_disabled %} score-input-readonly{% endif %}"
                                                name="score_{{ figure.code }}" value="{{ value }}"
                                                min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
                                                step="0.5"
                                                data-figure-code="{{ figure.code }}"
                                                data-group="platzueberflug"
                                                oninput="handleMutualExclusion(this, 'platzueberflug'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
-                                               {% if is_kuer_disabled %}style="background-color: #e8f4fd" readonly{% endif %}
+                                               {% if is_kuer_disabled %}readonly{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
                                     {% else %}
                                         <!-- Standard figures -->
@@ -222,19 +223,18 @@
                                 <td>
                                     <div class="input-group input-group-sm">
                                         {% if is_messwertung_blue %}
-                                            <span class="input-group-text" style="font-size: 0.75rem; color: #999;">-</span>
-                                            <input type="text" class="form-control form-control-sm text-end"
+                                            <span class="input-group-text score-label-sm">-</span>
+                                            <input type="text" class="form-control form-control-sm text-end score-input-readonly"
                                                    id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
                                                    data-exclude-total="true"
-                                                   value="" readonly
-                                                   style="background-color: #e8f4fd; color: #999;">
+                                                   value="" readonly>
                                         {% elif figure.code == 'SEGZEIT' %}
-                                            <span class="input-group-text" style="font-size: 0.75rem;">*</span>
+                                            <span class="input-group-text score-label-sm">*</span>
                                             <input type="text" class="form-control form-control-sm text-end points-display"
                                                    id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
                                                    value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
                                         {% else %}
-                                            <span class="input-group-text" style="font-size: 0.75rem;">&times;{{ figure.k_factor or 1 }}=</span>
+                                            <span class="input-group-text score-label-sm">&times;{{ figure.k_factor or 1 }}=</span>
                                             <input type="text" class="form-control form-control-sm text-end points-display"
                                                    id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
                                                    value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
@@ -246,8 +246,8 @@
                     </tbody>
                 </table>
 
-                <div class="text-muted" style="font-size: 0.75rem;">* Flugzeit: MAX(0, 300 - ABS(200 - Zeit) &times; 3)</div>
-                <div class="text-muted" style="font-size: 0.75rem;"><span style="background-color: #e8f4fd; padding: 0 3px;">&#9632;</span> Messwerte werden automatisch &uuml;bertragen und k&ouml;nnen nur auf dem Originalbogen ge&auml;ndert werden</div>
+                <div class="text-muted score-label-sm">* Flugzeit: MAX(0, 300 - ABS(200 - Zeit) &times; 3)</div>
+                <div class="text-muted score-label-sm"><span class="score-input-readonly px-1">&#9632;</span> Messwerte werden automatisch &uuml;bertragen und k&ouml;nnen nur auf dem Originalbogen ge&auml;ndert werden</div>
 
                 <!-- Total Points Row -->
                 <div class="row mt-3 pt-2 border-top">
@@ -299,9 +299,9 @@
                     <div>
                     {% if score and not score.locked %}
                         <button type="submit" class="btn btn-primary">Speichern</button>
-                        <form action="{{ url_for('scoring.lock_score', score_id=score.score_id) }}" method="POST" style="display: inline;">
+                        <form action="{{ url_for('scoring.lock_score', score_id=score.score_id) }}" method="POST" class="d-inline">
                             <input type="hidden" name="redirect" value="{{ url_for('scoring.view_score', score_id=score.score_id) }}">
-                            <button type="button" class="btn btn-warning" onclick="lockScore({{ score.score_id }})" style="display: inline;">
+                            <button type="button" class="btn btn-warning d-inline" onclick="lockScore({{ score.score_id }})">
                                 Sperren
                             </button>
                         </form>
@@ -312,7 +312,7 @@
                         {% endif %}
                     {% elif score and score.locked and session.get('is_admin') %}
                         <button type="submit" class="btn btn-primary">Speichern (Admin)</button>
-                        <form action="{{ url_for('scoring.unlock_score', score_id=score.score_id) }}" method="POST" style="display: inline;">
+                        <form action="{{ url_for('scoring.unlock_score', score_id=score.score_id) }}" method="POST" class="d-inline">
                             <button type="button" class="btn btn-danger" onclick="unlockScore({{ score.score_id }})">
                                 Entsperren (Admin)
                             </button>

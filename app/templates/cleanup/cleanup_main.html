@@ -1,7 +1,8 @@
 <!--
 File: app/templates/cleanup/cleanup_main.html
-Version: 1.0.0
+Version: 1.1.0
 Created: 2025-04-01
+Last Updated: 2026-02-18
 Description: Template for the data cleanup page
 -->
 
@@ -23,9 +24,9 @@ Description: Template for the data cleanup page
                 <h4 class="mb-0">Warnung!</h4>
             </div>
             <div class="card-body text-danger">
-                <p style="color: #dc3545 !important; font-weight: bold;">Diese Seite ermöglicht das Löschen von Datensätzen, auch wenn sie referenziert werden. Diese Aktion kann nicht rückgängig gemacht werden.</p>
-                <p style="color: #dc3545 !important;"><strong>Beim Löschen werden:</strong></p>
-                <ul style="color: #dc3545 !important;">
+                <p class="danger-text">Diese Seite ermöglicht das Löschen von Datensätzen, auch wenn sie referenziert werden. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+                <p class="text-danger"><strong>Beim Löschen werden:</strong></p>
+                <ul class="text-danger">
                     <li><strong>Teilnehmer:</strong> Auch zugehörige Teams, Flugzeuge und Bewertungen gelöscht</li>
                     <li><strong>Flugzeuge:</strong> References in Teams werden entfernt</li>
                     <li><strong>Teams:</strong> Auch zugehörige Durchgänge und Bewertungen gelöscht</li>
@@ -240,7 +241,7 @@ Description: Template for the data cleanup page
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <form id="deleteTeilnehmerForm" method="POST" style="display: inline;">
+                <form id="deleteTeilnehmerForm" method="POST" class="d-inline">
                     <button type="submit" class="btn btn-danger">Force Delete</button>
                 </form>
             </div>
@@ -264,7 +265,7 @@ Description: Template for the data cleanup page
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <form id="deleteFlugzeugForm" method="POST" style="display: inline;">
+                <form id="deleteFlugzeugForm" method="POST" class="d-inline">
                     <button type="submit" class="btn btn-danger">Force Delete</button>
                 </form>
             </div>
@@ -288,7 +289,7 @@ Description: Template for the data cleanup page
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <form id="deleteTeamForm" method="POST" style="display: inline;">
+                <form id="deleteTeamForm" method="POST" class="d-inline">
                     <button type="submit" class="btn btn-danger">Force Delete</button>
                 </form>
             </div>

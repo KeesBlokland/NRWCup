@@ -1,7 +1,8 @@
 /*
-File: app/static/css/consolidated_styles.css
-Version: 1.0.0
+File: app/static/css/main_styles.css
+Version: 1.1.0
 Created: 2025-04-07
+Last Updated: 2026-02-18
 Description: Consolidated CSS styles extracted from HTML templates
 */
 
@@ -506,3 +507,288 @@ select {
   select::-ms-expand {
     display: none;
   }
+
+/* ================================================================
+   Inline-style consolidation – added per refactor plan
+   ================================================================ */
+
+/* Scoresheet form containers (score_form, score_view, scoresheet) */
+.scoresheet-container { max-width: 600px; }
+
+/* Score form: readonly/disabled measurement fields */
+.score-input-readonly { background-color: #e8f4fd !important; color: #999; }
+
+/* Score form: small label text */
+.score-label-sm { font-size: 0.75rem; color: #999; }
+
+/* Scoresheet print pages (page-break between pairs) */
+.scoresheet-page { page-break-after: always; }
+
+/* Unified scoring: judge score buttons */
+.judge-btn {
+    margin: 2px;
+    padding: 3px 8px;
+}
+
+/* Unified scoring: small interactive badge */
+.badge-info-sm { cursor: pointer; font-size: 0.7rem; }
+
+/* Reports: dropped / struck-out round score */
+.dropped-score { opacity: 0.45; }
+
+/* Club logo */
+.club-logo { height: 40px; }
+
+/* Dark header row for standings tables */
+.table-dark-header { background-color: #343a40; color: white; font-weight: bold; }
+
+/* Team-results page container (2.5 cm margins for landscape print) */
+.team-results-container { max-width: calc(100% - 5cm); margin: 0 2.5cm; }
+
+/* Landing-zone radio button labels */
+.landing-btn-sm { min-width: 35px; }
+
+/* Judge / start-number column width */
+.judge-col-w { width: 100px; }
+
+/* Checkbox column (select-all) */
+.col-checkbox { width: 40px; }
+
+/* Label preview box (formular_main.html modal) */
+.label-preview-box {
+    width: 200px;
+    height: 50px;
+    font-family: monospace;
+    font-size: 11px;
+    background-color: #f8f9fa;
+}
+
+/* Header logo (base.html) */
+.header-logo { height: 80px; }
+
+/* Hidden admin button (base.html) */
+.admin-btn-hidden { font-size: 0.6rem; opacity: 0.2; }
+
+/* ----------------------------------------------------------------
+   Print-scoresheet layout (moved from print_scoresheets.html)
+   @page rule intentionally kept in template to avoid global override
+   ---------------------------------------------------------------- */
+@media print {
+    .print-scoresheet-wrap .scoresheet-page {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+    }
+
+    .scoresheet {
+        width: 148.5mm;
+        height: 210mm;
+        padding: 5mm;
+        box-sizing: border-box;
+        border-right: 1px dashed #ccc;
+    }
+
+    .scoresheet:last-child {
+        border-right: none;
+    }
+
+    .scoresheet-header h3 {
+        font-size: 14pt;
+        font-weight: bold;
+        margin-top: 0;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .scoresheet-meta {
+        margin-bottom: 10px;
+    }
+
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .meta-label {
+        margin-right: 3mm;
+        font-weight: normal;
+    }
+
+    .meta-field {
+        border-bottom: 1px solid white;
+        width: 20mm;
+        display: inline-block;
+        margin-right: 5mm;
+    }
+
+    .meta-field-long {
+        border-bottom: 1px solid white;
+        width: 50mm;
+        display: inline-block;
+    }
+
+    .scoresheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        border: none;
+    }
+
+    .scoresheet-table th,
+    .scoresheet-table td {
+        border-bottom: 1px solid black;
+        padding: 2px 5px;
+        text-align: left;
+        font-size: 10pt;
+    }
+
+    .scoresheet-table th {
+        background-color: white;
+        font-weight: bold;
+    }
+
+    .scoresheet-table th.figure-col,
+    .scoresheet-table td.figure-col {
+        width: 50%;
+        border-right: 1px solid black !important;
+    }
+
+    .points-col { width: 50%; }
+
+    .score-box {
+        text-align: center;
+        height: 14pt;
+    }
+
+    .signature-line {
+        margin-top: 10mm;
+        display: flex;
+        align-items: center;
+    }
+
+    .signature-field {
+        border-bottom: 1px solid black;
+        width: 80mm;
+        display: inline-block;
+        margin-left: 5mm;
+    }
+}
+
+@media screen {
+    .print-scoresheet-wrap {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-top: 20px;
+    }
+
+    .print-scoresheet-wrap .scoresheet-page {
+        display: flex;
+        flex-direction: row;
+        border: none;
+        margin-bottom: 30px;
+        max-width: 297mm;
+    }
+
+    .scoresheet {
+        width: 148.5mm;
+        padding: 15px;
+        box-sizing: border-box;
+        border-right: 1px dashed #ccc;
+        font-family: Arial, sans-serif;
+    }
+
+    .scoresheet:last-child {
+        border-right: none;
+    }
+
+    .scoresheet-header h3 {
+        margin-top: 0;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .meta-label { margin-right: 5px; }
+
+    .meta-field {
+        border-bottom: 1px solid white;
+        width: 60px;
+        display: inline-block;
+        margin-right: 15px;
+    }
+
+    .meta-field-long {
+        border-bottom: 1px solid white;
+        width: 180px;
+        display: inline-block;
+    }
+
+    .scoresheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        border: none;
+    }
+
+    .scoresheet-table th,
+    .scoresheet-table td {
+        border-bottom: 1px solid black;
+        padding: 5px;
+        text-align: left;
+    }
+
+    .scoresheet-table th {
+        background-color: white;
+        font-weight: bold;
+    }
+
+    .scoresheet-table th.figure-col,
+    .scoresheet-table td.figure-col {
+        width: 50%;
+        border-right: 1px solid black !important;
+    }
+
+    .points-col { width: 50%; }
+
+    .score-box {
+        text-align: center;
+        height: 25px;
+    }
+
+    .signature-line {
+        margin-top: 25px;
+        display: flex;
+        align-items: center;
+    }
+
+    .signature-field {
+        border-bottom: 1px solid black;
+        width: 200px;
+        display: inline-block;
+        margin-left: 10px;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Unified-scoring print rules (moved from unified_scoring.html)
+   ---------------------------------------------------------------- */
+@media print {
+    .tab-pane {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    table {
+        page-break-inside: avoid;
+    }
+}

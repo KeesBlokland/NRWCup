@@ -1,3 +1,4 @@
+{# File: app/templates/formular/formular_main.html | Last Updated: 2026-02-18 #}
 {% extends "base.html" %}
 {% block title %}NRW Cup {{ current_year }} - Startliste{% endblock %}
 
@@ -16,7 +17,7 @@
                         {% else %}
                             <button type="button" class="btn btn-secondary me-2" id="randomizeBtn" {% if is_locked %}disabled{% endif %}>Zufällige Reihenfolge</button>
                         {% endif %}
-                        <select class="form-select d-inline-block me-2" id="eventSelect" style="width: auto;"
+                        <select class="form-select d-inline-block me-2 w-auto" id="eventSelect"
                                 onchange="if(this.value) window.location.href='/formular/?event_id='+this.value">
                             <option value="">- Wettbewerb auswählen -</option>
                             {% for event in events %}
@@ -91,7 +92,7 @@
             <div class="modal-body">
                 <div class="alert alert-info">
                     <h6>Label Format (40mm x 12mm):</h6>
-                    <div class="border p-2 mb-2" style="width: 200px; height: 50px; font-family: monospace; font-size: 11px; background-color: #f8f9fa;">
+                    <div class="border p-2 mb-2 label-preview-box">
                         <div><strong>Team 15: Durchgang: 2</strong></div>
                         <div>Mueller / Schmidt</div>
                     </div>

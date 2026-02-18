@@ -1,14 +1,15 @@
+{# File: app/templates/scoring/scoresheet.html | Last Updated: 2026-02-18 #}
 {% extends "base.html" %}
 
 {% block title %}NRW Cup {{ current_year }} - Qualitätswertung{% endblock %}
 
 {% block content %}
-<div class="container-sm" style="max-width: 600px;">
+<div class="container-sm scoresheet-container">
     <div class="card">
         <div class="card-header py-1">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">NRW Cup {{ current_year }} - Bewertungsbogen</h5>
-                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" style="height: 40px;">
+                <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" class="club-logo">
             </div>
         </div>
         <div class="card-body p-1">
@@ -99,14 +100,14 @@
                         <input type="hidden" name="figure_code_{{ loop.index + (figures|length - 3) }}" value="{{ figure.code }}">
                     </div>
                     <div class="col-6">
-                        <div class="d-flex" style="gap: 10px;">
+                        <div class="d-flex gap-2">
                             {% for value in [30,20,10,5,0] %}
                             <div>
                                 <input type="radio" class="btn-check landing-score" name="score_{{ figure.code }}" 
                                        id="{{ figure.code }}_{{ value }}" value="{{ value }}"
                                        data-figure-code="{{ figure.code }}"
                                        onchange="updateLandingPoints('{{ figure.code }}', this.value); updateTotalPoints()">
-                                <label class="btn btn-outline-primary py-0" style="min-width: 35px;" for="{{ figure.code }}_{{ value }}">{{ value }}</label>
+                                <label class="btn btn-outline-primary py-0 landing-btn-sm" for="{{ figure.code }}_{{ value }}">{{ value }}</label>
                             </div>
                             {% endfor %}
                         </div>

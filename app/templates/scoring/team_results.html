@@ -104,19 +104,20 @@
                                 <td class="py-0">{{ figure.name_de }}</td>
                                 <td class="text-center py-0">{{ figure.k_factor or 1 }}</td>
                                 {% for score in team_data.scores %}
+                                    {% set is_first_judge = loop.first %}
                                     <td class="text-center py-0">
                                         {% for sv in score.values %}
                                             {% if sv.task_type and sv.task_type.code == figure.code %}
                                                 {% if sv.value is not none %}
                                                     {% if sv.task_type.code == 'SEGZEIT' %}
                                                         {# Messwert: show only in judge #1 column (first score = lowest score_id) #}
-                                                        {% if loop.parent.loop.index == 1 %}
+                                                        {% if is_first_judge %}
                                                             {% set pts = [0, 300 - ((200 - sv.value)|abs * 3)]|max %}
                                                             {% if sv.value == 0 %}<span class="text-muted">0s (0)</span>{% else %}{{ sv.value }}s ({{ pts|round(0)|int }}){% endif %}
                                                         {% else %}—{% endif %}
                                                     {% elif sv.task_type.code in MESS_CODES %}
                                                         {# Other Messwerte: show only in judge #1 column #}
-                                                        {% if loop.parent.loop.index == 1 %}
+                                                        {% if is_first_judge %}
                                                             {{ sv.value|int }} ({{ sv.value|int }})
                                                         {% else %}—{% endif %}
                                                     {% else %}

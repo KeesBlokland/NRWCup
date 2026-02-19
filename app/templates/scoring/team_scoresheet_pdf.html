@@ -2,179 +2,166 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bewertungsbogen Team {{ team.team_nummer }}</title>
+    <title>Bewertungsbogen Team {{ team_data.team.team_nummer }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 11pt;
-            margin: 20px;
-            background-color: white;
-        }
-        .header {
-            border: 2px solid black;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-        .team-info {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .round-header {
-            background-color: #f0f0f0;
-            padding: 5px;
-            text-align: center;
-            font-weight: bold;
-            border: 1px solid black;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 4px 6px;
-            text-align: center;
-        }
-        th {
-            background-color: #e0e0e0;
-            font-weight: bold;
-            font-size: 10pt;
-        }
-        .figure-name {
-            text-align: left;
-            padding-left: 8px;
-        }
-        .section-title {
-            background-color: #d0d0d0;
-            font-weight: bold;
-            text-align: center;
-        }
-        .total-row {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        .grand-total {
-            background-color: #e0e0e0;
-            font-weight: bold;
-            font-size: 12pt;
-        }
+        body { font-family: Arial, sans-serif; font-size: 10pt; margin: 20px; background: white; }
+        h3 { margin: 0 0 4px 0; font-size: 12pt; }
+        .subheader { font-size: 10pt; color: #333; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 9pt; }
+        th, td { border: 1px solid #999; padding: 3px 5px; text-align: center; }
+        th { background-color: #6c757d; color: white; font-weight: bold; }
+        td.fig { text-align: left; }
+        .row-quality-total td { background-color: #fff3cd; font-weight: bold; }
+        .row-mess         td { background-color: #e2e3e5; font-weight: bold; }
+        .row-result       td { background-color: #d1e7dd; font-weight: bold; }
+        .row-norm         td { background-color: #cff4fc; font-weight: bold; }
+        .text-muted { color: #6c757d; }
+        .no-print { display: block; margin-top: 16px; }
         @media print {
-            body { margin: 15px; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            body { margin: 10px; font-size: 9pt; }
+            @page { size: A4 landscape; margin: 1.5cm; }
         }
     </style>
 </head>
 <body>
-    <!-- Header with team info -->
-    <div class="header">
-        <div class="team-info">
-            {% if team.schlepper_pilot and team.segler_pilot %}
-                {{ team.schlepper_pilot.name }} / {{ team.segler_pilot.name }}
-            {% elif team.schlepper_pilot %}
-                {{ team.schlepper_pilot.name }}
-            {% elif team.segler_pilot %}
-                {{ team.segler_pilot.name }}
-            {% else %}
-                Team {{ team.team_nummer }}
+
+<h3>{{ event.name }} — Durchgang {{ round_obj.round_number }}</h3>
+<div class="subheader">
+    Team {{ team_data.team.team_nummer }}:
+    {% if team_data.team.schlepper_pilot %}{{ team_data.team.schlepper_pilot.name }}{% endif %}
+    {% if team_data.team.schlepper_pilot and team_data.team.segler_pilot %} / {% endif %}
+    {% if team_data.team.segler_pilot %}{{ team_data.team.segler_pilot.name }}{% endif %}
+</div>
+
+{% set MESS_CODES = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'] %}
+{% set EXCLUSIVE_CODES = ['PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'] %}
+
+{# Build set of unchosen exclusive figures #}
+{% set unchosen = [] %}
+{% for code in EXCLUSIVE_CODES %}
+    {% set has_value = [] %}
+    {% for score in team_data.scores %}
+        {% for sv in score.values %}
+            {% if sv.task_type and sv.task_type.code == code and sv.value and sv.value > 0 %}
+                {% set _ = has_value.append(1) %}
             {% endif %}
-        </div>
-        <div>Teamnummer {{ team.team_nummer }}</div>
-    </div>
+        {% endfor %}
+    {% endfor %}
+    {% if has_value|length == 0 %}
+        {% set _ = unchosen.append(code) %}
+    {% endif %}
+{% endfor %}
 
-    <!-- Round header -->
-    <div class="round-header">
-        Durchgang {{ round_obj.round_number }}
-    </div>
-
-    <!-- Main scoring table -->
-    <table>
-        <thead>
+<table>
+    <thead>
+        <tr>
+            <th style="width:38%; text-align:left;">Figur</th>
+            <th style="width:5%;">K</th>
+            {% for score in team_data.scores %}
+                <th>{{ score.judge.name if score.judge else 'R' + loop.index|string }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for figure in team_data.figures %}
+          {% if figure.code not in unchosen %}
             <tr>
-                <th style="width: 40%;">Figur</th>
-                <th style="width: 10%;">K-Fakt.</th>
-                <th style="width: 15%;">Summe</th>
-                <th style="width: 15%;">Wertung</th>
-                <th style="width: 20%;">Punkte</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Qualitätswertung Section -->
-            {% if qualitaet_data %}
-                <tr class="section-title">
-                    <td colspan="5">{{ event.name }}<br>Qualitätswertung</td>
-                </tr>
-                {% for item in qualitaet_data %}
-                    <tr>
-                        <td class="figure-name">{{ item.figure.name_de }}</td>
-                        <td>{{ item.k_factor }}</td>
-                        <td>{{ "%.1f"|format(item.sum) }}</td>
-                        <td>{{ "%.2f"|format(item.average) }}</td>
-                        <td>{{ "%.2f"|format(item.points) }}</td>
-                    </tr>
+                <td class="fig">{{ figure.name_de }}</td>
+                <td>{{ figure.k_factor or 1 }}</td>
+                {% for score in team_data.scores %}
+                    {% set is_first_judge = loop.first %}
+                    <td>
+                        {% for sv in score.values %}
+                            {% if sv.task_type and sv.task_type.code == figure.code %}
+                                {% if sv.value is not none %}
+                                    {% if sv.task_type.code == 'SEGZEIT' %}
+                                        {% if is_first_judge %}
+                                            {% set pts = [0, 300 - ((200 - sv.value)|abs * 3)]|max %}
+                                            {% if sv.value == 0 %}<span class="text-muted">0s (0)</span>{% else %}{{ sv.value }}s ({{ pts|round(0)|int }}){% endif %}
+                                        {% else %}—{% endif %}
+                                    {% elif sv.task_type.code in MESS_CODES %}
+                                        {% if is_first_judge %}
+                                            {{ sv.value|int }} ({{ sv.value|int }})
+                                        {% else %}—{% endif %}
+                                    {% else %}
+                                        {% set pts = (sv.value * (sv.task_type.k_factor or 1))|round(0)|int %}
+                                        {% if sv.value == 0 %}<span class="text-muted">0 (0)</span>{% else %}{{ sv.value }} ({{ pts }}){% endif %}
+                                    {% endif %}
+                                {% else %}-{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
                 {% endfor %}
-                <tr class="total-row">
-                    <td class="figure-name">Summe Qualitätswertung</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>{{ "%.2f"|format(qualitaet_total) }}</td>
-                </tr>
-            {% endif %}
-
-            <!-- Messwertung Section -->
-            {% if messwertung_data %}
-                <tr class="section-title">
-                    <td colspan="5">Messwertung</td>
-                </tr>
-                {% for item in messwertung_data %}
-                    <tr>
-                        <td class="figure-name">{{ item.figure.name_de }}</td>
-                        <td>-</td>
-                        <td>{% if item.value is not none %}{% if item.figure.code == 'SEGZEIT' %}{{ "%.0f"|format(item.value) }}s{% else %}{{ "%.0f"|format(item.value) }}{% endif %}{% else %}-{% endif %}</td>
-                        <td>-</td>
-                        <td>{{ "%.2f"|format(item.points) }}</td>
-                    </tr>
-                {% endfor %}
-                <tr class="total-row">
-                    <td class="figure-name">Summe Messwertung</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>{{ "%.2f"|format(messwertung_total) }}</td>
-                </tr>
-            {% endif %}
-
-            <!-- Grand Total -->
-            <tr class="grand-total">
-                <td class="figure-name">Ergebnis</td>
-                <td>-</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{{ "%.2f"|format(grand_total) }}</td>
             </tr>
-        </tbody>
-    </table>
+          {% endif %}
+        {% endfor %}
 
-    <!-- Legend -->
-    <div style="margin-top: 15px; font-size: 9pt; color: #444; border-top: 1px solid #ccc; padding-top: 8px;">
-        <strong>Legende:</strong>
-        Summe = Summe aller Punktrichter &nbsp;|&nbsp;
-        Wertung = Summe / Anzahl Punktrichter &nbsp;|&nbsp;
-        Punkte = Wertung &times; K-Faktor
-    </div>
+        {# Quality subtotals per judge #}
+        {% set quality_totals = [] %}
+        <tr class="row-quality-total">
+            <td class="fig">Qualität (×K)</td>
+            <td></td>
+            {% for score in team_data.scores %}
+                <td>
+                    {% set qtotal = [] %}
+                    {% for sv in score.values %}
+                        {% if sv.value is not none and sv.task_type.code not in MESS_CODES %}
+                            {% set _ = qtotal.append(sv.value * (sv.task_type.k_factor or 1)) %}
+                        {% endif %}
+                    {% endfor %}
+                    {{ qtotal|sum|round(1) }}
+                    {% set _ = quality_totals.append(qtotal|sum) %}
+                </td>
+            {% endfor %}
+        </tr>
 
-    <!-- Event info -->
-    <div style="margin-top: 10px; font-size: 10pt; color: #666;">
-        {{ event.name }} - {{ event.event_date.strftime('%d.%m.%Y') if event.event_date }}<br>
-        Durchgang {{ round_obj.round_number }} - {{ judge_count }} Punktrichter
-    </div>
+        {# Messwerte — judge #1 only #}
+        {% set mess_total = [] %}
+        {% for sv in team_data.scores[0].values %}
+            {% if sv.value is not none and sv.task_type.code in MESS_CODES %}
+                {% if sv.task_type.code == 'SEGZEIT' %}
+                    {% set _ = mess_total.append([0, 300 - ((200 - sv.value)|abs * 3)]|max) %}
+                {% else %}
+                    {% set _ = mess_total.append(sv.value) %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        <tr class="row-mess">
+            <td class="fig">Messwerte</td>
+            <td></td>
+            <td colspan="{{ team_data.scores|length }}">{{ mess_total|sum|round(1) }}</td>
+        </tr>
 
-    <!-- Buttons (only visible on screen) -->
-    <div class="no-print" style="margin-top: 20px;">
-        <button onclick="window.print()" style="padding: 6px 16px; font-size: 11pt; cursor: pointer;">Drucken</button>
-        <button onclick="window.close(); if(!window.closed) history.back();" style="padding: 6px 16px; font-size: 11pt; cursor: pointer; margin-left: 8px;">Schließen</button>
-    </div>
+        {# Ergebnis #}
+        {% if quality_totals|length > 0 %}
+        {% set avg_quality = quality_totals|sum / quality_totals|length %}
+        <tr class="row-result">
+            <td class="fig">Ergebnis</td>
+            <td></td>
+            <td colspan="{{ team_data.scores|length }}">
+                {{ (avg_quality + mess_total|sum)|round(1) }}
+                <small class="text-muted">(Ø {{ avg_quality|round(1) }} + {{ mess_total|sum|round(1) }})</small>
+            </td>
+        </tr>
+        {% endif %}
+
+        {% if team_data.team_round and team_data.team_round.normalized_score is not none %}
+        <tr class="row-norm">
+            <td class="fig">Normalisiert</td>
+            <td></td>
+            <td colspan="{{ team_data.scores|length }}">
+                {{ "%.1f%%"|format(team_data.team_round.normalized_score / 10) }}
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<div class="no-print">
+    <button onclick="window.print()" style="padding:5px 14px; cursor:pointer;">Drucken</button>
+    <button onclick="window.close(); if(!window.closed) history.back();" style="padding:5px 14px; cursor:pointer; margin-left:8px;">Schließen</button>
+</div>
+
 </body>
 </html>

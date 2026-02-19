@@ -1186,73 +1186,18 @@ def email_team_results():
 
         figures = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
 
-        # Build same data structures as team_scoresheet_pdf route
-        messwertung_codes = {'LANDGM', 'LANS', 'SEILZ', 'SEGZEIT'}
-        EXCLUSIVE_CODES = {'PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'}
-        unchosen_codes = set()
-        for code in EXCLUSIVE_CODES:
-            has_nonzero = any(
-                sv.task_type and sv.task_type.code == code and sv.value and sv.value > 0
-                for score in scores for sv in score.values
-            )
-            if not has_nonzero:
-                unchosen_codes.add(code)
-
-        qualitaet_figures = [f for f in figures if f.code not in messwertung_codes and f.code not in unchosen_codes]
-        messwertung_figures = [f for f in figures if f.code in messwertung_codes]
-
-        qualitaet_data = []
-        for figure in qualitaet_figures:
-            judge_scores = []
-            for score in scores:
-                for sv in score.values:
-                    if sv.task_type and sv.task_type.code == figure.code and sv.value is not None:
-                        judge_scores.append(sv.value)
-                        break
-            k_factor = figure.k_factor or 1
-            average = sum(judge_scores) / len(judge_scores) if judge_scores else 0
-            qualitaet_data.append({
-                'figure': figure,
-                'judge_scores': judge_scores,
-                'sum': sum(judge_scores),
-                'average': average,
-                'k_factor': k_factor,
-                'points': average * k_factor,
-            })
-
-        messwertung_data = []
-        messwertung_total = 0
-        for figure in messwertung_figures:
-            value = None
-            points = 0
-            for score in scores:
-                for sv in score.values:
-                    if sv.task_type and sv.task_type.code == figure.code and sv.value is not None:
-                        value = sv.value
-                        if figure.code == 'SEGZEIT':
-                            points = max(0, 300 - abs(200 - value) * 3)
-                        else:
-                            points = value
-                        break
-                if value is not None:
-                    break
-            messwertung_data.append({'figure': figure, 'value': value, 'points': points})
-            messwertung_total += points
-
-        qualitaet_total = sum(item['points'] for item in qualitaet_data)
-        grand_total = qualitaet_total + messwertung_total
+        team_data = {
+            'team': team,
+            'figures': figures,
+            'scores': scores,
+            'team_round': team_round,
+        }
 
         # Render same template as PDF view
         html_content = render_template('scoring/team_scoresheet_pdf.html',
-                                       team=team,
+                                       team_data=team_data,
                                        round_obj=round_obj,
-                                       event=event,
-                                       qualitaet_data=qualitaet_data,
-                                       messwertung_data=messwertung_data,
-                                       qualitaet_total=qualitaet_total,
-                                       messwertung_total=messwertung_total,
-                                       grand_total=grand_total,
-                                       judge_count=len(scores))
+                                       event=event)
 
         # Recipients
         recipients = []
@@ -1359,144 +1304,41 @@ def recalculate_scores():
 
 @scoring_bp.route('/team_scoresheet_pdf/<int:team_id>/<int:round_id>')
 def team_scoresheet_pdf(team_id, round_id):
-    """Generate detailed PDF scoresheet for a team in a specific round"""
+    """Generate PDF scoresheet for a team in a specific round — same layout as web view"""
     try:
-        # Get basic objects
         team = Team.query.get_or_404(team_id)
         round_obj = Round.query.get_or_404(round_id)
         event = Event.query.get_or_404(round_obj.event_id)
 
-        # Get team round
         team_round = TeamRound.query.filter_by(team_id=team_id, round_id=round_id).first()
-        
         if not team_round:
             flash('Keine Wertungen für dieses Team in diesem Durchgang gefunden', 'error')
             return redirect(url_for('scoring.team_results'))
-            
-        # Get all scores for this team round
+
         scores = Score.query.options(
             db.joinedload(Score.values).joinedload(ScoreValue.task_type),
             db.joinedload(Score.judge)
         ).filter_by(team_round_id=team_round.team_round_id).all()
-        
-        # CHANGE: Get ALL active figures instead of only scored ones
+
         figures = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
-        
-        # Define Messwertung codes
-        messwertung_codes = {'LANDGM', 'LANS', 'SEILZ', 'SEGZEIT'}
-        
-        # Find unchosen exclusive group figures (all judges have 0 or missing)
-        EXCLUSIVE_CODES = {'PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'}
-        unchosen_codes = set()
-        for code in EXCLUSIVE_CODES:
-            has_nonzero = False
-            for score in scores:
-                for sv in score.values:
-                    if sv.task_type and sv.task_type.code == code and sv.value and sv.value > 0:
-                        has_nonzero = True
-                        break
-                if has_nonzero:
-                    break
-            if not has_nonzero:
-                unchosen_codes.add(code)
 
-        # Separate figures, skip unchosen exclusive variants
-        qualitaet_figures = [f for f in figures if f.code not in messwertung_codes and f.code not in unchosen_codes]
-        messwertung_figures = [f for f in figures if f.code in messwertung_codes]
-        
-        # Build judge scores matrix for Qualitätswertung - SHOW ALL FIGURES
-        qualitaet_data = []
-        for figure in qualitaet_figures:
-            judge_scores = []
-            for score in scores:
-                for score_value in score.values:
-                    if score_value.task_type and score_value.task_type.code == figure.code:
-                        if score_value.value is not None:
-                            judge_scores.append(score_value.value)
-                        break
-            
-            # Calculate even if no scores exist
-            if judge_scores:
-                total_sum = sum(judge_scores)
-                average = total_sum / len(judge_scores)
-                k_factor = figure.k_factor or 1
-                points = average * k_factor
-            else:
-                total_sum = 0
-                average = 0
-                k_factor = figure.k_factor or 1
-                points = 0
-                
-            qualitaet_data.append({
-                'figure': figure,
-                'judge_scores': judge_scores,
-                'sum': total_sum,
-                'average': average,
-                'k_factor': k_factor,
-                'points': points
-            })
-        
-        # Build Messwertung data - SHOW ALL FIGURES
-        messwertung_data = []
-        messwertung_total = 0
-        
-        for figure in messwertung_figures:
-            value = None
-            points = 0
+        team_data = {
+            'team': team,
+            'figures': figures,
+            'scores': scores,
+            'team_round': team_round,
+        }
 
-            for score in scores:
-                for score_value in score.values:
-                    if score_value.task_type and score_value.task_type.code == figure.code:
-                        if score_value.value is not None:
-                            value = score_value.value
-
-                            # Calculate points based on figure type
-                            if figure.code == 'SEGZEIT':
-                                # Special Seglerzeit calculation
-                                target_time = 200
-                                max_points = 300
-                                penalty_factor = 3
-                                time_diff = abs(target_time - value)
-                                points = max(0, max_points - (time_diff * penalty_factor))
-                            else:
-                                # Standard Messwertung (direct points)
-                                points = value
-                            break
-                if value is not None:
-                    break
-            
-            # Add ALL figures, even without scores
-            messwertung_data.append({
-                'figure': figure,
-                'value': value,
-                'points': points
-            })
-            
-            if points:
-                messwertung_total += points
-        
-        # Calculate totals
-        qualitaet_total = sum(item['points'] for item in qualitaet_data)
-        grand_total = qualitaet_total + messwertung_total
-        
-        # Render HTML template - KEEP YOUR EXACT TEMPLATE
         html = render_template('scoring/team_scoresheet_pdf.html',
-                              team=team,
-                              round_obj=round_obj,
-                              event=event,
-                              qualitaet_data=qualitaet_data,
-                              messwertung_data=messwertung_data,
-                              qualitaet_total=qualitaet_total,
-                              messwertung_total=messwertung_total,
-                              grand_total=grand_total,
-                              judge_count=len(scores))
-        
-        # Convert to PDF using reportlab or return HTML for now
+                               team_data=team_data,
+                               round_obj=round_obj,
+                               event=event)
+
         from flask import make_response
         response = make_response(html)
         response.headers['Content-Type'] = 'text/html'
         return response
-        
+
     except Exception as e:
         logger.error(f"Error generating scoresheet PDF: {str(e)}")
         flash(f'Fehler beim Erstellen des Bewertungsbogens: {str(e)}', 'error')

@@ -38,3 +38,5 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
     MAIL_ENABLED = os.environ.get('MAIL_ENABLED', 'false').lower() == 'true'
+    # Fallback recipient when team has no email addresses configured
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', os.environ.get('MAIL_USERNAME', ''))

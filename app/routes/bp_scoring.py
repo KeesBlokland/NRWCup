@@ -1205,8 +1205,11 @@ def email_team_results():
             recipients.append(team.schlepper_pilot.email)
         if team.segler_pilot and team.segler_pilot.email:
             recipients.append(team.segler_pilot.email)
-        if not recipients:
-            return jsonify({'success': False, 'message': 'Keine Email-Adressen für dieses Team gefunden'})
+        admin_fallback = not recipients
+        if admin_fallback:
+            if not Config.ADMIN_EMAIL:
+                return jsonify({'success': False, 'message': 'Keine Email-Adressen für dieses Team und keine Admin-Email konfiguriert'})
+            recipients = [Config.ADMIN_EMAIL]
 
         msg = MIMEMultipart()
         msg['From'] = Config.MAIL_USERNAME
@@ -1219,6 +1222,8 @@ def email_team_results():
             server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
             server.send_message(msg)
 
+        if admin_fallback:
+            return jsonify({'success': True, 'message': f'Keine Team-Adressen — gesendet an Admin: {Config.ADMIN_EMAIL}'})
         return jsonify({'success': True, 'message': f'Email gesendet an: {", ".join(recipients)}'})
 
     except Exception as e:

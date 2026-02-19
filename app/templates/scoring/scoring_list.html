@@ -23,7 +23,7 @@
                                     <option value="">Alle Durchgänge</option>
                                     {% for round in rounds %}
                                         <option value="{{ round.round_id }}" {% if selected_round == round.round_id %}selected{% endif %}>
-                                            Durchgang {{ round.round_number }} ({{ round.status }})
+                                            Durchgang {{ round.round_number }} ({{ {'Active':'Aktiv','Completed':'Abgeschlossen','Pending':'Geplant','Cancelled':'Storniert'}.get(round.status, round.status) }})
                                         </option>
                                     {% endfor %}
                                 </select>
@@ -50,7 +50,7 @@
                     <div class="table-responsive">
                         {% for round in rounds %}
                             {% if not selected_round or selected_round == round.round_id %}
-                                <h5 class="mt-4 mb-2">Durchgang {{ round.round_number }} ({{ round.status }})</h5>
+                                <h5 class="mt-4 mb-2">Durchgang {{ round.round_number }} ({{ {'Active':'Aktiv','Completed':'Abgeschlossen','Pending':'Geplant','Cancelled':'Storniert'}.get(round.status, round.status) }})</h5>
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>

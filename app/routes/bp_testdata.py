@@ -187,16 +187,19 @@ def generate():
         else:
             rounds_to_process = []
             for i in range(1, num_rounds + 1):
+                round_status = 'Active' if i == num_rounds else 'Completed'
                 round_obj = next((r for r in existing_rounds if r.round_number == i), None)
                 if not round_obj:
                     round_obj = Round(
                         event_id=event_id,
                         round_number=i,
-                        status='Active'
+                        status=round_status
                     )
                     db.session.add(round_obj)
                     db.session.flush()
                     logger.info(f"Created new round {i} for event {event_id}")
+                else:
+                    round_obj.status = round_status
                 rounds_to_process.append(round_obj)
 
         db.session.commit()

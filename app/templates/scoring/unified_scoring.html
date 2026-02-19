@@ -29,7 +29,7 @@
                         <select class="form-select" id="roundSelect" name="round_id" onchange="checkForNextRoundGeneration(this)">
                             {% for round in rounds %}
                                 <option value="{{ round.round_id }}" {% if selected_round == round.round_id %}selected{% endif %}>
-                                    Durchgang {{ round.round_number }} ({{ round.status }})
+                                    Durchgang {{ round.round_number }} ({{ {'Active':'Aktiv','Completed':'Abgeschlossen','Pending':'Geplant','Cancelled':'Storniert'}.get(round.status, round.status) }})
                                 </option>
                             {% endfor %}
                         </select>

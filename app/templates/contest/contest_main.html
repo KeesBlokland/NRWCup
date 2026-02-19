@@ -235,10 +235,12 @@
 
 <script>
 function toggleForm(show, title = 'Neuer Wettbewerb') {
-    const form = document.getElementById('eventForm');
+    const card = document.getElementById('eventForm');
     document.getElementById('formTitle').textContent = title;
-    form.style.display = show ? 'block' : 'none';
-    if (!show) {
+    if (show) {
+        card.classList.remove('d-none');
+    } else {
+        card.classList.add('d-none');
         document.querySelector('form#eventForm').reset();
         document.getElementById('event_id').value = '';
         document.getElementById('deleteBtn').classList.add('d-none');

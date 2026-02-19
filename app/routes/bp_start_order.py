@@ -240,9 +240,20 @@ def randomize(round_id):
 def print_start_order(round_id):
     """Print start order for a round"""
     try:
+        round_obj = Round.query.get(round_id)
+        if round_obj and round_obj.round_number > 1:
+            prev_round = Round.query.filter_by(
+                event_id=round_obj.event_id,
+                round_number=round_obj.round_number - 1
+            ).first()
+            if prev_round and prev_round.status != 'Completed':
+                flash(f'Startfolge Durchgang {round_obj.round_number} kann erst gedruckt werden, '
+                      f'wenn Durchgang {prev_round.round_number} abgeschlossen ist.', 'warning')
+                return redirect(url_for('start_order.index', event_id=round_obj.event_id))
+
         pdf_service = PdfService()
         buffer = pdf_service.generate_start_order_pdf(round_id)
-        
+
         if not buffer:
             flash('Error generating start order PDF', 'error')
             return redirect(url_for('start_order.index'))

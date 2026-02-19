@@ -100,9 +100,22 @@
                                         </form>
                                     {% endif %}
                                 {% endif %}
-                                <a href="{{ url_for('start_order.print_start_order', round_id=round.round_id) }}" class="btn btn-outline-primary">
-                                    Drucken
-                                </a>
+                                {% if round.round_number == 1 %}
+                                    {% set can_print = true %}
+                                {% else %}
+                                    {% set prev = rounds | selectattr('round_number', 'equalto', round.round_number - 1) | first %}
+                                    {% set can_print = prev and prev.status == 'Completed' %}
+                                {% endif %}
+                                {% if can_print %}
+                                    <a href="{{ url_for('start_order.print_start_order', round_id=round.round_id) }}" class="btn btn-outline-primary">
+                                        Drucken
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-outline-secondary" disabled
+                                            title="Durchgang {{ round.round_number - 1 }} muss erst abgeschlossen sein">
+                                        Drucken
+                                    </button>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="card-body">

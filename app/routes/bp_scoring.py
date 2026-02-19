@@ -1155,86 +1155,127 @@ def team_results():
 
 @scoring_bp.route('/email_team_results', methods=['POST'])
 def email_team_results():
-    """Email team results to recipients"""
+    """Email team results as PDF-layout HTML (same template as the PDF view)"""
     try:
         import smtplib
+        import ssl
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
-        
+        from app.config import Config
+
         data = request.get_json()
         team_id = data.get('team_id')
         round_id = data.get('round_id')
         event_id = data.get('event_id')
-        
-        # Get team data
+
         team = Team.query.get(team_id)
         if not team:
             return jsonify({'success': False, 'message': 'Team not found'})
-        
-        # Get figures and scores
-        figures = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
+
+        round_obj = Round.query.get(round_id)
+        event = Event.query.get(event_id)
+
         team_round = TeamRound.query.filter_by(team_id=team_id, round_id=round_id).first()
-        
         if not team_round:
             return jsonify({'success': False, 'message': 'No scores found'})
-            
+
         scores = Score.query.options(
             db.joinedload(Score.values).joinedload(ScoreValue.task_type),
             db.joinedload(Score.judge)
         ).filter_by(team_round_id=team_round.team_round_id).all()
-        
-        team_data = {
-            'team': team,
-            'figures': figures,
-            'scores': scores
-        }
-        
-        # Get event for subject line
-        event = Event.query.get(event_id)
-        round_obj = Round.query.get(round_id)
-        
-        # Create HTML email content
-        html_content = render_template('scoring/team_results_email.html', 
-                                     team_data=team_data,
-                                     event=event,
-                                     round_obj=round_obj)
-        
-        # Email configuration from config
-        from app.config import Config
-        smtp_server = Config.MAIL_SERVER
-        smtp_port = Config.MAIL_PORT
-        email_user = Config.MAIL_USERNAME
-        email_password = Config.MAIL_PASSWORD
 
-        
+        figures = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
+
+        # Build same data structures as team_scoresheet_pdf route
+        messwertung_codes = {'LANDGM', 'LANS', 'SEILZ', 'SEGZEIT'}
+        EXCLUSIVE_CODES = {'PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'}
+        unchosen_codes = set()
+        for code in EXCLUSIVE_CODES:
+            has_nonzero = any(
+                sv.task_type and sv.task_type.code == code and sv.value and sv.value > 0
+                for score in scores for sv in score.values
+            )
+            if not has_nonzero:
+                unchosen_codes.add(code)
+
+        qualitaet_figures = [f for f in figures if f.code not in messwertung_codes and f.code not in unchosen_codes]
+        messwertung_figures = [f for f in figures if f.code in messwertung_codes]
+
+        qualitaet_data = []
+        for figure in qualitaet_figures:
+            judge_scores = []
+            for score in scores:
+                for sv in score.values:
+                    if sv.task_type and sv.task_type.code == figure.code and sv.value is not None:
+                        judge_scores.append(sv.value)
+                        break
+            k_factor = figure.k_factor or 1
+            average = sum(judge_scores) / len(judge_scores) if judge_scores else 0
+            qualitaet_data.append({
+                'figure': figure,
+                'judge_scores': judge_scores,
+                'sum': sum(judge_scores),
+                'average': average,
+                'k_factor': k_factor,
+                'points': average * k_factor,
+            })
+
+        messwertung_data = []
+        messwertung_total = 0
+        for figure in messwertung_figures:
+            value = None
+            points = 0
+            for score in scores:
+                for sv in score.values:
+                    if sv.task_type and sv.task_type.code == figure.code and sv.value is not None:
+                        value = sv.value
+                        if figure.code == 'SEGZEIT':
+                            points = max(0, 300 - abs(200 - value) * 3)
+                        else:
+                            points = value
+                        break
+                if value is not None:
+                    break
+            messwertung_data.append({'figure': figure, 'value': value, 'points': points})
+            messwertung_total += points
+
+        qualitaet_total = sum(item['points'] for item in qualitaet_data)
+        grand_total = qualitaet_total + messwertung_total
+
+        # Render same template as PDF view
+        html_content = render_template('scoring/team_scoresheet_pdf.html',
+                                       team=team,
+                                       round_obj=round_obj,
+                                       event=event,
+                                       qualitaet_data=qualitaet_data,
+                                       messwertung_data=messwertung_data,
+                                       qualitaet_total=qualitaet_total,
+                                       messwertung_total=messwertung_total,
+                                       grand_total=grand_total,
+                                       judge_count=len(scores))
+
         # Recipients
         recipients = []
         if team.schlepper_pilot and team.schlepper_pilot.email:
             recipients.append(team.schlepper_pilot.email)
         if team.segler_pilot and team.segler_pilot.email:
             recipients.append(team.segler_pilot.email)
-        
         if not recipients:
             return jsonify({'success': False, 'message': 'Keine Email-Adressen für dieses Team gefunden'})
-        
-        # Create email
+
         msg = MIMEMultipart()
-        msg['From'] = email_user
+        msg['From'] = Config.MAIL_USERNAME
         msg['To'] = ', '.join(recipients)
         msg['Subject'] = f"Team {team.team_nummer} Ergebnisse - {event.name if event else 'NRW Cup'}"
-        
         msg.attach(MIMEText(html_content, 'html'))
-        
-        # Send email
-        import ssl 
 
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
-            server.login(email_user, email_password)
+        with smtplib.SMTP_SSL(Config.MAIL_SERVER, Config.MAIL_PORT, context=context) as server:
+            server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
             server.send_message(msg)
-        
+
         return jsonify({'success': True, 'message': f'Email gesendet an: {", ".join(recipients)}'})
-        
+
     except Exception as e:
         logger.error(f"Email error: {str(e)}")
         return jsonify({'success': False, 'message': str(e)})

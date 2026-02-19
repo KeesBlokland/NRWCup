@@ -109,12 +109,20 @@
                                             {% if sv.task_type and sv.task_type.code == figure.code %}
                                                 {% if sv.value is not none %}
                                                     {% if sv.task_type.code == 'SEGZEIT' %}
-                                                        {% set pts = [0, 300 - ((200 - sv.value)|abs * 3)]|max %}
-                                                        {% if sv.value == 0 %}<span class="text-muted">0</span>{% else %}{{ sv.value }}s ({{ pts|round(0)|int }}){% endif %}
+                                                        {# Messwert: show only in judge #1 column (first score = lowest score_id) #}
+                                                        {% if loop.parent.loop.index == 1 %}
+                                                            {% set pts = [0, 300 - ((200 - sv.value)|abs * 3)]|max %}
+                                                            {% if sv.value == 0 %}<span class="text-muted">0s (0)</span>{% else %}{{ sv.value }}s ({{ pts|round(0)|int }}){% endif %}
+                                                        {% else %}—{% endif %}
                                                     {% elif sv.task_type.code in MESS_CODES %}
-                                                        {{ sv.value|int }}
+                                                        {# Other Messwerte: show only in judge #1 column #}
+                                                        {% if loop.parent.loop.index == 1 %}
+                                                            {{ sv.value|int }} ({{ sv.value|int }})
+                                                        {% else %}—{% endif %}
                                                     {% else %}
-                                                        {% if sv.value == 0 %}<span class="text-muted">0</span>{% else %}{{ sv.value }}{% endif %}
+                                                        {# Quality figure: show value (value × K) #}
+                                                        {% set pts = (sv.value * (sv.task_type.k_factor or 1))|round(0)|int %}
+                                                        {% if sv.value == 0 %}<span class="text-muted">0 (0)</span>{% else %}{{ sv.value }} ({{ pts }}){% endif %}
                                                     {% endif %}
                                                 {% else %}-{% endif %}
                                             {% endif %}

@@ -132,7 +132,7 @@
                     <tr>
                         <td class="figure-name">{{ item.figure.name_de }}</td>
                         <td>-</td>
-                        <td>{% if item.value is not none %}{{ "%.1f"|format(item.value) }}{% else %}-{% endif %}</td>
+                        <td>{% if item.value is not none %}{% if item.figure.code == 'SEGZEIT' %}{{ "%.0f"|format(item.value) }}s{% else %}{{ "%.0f"|format(item.value) }}{% endif %}{% else %}-{% endif %}</td>
                         <td>-</td>
                         <td>{{ "%.2f"|format(item.points) }}</td>
                     </tr>

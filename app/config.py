@@ -25,6 +25,9 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-change-this'
     DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
 
+    # Scoring settings (can be overridden via SystemConfig in the database)
+    DROP_WORST_ROUND_THRESHOLD = 3  # Drop lowest round when total rounds >= this number
+
     # Admin configuration
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'NRWAdmin')
 

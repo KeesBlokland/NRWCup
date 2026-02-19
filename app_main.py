@@ -83,6 +83,18 @@ with app.app_context():
         db.session.add(config)
         db.session.commit()
 
+    # Initialize drop-worst-round threshold if it doesn't exist
+    drop_config = SystemConfig.query.filter_by(config_key='drop_worst_round_threshold').first()
+    if not drop_config:
+        drop_config = SystemConfig(
+            config_key='drop_worst_round_threshold',
+            config_value=str(Config.DROP_WORST_ROUND_THRESHOLD),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.session.add(drop_config)
+        db.session.commit()
+
 DBLogger.info("Application starting")
 
 # Make current year available in all templates

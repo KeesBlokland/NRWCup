@@ -7,7 +7,7 @@ Description: Scoring service with Messwertung/Qualitätswertung separation
 """
 
 from sqlalchemy import or_
-from app.models import db, Score, TaskType, TeamRound, Teilnehmer, Team, Round, Event, ScoreValue
+from app.models import db, Score, TaskType, TeamRound, Teilnehmer, Team, Round, Event, ScoreValue, SystemConfig
 from app.utils.utils_base_service import BaseService
 from datetime import datetime
 import logging
@@ -551,12 +551,16 @@ class ScoringService(BaseService):
                 if team_id in round_scores:
                     round_scores[team_id][i] = score
         
+        # Read drop threshold from SystemConfig (default 3)
+        threshold_config = SystemConfig.query.filter_by(config_key='drop_worst_round_threshold').first()
+        drop_threshold = int(threshold_config.config_value) if threshold_config else 3
+
         # Apply final scoring rules
         final_scores = {}
         for team_id, scores in round_scores.items():
             # Apply dropping rules based on number of rounds
-            if len(scores) >= 3:
-                # For 3+ rounds, drop the lowest score
+            if len(scores) >= drop_threshold:
+                # For rounds >= threshold, drop the lowest score
                 temp_scores = scores.copy()
                 min_score = min(temp_scores)
                 min_index = temp_scores.index(min_score)
@@ -574,7 +578,7 @@ class ScoringService(BaseService):
                     'dropped_indices': dropped_indices
                 }
             else:
-                # For 1-2 rounds, count all rounds
+                # Below threshold — count all rounds
                 final_scores[team_id] = {
                     'score': sum(scores),
                     'round_scores': scores,

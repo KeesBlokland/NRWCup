@@ -115,13 +115,13 @@ def generate():
         # Get parameters from form
         team_ids = request.form.getlist('team_ids')
         judge_ids = request.form.getlist('judge_ids')
-        score_variability = int(request.form.get('score_variability', 20))  # Percentage
+        score_variability = int(request.form.get('score_variability') or 20)  # Percentage
         clear_existing = request.form.get('clear_existing') == 'on'
         event_id = request.form.get('event_id')
-        specific_round = int(request.form.get('specific_round', 0))  # New parameter
+        specific_round = int(request.form.get('specific_round') or 0)  # Empty string → 0
 
         # Get number of rounds
-        num_rounds = int(request.form.get('num_rounds', 1))
+        num_rounds = int(request.form.get('num_rounds') or 1)
 
         # If num_rounds is 0, redirect to contest page for clearing all scores
         if num_rounds == 0:

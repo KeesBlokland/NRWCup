@@ -79,7 +79,7 @@ Description: Template for displaying detailed round scores with raw scores
                                 <td>{{ team_round.start_order or '-' }}</td>
                                 <td>
                                     <span class="badge {{ 'bg-success' if team_round.status == 'Completed' else 'bg-warning' }}">
-                                        {{ team_round.status }}
+                                        {{ {'Completed':'Abgeschlossen','Active':'Aktiv','Pending':'Geplant','Cancelled':'Storniert'}.get(team_round.status, team_round.status) }}
                                     </span>
                                 </td>
                                 <td>

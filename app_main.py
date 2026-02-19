@@ -5,8 +5,11 @@ Created: 2025-01-19
 Last Updated: 2026-02-10
 Description: Main application entry point with streamlined blueprint registration
 """
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 import os
 import sys

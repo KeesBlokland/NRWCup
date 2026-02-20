@@ -46,24 +46,70 @@
 </ul>
 <h3>Zugang</h3>
 <p>Das System läuft im lokalen Netzwerk. Öffnen Sie im Browser:</p>
-<p>| System | Adresse |
-|--------|---------|
-| Entwicklung | http://192.168.2.30:5000 |
-| Pi (Wettbewerb) | http://192.168.2.83:5000 |</p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Adresse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entwicklung</td>
+<td>http://192.168.2.30:5000</td>
+</tr>
+<tr>
+<td>Pi (Wettbewerb)</td>
+<td>http://192.168.2.83:5000</td>
+</tr>
+</tbody>
+</table>
 <p>Es ist kein Login für die normale Nutzung erforderlich. Administrative Funktionen (System, Cleanup) sind durch ein Admin-Passwort geschützt.</p>
 <hr />
 <h2>2. Startseite &amp; Navigation</h2>
 <p>Die Startseite zeigt Kacheln für alle Bereiche. Die Navigationsleiste am oberen Rand ist auf jeder Seite verfügbar:</p>
-<p>| Menüpunkt | Beschreibung |
-|-----------|-------------|
-| Start | Zurück zur Startseite |
-| Teilnehmer | Piloten, Punktrichter, Wettkampfleitung |
-| Flugzeuge | Motor- und Segelflugmodelle |
-| Teams | Zusammenstellung Pilot + Flugzeug |
-| Figuren | Bewertungsfiguren und K-Faktoren |
-| Wettbewerb | Events anlegen und verwalten |
-| Startliste | Startreihenfolge festlegen |
-| Wertung &amp; Ergebnisse | Punkte eingeben und Rangliste |</p>
+<table>
+<thead>
+<tr>
+<th>Menüpunkt</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start</td>
+<td>Zurück zur Startseite</td>
+</tr>
+<tr>
+<td>Teilnehmer</td>
+<td>Piloten, Punktrichter, Wettkampfleitung</td>
+</tr>
+<tr>
+<td>Flugzeuge</td>
+<td>Motor- und Segelflugmodelle</td>
+</tr>
+<tr>
+<td>Teams</td>
+<td>Zusammenstellung Pilot + Flugzeug</td>
+</tr>
+<tr>
+<td>Figuren</td>
+<td>Bewertungsfiguren und K-Faktoren</td>
+</tr>
+<tr>
+<td>Wettbewerb</td>
+<td>Events anlegen und verwalten</td>
+</tr>
+<tr>
+<td>Startliste</td>
+<td>Startreihenfolge festlegen</td>
+</tr>
+<tr>
+<td>Wertung &amp; Ergebnisse</td>
+<td>Punkte eingeben und Rangliste</td>
+</tr>
+</tbody>
+</table>
 <p>Die Menüpunkte <strong>Datenbereinigung</strong> und <strong>Systemeinstellungen</strong> sind im Admin-Bereich verfügbar.</p>
 <hr />
 <h2>3. Teilnehmer Verwaltung</h2>
@@ -71,12 +117,37 @@
 <p>Hier werden alle Personen verwaltet, die am Wettbewerb beteiligt sind.</p>
 <h3>Rollen</h3>
 <p>Jeder Teilnehmer kann eine oder mehrere Rollen haben:</p>
-<p>| Rolle | Badge | Bedeutung |
-|-------|-------|-----------|
-| Segler Pilot | blau | Fliegt das Segelflugmodell |
-| Schlepper Pilot | grün | Fliegt das Motormodell |
-| Punktwerter | hellblau | Bewertet als Punktrichter |
-| Wettbewerbsleitung | gelb | Wettkampfleitung |</p>
+<table>
+<thead>
+<tr>
+<th>Rolle</th>
+<th>Badge</th>
+<th>Bedeutung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Segler Pilot</td>
+<td>blau</td>
+<td>Fliegt das Segelflugmodell</td>
+</tr>
+<tr>
+<td>Schlepper Pilot</td>
+<td>grün</td>
+<td>Fliegt das Motormodell</td>
+</tr>
+<tr>
+<td>Punktwerter</td>
+<td>hellblau</td>
+<td>Bewertet als Punktrichter</td>
+</tr>
+<tr>
+<td>Wettbewerbsleitung</td>
+<td>gelb</td>
+<td>Wettkampfleitung</td>
+</tr>
+</tbody>
+</table>
 <h3>Teilnehmer anlegen</h3>
 <ol>
 <li>Klicken Sie auf <strong>Neuer Teilnehmer</strong></li>
@@ -159,10 +230,27 @@
 <li><strong>Löschen</strong>: Über den Löschen-Button mit Bestätigungsdialog</li>
 </ol>
 <h3>Status</h3>
-<p>| Status | Anzeige | Bedeutung |
-|--------|---------|-----------|
-| Aktiv | grüner Badge | Team nimmt am Wettbewerb teil |
-| Inaktiv | grauer Badge, Zeile grau | Team ist deaktiviert (bleibt erhalten) |</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Anzeige</th>
+<th>Bedeutung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktiv</td>
+<td>grüner Badge</td>
+<td>Team nimmt am Wettbewerb teil</td>
+</tr>
+<tr>
+<td>Inaktiv</td>
+<td>grauer Badge, Zeile grau</td>
+<td>Team ist deaktiviert (bleibt erhalten)</td>
+</tr>
+</tbody>
+</table>
 <h3>Sonderfunktionen</h3>
 <ul>
 <li><strong>Teams neu nummerieren</strong>: Nummeriert alle aktiven Teams lückenlos durch (mit Bestätigung)</li>
@@ -173,14 +261,40 @@
 <p><strong>Pfad:</strong> <code>/figures/</code></p>
 <p>Verwaltet die Bewertungsfiguren gemäß der DMFV-Ausschreibung. Jede Figur hat einen K-Faktor (Koeffizient), der die Gewichtung in der Gesamtwertung bestimmt.</p>
 <h3>Felder</h3>
-<p>| Feld | Beschreibung |
-|------|-------------|
-| Code | Kurzbezeichnung (z.B. &quot;S&quot;, &quot;PR&quot;) |
-| Name (DE) | Deutscher Name der Figur |
-| Sortierung | Reihenfolge in der Anzeige |
-| Maximalwert | Höchste vergebbare Punktzahl |
-| K-Faktor | Multiplikator für die Wertung |
-| Aktiv/Inaktiv | Ob die Figur im aktuellen Wettbewerb bewertet wird |</p>
+<table>
+<thead>
+<tr>
+<th>Feld</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Code</td>
+<td>Kurzbezeichnung (z.B. &quot;S&quot;, &quot;PR&quot;)</td>
+</tr>
+<tr>
+<td>Name (DE)</td>
+<td>Deutscher Name der Figur</td>
+</tr>
+<tr>
+<td>Sortierung</td>
+<td>Reihenfolge in der Anzeige</td>
+</tr>
+<tr>
+<td>Maximalwert</td>
+<td>Höchste vergebbare Punktzahl</td>
+</tr>
+<tr>
+<td>K-Faktor</td>
+<td>Multiplikator für die Wertung</td>
+</tr>
+<tr>
+<td>Aktiv/Inaktiv</td>
+<td>Ob die Figur im aktuellen Wettbewerb bewertet wird</td>
+</tr>
+</tbody>
+</table>
 <h3>Aktiv / Inaktiv</h3>
 <p>Der <strong>Aktiv/Inaktiv</strong>-Button auf der Bearbeiten-Seite steuert, ob eine Figur in der Wertung erscheint:</p>
 <ul>
@@ -213,12 +327,32 @@
 <p>Ein Event durchläuft folgende Zustände:</p>
 <pre><code>Pending → Active → Completed → Published
 </code></pre>
-<p>| Status | Bedeutung |
-|--------|-----------|
-| Pending | Angelegt, noch nicht aktiv |
-| Active | Laufender Wettbewerb, Änderungen erlaubt |
-| Completed | Abgeschlossen, <strong>gesperrt</strong> — keine Änderungen mehr |
-| Published | Veröffentlicht, <strong>gesperrt</strong> |</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Bedeutung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pending</td>
+<td>Angelegt, noch nicht aktiv</td>
+</tr>
+<tr>
+<td>Active</td>
+<td>Laufender Wettbewerb, Änderungen erlaubt</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>Abgeschlossen, <strong>gesperrt</strong> — keine Änderungen mehr</td>
+</tr>
+<tr>
+<td>Published</td>
+<td>Veröffentlicht, <strong>gesperrt</strong></td>
+</tr>
+</tbody>
+</table>
 <h3>Sperren / Entsperren</h3>
 <p>Jedes Event hat einen <strong>Gesperrt/Entsperrt</strong>-Button:</p>
 <ul>
@@ -279,12 +413,32 @@
 </ul>
 <p>Um die Startliste wieder zu entsperren, klicken Sie auf <strong>Gesperrt</strong> (roter Button).</p>
 <h3>Dokumente</h3>
-<p>| Button | Funktion |
-|--------|----------|
-| <strong>PDF erstellen</strong> | Startliste als PDF zum Drucken |
-| <strong>Bewertungsbögen</strong> | Leere Bewertungsformulare für die Punktrichter |
-| <strong>Labels Excel</strong> | Excel-Datei für Niimbot D11 Etikettendrucker |
-| <strong>Email Startliste</strong> | Startliste per Email an Teilnehmer versenden |</p>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Funktion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PDF erstellen</strong></td>
+<td>Startliste als PDF zum Drucken</td>
+</tr>
+<tr>
+<td><strong>Bewertungsbögen</strong></td>
+<td>Leere Bewertungsformulare für die Punktrichter</td>
+</tr>
+<tr>
+<td><strong>Labels Excel</strong></td>
+<td>Excel-Datei für Niimbot D11 Etikettendrucker</td>
+</tr>
+<tr>
+<td><strong>Email Startliste</strong></td>
+<td>Startliste per Email an Teilnehmer versenden</td>
+</tr>
+</tbody>
+</table>
 <h3>Labels</h3>
 <p>Der Label-Export erzeugt eine Excel-Datei mit Etiketten im Format 40mm x 12mm:</p>
 <pre><code>Team 15: Durchgang: 2
@@ -296,11 +450,28 @@ Mueller / Schmidt
 <p><strong>Pfad:</strong> <code>/start_order/</code></p>
 <p>Verwaltet die Startreihenfolge für alle Durchgänge ab Runde 2.</p>
 <h3>Reihenfolge für weitere Runden</h3>
-<p>| Methode | Beschreibung |
-|---------|-------------|
-| <strong>Aus Ergebnissen generieren</strong> | Reihenfolge basiert auf der Platzierung des vorherigen Durchgangs (letztplatziertes Team startet zuerst) |
-| <strong>Manuell anpassen</strong> | Positionen direkt ändern |
-| <strong>Randomisieren</strong> | Zufällige Reihenfolge |</p>
+<table>
+<thead>
+<tr>
+<th>Methode</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Aus Ergebnissen generieren</strong></td>
+<td>Reihenfolge basiert auf der Platzierung des vorherigen Durchgangs (letztplatziertes Team startet zuerst)</td>
+</tr>
+<tr>
+<td><strong>Manuell anpassen</strong></td>
+<td>Positionen direkt ändern</td>
+</tr>
+<tr>
+<td><strong>Randomisieren</strong></td>
+<td>Zufällige Reihenfolge</td>
+</tr>
+</tbody>
+</table>
 <h3>Drucken</h3>
 <p>Klicken Sie auf <strong>Drucken</strong>, um die Startliste eines bestimmten Durchgangs als PDF zu erzeugen.</p>
 <blockquote>
@@ -373,19 +544,69 @@ Mueller / Schmidt
 <hr />
 <h2>11. Berichte &amp; Export</h2>
 <h3>PDF-Dokumente</h3>
-<p>| Dokument | Wo | Beschreibung |
-|----------|-----|-------------|
-| Startliste | Formular | Liste aller Teams mit Startreihenfolge |
-| Bewertungsbögen | Formular | Leere Formulare für Punktrichter |
-| Teamliste | Teams | Alle aktiven Teams |
-| Runden-Startliste | Start Order | Startreihenfolge pro Durchgang |
-| Team-Scoresheet | Wertung | Detailliertes Bewertungsblatt pro Team (Organisatoren-Ansicht: alle Punktrichter-Spalten) |
-| Gesamtergebnisse | Wertung | Rangliste mit allen Durchgängen |</p>
+<table>
+<thead>
+<tr>
+<th>Dokument</th>
+<th>Wo</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Startliste</td>
+<td>Formular</td>
+<td>Liste aller Teams mit Startreihenfolge</td>
+</tr>
+<tr>
+<td>Bewertungsbögen</td>
+<td>Formular</td>
+<td>Leere Formulare für Punktrichter</td>
+</tr>
+<tr>
+<td>Teamliste</td>
+<td>Teams</td>
+<td>Alle aktiven Teams</td>
+</tr>
+<tr>
+<td>Runden-Startliste</td>
+<td>Start Order</td>
+<td>Startreihenfolge pro Durchgang</td>
+</tr>
+<tr>
+<td>Team-Scoresheet</td>
+<td>Wertung</td>
+<td>Detailliertes Bewertungsblatt pro Team (Organisatoren-Ansicht: alle Punktrichter-Spalten)</td>
+</tr>
+<tr>
+<td>Gesamtergebnisse</td>
+<td>Wertung</td>
+<td>Rangliste mit allen Durchgängen</td>
+</tr>
+</tbody>
+</table>
 <h3>Excel-Export</h3>
-<p>| Export | Wo | Beschreibung |
-|--------|-----|-------------|
-| Labels | Formular | Etiketten für Niimbot D11 |
-| Gesamtergebnisse | Wertung | Rangliste mit Formeln in Excel |</p>
+<table>
+<thead>
+<tr>
+<th>Export</th>
+<th>Wo</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Labels</td>
+<td>Formular</td>
+<td>Etiketten für Niimbot D11</td>
+</tr>
+<tr>
+<td>Gesamtergebnisse</td>
+<td>Wertung</td>
+<td>Rangliste mit Formeln in Excel</td>
+</tr>
+</tbody>
+</table>
 <h3>Email-Versand</h3>
 <p>Alle Email-Funktionen prüfen zuerst, ob der Email-Server erreichbar ist. Siehe <a href="#17-email-funktionen">Email-Funktionen</a>.</p>
 <hr />
@@ -438,12 +659,32 @@ MAIL_ENABLED=true
 <blockquote>
 <p><strong>Warnung:</strong> Alle Aktionen hier sind destruktiv und können nicht rückgängig gemacht werden. Erstellen Sie vorher ein Backup.</p>
 </blockquote>
-<p>| Aktion | Beschreibung |
-|--------|-------------|
-| <strong>Event bereinigen</strong> | Entfernt alle Durchgänge und Wertungen eines Events |
-| <strong>Teilnehmer zwangslöschen</strong> | Löscht auch bei bestehenden Zuordnungen |
-| <strong>Flugzeug zwangslöschen</strong> | Löscht und entfernt Team-Zuordnungen |
-| <strong>Team zwangslöschen</strong> | Löscht mit allen Wertungsdaten |</p>
+<table>
+<thead>
+<tr>
+<th>Aktion</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Event bereinigen</strong></td>
+<td>Entfernt alle Durchgänge und Wertungen eines Events</td>
+</tr>
+<tr>
+<td><strong>Teilnehmer zwangslöschen</strong></td>
+<td>Löscht auch bei bestehenden Zuordnungen</td>
+</tr>
+<tr>
+<td><strong>Flugzeug zwangslöschen</strong></td>
+<td>Löscht und entfernt Team-Zuordnungen</td>
+</tr>
+<tr>
+<td><strong>Team zwangslöschen</strong></td>
+<td>Löscht mit allen Wertungsdaten</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2>14. Testdaten</h2>
 <p><strong>Pfad:</strong> <code>/testdata/</code></p>
@@ -513,11 +754,28 @@ MAIL_ENABLED=true
 <h3>Wann ist ein Event gesperrt?</h3>
 <p>Ein Event ist gesperrt, wenn sein Status <strong>Completed</strong> oder <strong>Published</strong> ist.</p>
 <h3>Was wird blockiert?</h3>
-<p>| Bereich | Blockierte Aktionen |
-|---------|-------------------|
-| <strong>Formular</strong> | Startreihenfolge ändern, Sperren/Entsperren, Randomisieren |
-| <strong>Startliste</strong> | Reihenfolge generieren, ändern, randomisieren |
-| <strong>Wertung</strong> | Punkte eingeben, Punkte ändern, nächste Runde generieren |</p>
+<table>
+<thead>
+<tr>
+<th>Bereich</th>
+<th>Blockierte Aktionen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Formular</strong></td>
+<td>Startreihenfolge ändern, Sperren/Entsperren, Randomisieren</td>
+</tr>
+<tr>
+<td><strong>Startliste</strong></td>
+<td>Reihenfolge generieren, ändern, randomisieren</td>
+</tr>
+<tr>
+<td><strong>Wertung</strong></td>
+<td>Punkte eingeben, Punkte ändern, nächste Runde generieren</td>
+</tr>
+</tbody>
+</table>
 <h3>Wie entsperren?</h3>
 <ol>
 <li>Gehen Sie zu <strong>Wettbewerb</strong> (<code>/contest/</code>)</li>
@@ -554,11 +812,32 @@ MAIL_ENABLED=true
 <li>Nützlich zum schnellen Weiterleiten an einen Ausschuss-Mitglieder statt an die Piloten</li>
 </ul>
 <h3>Verfügbare Emails</h3>
-<p>| Email | Seite | Inhalt |
-|-------|-------|--------|
-| Startliste | Formular | Startreihenfolge als PDF |
-| Team-Ergebnisse | Wertung | Detaillierte Bewertung pro Team (Organisatoren-Scoresheet, ohne Drucken/Schliessen-Buttons) |
-| Gesamtergebnisse | Wertung | Komplette Rangliste |</p>
+<table>
+<thead>
+<tr>
+<th>Email</th>
+<th>Seite</th>
+<th>Inhalt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Startliste</td>
+<td>Formular</td>
+<td>Startreihenfolge als PDF</td>
+</tr>
+<tr>
+<td>Team-Ergebnisse</td>
+<td>Wertung</td>
+<td>Detaillierte Bewertung pro Team (Organisatoren-Scoresheet, ohne Drucken/Schliessen-Buttons)</td>
+</tr>
+<tr>
+<td>Gesamtergebnisse</td>
+<td>Wertung</td>
+<td>Komplette Rangliste</td>
+</tr>
+</tbody>
+</table>
 <h3>Fallback bei fehlenden Email-Adressen</h3>
 <p>Wenn ein Team keine Email-Adressen eingetragen hat, wird die Email automatisch an die Admin-Adresse (<code>ADMIN_EMAIL</code> in der <code>.env</code>-Datei, Standard: <code>MAIL_USERNAME</code>) weitergeleitet. Die Erfolgsmeldung zeigt dann: <em>&quot;Keine Team-Adressen — gesendet an Admin: ...&quot;</em> — so ist klar, dass es ein Fallback war und keine echte Zustellung an die Piloten.</p>
 <hr />
@@ -570,23 +849,108 @@ MAIL_ENABLED=true
 — Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
 </blockquote>
 <p>Jeder Punktrichter bewertet diese Figuren unabhängig mit 0-10 Punkten. Der K-Faktor multipliziert die Punkte:</p>
-<p>| Figur | Punkte | K-Faktor | Max |
-|-------|--------|----------|-----|
-| Bodenstart | 0-10 | 15 | 150 |
-| Platzrunde | 0-10 | 20 | 200 |
-| Platzrunde M-Figur | 0-10 | 22 | 220 |
-| Platzrunde M-K-Figur | 0-10 | 23 | 230 |
-| Platzüberflug | 0-10 | 10 | 100 |
-| Platzüberflug Oval | 0-10 | 13 | 130 |
-| Platzüberflug Kreis | 0-10 | 12 | 120 |
-| Ausklinken | 0-10 | 10 | 100 |
-| Verfahrenskurve Segler | 0-10 | 10 | 100 |
-| Seilabwurf (Anflug) | 0-10 | 15 | 150 |
-| Landeanflug Motor | 0-10 | 10 | 100 |
-| Landung Motor | 0-10 | 10 | 100 |
-| Landequalität Segler | 0-10 | 10 | 100 |
-| Landung Segler | 0-10 | 10 | 100 |
-| Naturgetreues Erscheinungsbild | 0-10 | 15 | 150 |</p>
+<table>
+<thead>
+<tr>
+<th>Figur</th>
+<th>Punkte</th>
+<th>K-Faktor</th>
+<th>Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bodenstart</td>
+<td>0-10</td>
+<td>15</td>
+<td>150</td>
+</tr>
+<tr>
+<td>Platzrunde</td>
+<td>0-10</td>
+<td>20</td>
+<td>200</td>
+</tr>
+<tr>
+<td>Platzrunde M-Figur</td>
+<td>0-10</td>
+<td>22</td>
+<td>220</td>
+</tr>
+<tr>
+<td>Platzrunde M-K-Figur</td>
+<td>0-10</td>
+<td>23</td>
+<td>230</td>
+</tr>
+<tr>
+<td>Platzüberflug</td>
+<td>0-10</td>
+<td>10</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Platzüberflug Oval</td>
+<td>0-10</td>
+<td>13</td>
+<td>130</td>
+</tr>
+<tr>
+<td>Platzüberflug Kreis</td>
+<td>0-10</td>
+<td>12</td>
+<td>120</td>
+</tr>
+<tr>
+<td>Ausklinken</td>
+<td>0-10</td>
+<td>10</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Verfahrenskurve Segler</td>
+<td>0-10</td>
+<td>10</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Seilabwurf (Anflug)</td>
+<td>0-10</td>
+<td>15</td>
+<td>150</td>
+</tr>
+<tr>
+<td>Landeanflug Motor</td>
+<td>0-10</td>
+<td>10</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Landung Motor</td>
+<td>0-10</td>
+<td>10</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Landequalität Segler</td>
+<td>0-10</td>
+<td>10</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Landung Segler</td>
+<td>0-10</td>
+<td>10</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Naturgetreues Erscheinungsbild</td>
+<td>0-10</td>
+<td>15</td>
+<td>150</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Berechnung:</strong> Bei 5 Punktrichtern werden die höchste und niedrigste Wertung pro Figur gestrichen. Die verbleibenden 3 Wertungen werden gemittelt.</p>
 <h3>Messwertung (objektiv)</h3>
 <blockquote>
@@ -594,12 +958,42 @@ MAIL_ENABLED=true
 — Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
 </blockquote>
 <p>Diese Werte werden <strong>einmalig gemessen</strong> und sind für alle Punktrichter identisch:</p>
-<p>| Messwert | Code | Berechnung | Max |
-|----------|------|-----------|-----|
-| Flugzeit Segler | SEGZEIT | MAX(0, 300 - ABS(200 - Zeit) × 3) | 300 |
-| Seilabwurf Genauigkeit | SEILZ | Direktwert aus Landefeld | 30 |
-| Landegenauigkeit Motor | LANDGM | Direktwert aus Landefeld | 30 |
-| Landegenauigkeit Segler | LANS | Direktwert aus Landefeld | 30 |</p>
+<table>
+<thead>
+<tr>
+<th>Messwert</th>
+<th>Code</th>
+<th>Berechnung</th>
+<th>Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flugzeit Segler</td>
+<td>SEGZEIT</td>
+<td>MAX(0, 300 - ABS(200 - Zeit) × 3)</td>
+<td>300</td>
+</tr>
+<tr>
+<td>Seilabwurf Genauigkeit</td>
+<td>SEILZ</td>
+<td>Direktwert aus Landefeld</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Landegenauigkeit Motor</td>
+<td>LANDGM</td>
+<td>Direktwert aus Landefeld</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Landegenauigkeit Segler</td>
+<td>LANS</td>
+<td>Direktwert aus Landefeld</td>
+<td>30</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Flugzeitberechnung:</strong> Die Sollflugzeit beträgt 200 Sekunden. Pro Sekunde Abweichung werden 3 Punkte abgezogen, bis maximal 0 Punkte.</p>
 <p><strong>Landegenauigkeit:</strong> Aus der Skizze der Ausschreibung ergeben sich die Landefelder: 0, 5, 10, 20, 30 Punkte je nach Auftreffpunkt.</p>
 <h3>Gesamtwertung eines Durchgangs</h3>
@@ -618,11 +1012,36 @@ MAIL_ENABLED=true
 <li>Wird ein Messwert korrigiert und erneut gespeichert, wird die Korrektur ebenfalls auf alle Bögen übertragen</li>
 </ol>
 <p><strong>Anzeige auf dem Bewertungsbogen:</strong></p>
-<p>| Situation | Wert-Feld | Punkte-Spalte | Im Total |
-|-----------|-----------|---------------|----------|
-| <strong>Messwert-Inhaber</strong> (erster Bogen) | Normal | Punkte berechnet | Ja |
-| <strong>Alle anderen Bögen</strong> | Hellblau hinterlegt | <code>-</code> (leer) | Nein |
-| <strong>Neuer Bogen (Eingabe)</strong> | Normal (editierbar) | Punkte berechnet | Ja |</p>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Wert-Feld</th>
+<th>Punkte-Spalte</th>
+<th>Im Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Messwert-Inhaber</strong> (erster Bogen)</td>
+<td>Normal</td>
+<td>Punkte berechnet</td>
+<td>Ja</td>
+</tr>
+<tr>
+<td><strong>Alle anderen Bögen</strong></td>
+<td>Hellblau hinterlegt</td>
+<td><code>-</code> (leer)</td>
+<td>Nein</td>
+</tr>
+<tr>
+<td><strong>Neuer Bogen (Eingabe)</strong></td>
+<td>Normal (editierbar)</td>
+<td>Punkte berechnet</td>
+<td>Ja</td>
+</tr>
+</tbody>
+</table>
 <ul>
 <li>Der <strong>erste Bewertungsbogen</strong> (Messwert-Inhaber) zeigt die Messwerte normal an — mit berechneten Punkten und im Gesamttotal enthalten</li>
 <li><strong>Alle weiteren Bögen</strong> zeigen die Messwerte mit hellblauem Hintergrund als Referenz — die Punkte werden dort <em>nicht</em> angezeigt und <em>nicht</em> zum Einzeltotal addiert, da sie bereits über den Inhaber-Bogen in die Gesamtwertung einfließen</li>
@@ -634,11 +1053,32 @@ MAIL_ENABLED=true
 <p><em>„Zur Berechnung des Gesamtergebnisses wird ein Streichdurchgang (bei Durchführung von 3 oder mehr kompletten Durchgängen) abgezogen. Die verbleibenden Durchgänge werden in der Prozentwertung miteinander addiert.&quot;</em>
 — Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
 </blockquote>
-<p>| Anzahl Durchgänge | Streichwertung | Endstand |
-|-------------------|---------------|----------|
-| 1-2 | Keine | Summe aller Prozentwertungen |
-| 3 | Niedrigster gestrichen | Summe der 2 besten |
-| 4 | Niedrigster gestrichen | Summe der 3 besten |</p>
+<table>
+<thead>
+<tr>
+<th>Anzahl Durchgänge</th>
+<th>Streichwertung</th>
+<th>Endstand</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-2</td>
+<td>Keine</td>
+<td>Summe aller Prozentwertungen</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Niedrigster gestrichen</td>
+<td>Summe der 2 besten</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Niedrigster gestrichen</td>
+<td>Summe der 3 besten</td>
+</tr>
+</tbody>
+</table>
 <h3>Referenzdokument</h3>
 <p>Die vollständige Ausschreibung ist lokal verfügbar:
 <code>/home/NRWcup_docs/Ausschreibung-2025-Rev-0.pdf</code></p>

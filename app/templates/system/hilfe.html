@@ -1,4 +1,5 @@
 {# File: app/templates/system/hilfe.html #}
+{# Pre-rendered from Benutzerhandbuch.md — re-run render script after doc updates #}
 {% extends "base.html" %}
 
 {% block content %}
@@ -8,7 +9,676 @@
 </div>
 <div class="card">
     <div class="card-body handbuch-content">
-        {{ content | safe }}
+<h1>NRW Cup — Benutzerhandbuch</h1>
+<p><strong>Verwaltungssystem für Seglerschlepp-Wettbewerbe</strong></p>
+<p>Version 1.0 — Februar 2026</p>
+<hr />
+<h2>Inhaltsverzeichnis</h2>
+<ol>
+<li><a href="#1-%C3%BCberblick">Überblick</a></li>
+<li><a href="#2-startseite--navigation">Startseite &amp; Navigation</a></li>
+<li><a href="#3-teilnehmer-verwaltung">Teilnehmer Verwaltung</a></li>
+<li><a href="#4-flugzeug-verwaltung">Flugzeug Verwaltung</a></li>
+<li><a href="#5-team-verwaltung">Team Verwaltung</a></li>
+<li><a href="#6-figuren-verwaltung">Figuren Verwaltung</a></li>
+<li><a href="#7-wettbewerb-events">Wettbewerb (Events)</a></li>
+<li><a href="#8-startliste--formular">Startliste / Formular</a></li>
+<li><a href="#9-startliste-verwaltung">Startliste Verwaltung</a></li>
+<li><a href="#10-wertung--ergebnisse">Wertung &amp; Ergebnisse</a></li>
+<li><a href="#11-berichte--export">Berichte &amp; Export</a></li>
+<li><a href="#12-systemverwaltung">Systemverwaltung</a></li>
+<li><a href="#13-datenbereinigung">Datenbereinigung</a></li>
+<li><a href="#14-testdaten">Testdaten</a></li>
+<li><a href="#15-typischer-wettbewerbs-ablauf">Typischer Wettbewerbs-Ablauf</a></li>
+<li><a href="#16-sperrmechanismus">Sperrmechanismus</a></li>
+<li><a href="#17-email-funktionen">Email-Funktionen</a></li>
+<li><a href="#18-messwertung--qualit%C3%A4tswertung">Messwertung &amp; Qualitätswertung</a></li>
+<li><a href="#19-h%C3%A4ufige-fragen">Häufige Fragen</a></li>
+</ol>
+<hr />
+<h2>1. Überblick</h2>
+<p>Das NRW Cup System verwaltet den kompletten Ablauf eines Seglerschlepp-Wettbewerbs:</p>
+<ul>
+<li><strong>Stammdaten</strong>: Teilnehmer (Piloten, Punktrichter, Wettbewerbsleitung), Flugzeuge, Teams</li>
+<li><strong>Wettbewerb</strong>: Events anlegen, Startlisten erstellen, Durchgänge verwalten</li>
+<li><strong>Wertung</strong>: Punkteingabe pro Punktrichter, automatische Berechnung, Rangliste</li>
+<li><strong>Ausgabe</strong>: PDF-Dokumente, Excel-Export, Email-Versand</li>
+</ul>
+<h3>Zugang</h3>
+<p>Das System läuft im lokalen Netzwerk. Öffnen Sie im Browser:</p>
+<p>| System | Adresse |
+|--------|---------|
+| Entwicklung | http://192.168.2.30:5000 |
+| Pi (Wettbewerb) | http://192.168.2.83:5000 |</p>
+<p>Es ist kein Login für die normale Nutzung erforderlich. Administrative Funktionen (System, Cleanup) sind durch ein Admin-Passwort geschützt.</p>
+<hr />
+<h2>2. Startseite &amp; Navigation</h2>
+<p>Die Startseite zeigt Kacheln für alle Bereiche. Die Navigationsleiste am oberen Rand ist auf jeder Seite verfügbar:</p>
+<p>| Menüpunkt | Beschreibung |
+|-----------|-------------|
+| Start | Zurück zur Startseite |
+| Teilnehmer | Piloten, Punktrichter, Wettkampfleitung |
+| Flugzeuge | Motor- und Segelflugmodelle |
+| Teams | Zusammenstellung Pilot + Flugzeug |
+| Figuren | Bewertungsfiguren und K-Faktoren |
+| Wettbewerb | Events anlegen und verwalten |
+| Startliste | Startreihenfolge festlegen |
+| Wertung &amp; Ergebnisse | Punkte eingeben und Rangliste |</p>
+<p>Die Menüpunkte <strong>Datenbereinigung</strong> und <strong>Systemeinstellungen</strong> sind im Admin-Bereich verfügbar.</p>
+<hr />
+<h2>3. Teilnehmer Verwaltung</h2>
+<p><strong>Pfad:</strong> <code>/teilnehmer/</code></p>
+<p>Hier werden alle Personen verwaltet, die am Wettbewerb beteiligt sind.</p>
+<h3>Rollen</h3>
+<p>Jeder Teilnehmer kann eine oder mehrere Rollen haben:</p>
+<p>| Rolle | Badge | Bedeutung |
+|-------|-------|-----------|
+| Segler Pilot | blau | Fliegt das Segelflugmodell |
+| Schlepper Pilot | grün | Fliegt das Motormodell |
+| Punktwerter | hellblau | Bewertet als Punktrichter |
+| Wettbewerbsleitung | gelb | Wettkampfleitung |</p>
+<h3>Teilnehmer anlegen</h3>
+<ol>
+<li>Klicken Sie auf <strong>Neuer Teilnehmer</strong></li>
+<li>Geben Sie mindestens den <strong>Namen</strong> ein (Pflichtfeld)</li>
+<li>Wählen Sie die passenden <strong>Rollen</strong> aus</li>
+<li>Optional: Email, Handy, Verein, Verband, Nachweise</li>
+<li>Klicken Sie auf <strong>Speichern</strong></li>
+</ol>
+<h3>Teilnehmer bearbeiten</h3>
+<ol>
+<li>Klicken Sie auf <strong>Bearbeiten</strong> in der Liste</li>
+<li>Ändern Sie die gewünschten Felder</li>
+<li>Klicken Sie auf <strong>Änderungen Speichern</strong></li>
+</ol>
+<h3>Teilnehmer löschen</h3>
+<ol>
+<li>Öffnen Sie die <strong>Bearbeiten</strong>-Seite des Teilnehmers</li>
+<li>Klicken Sie auf <strong>Löschen</strong> (links unten)</li>
+<li>Bestätigen Sie im Dialog</li>
+</ol>
+<blockquote>
+<p><strong>Hinweis:</strong> Teilnehmer, die einem Team zugeordnet sind, können nicht gelöscht werden. Entfernen Sie zuerst die Team-Zuordnung.</p>
+</blockquote>
+<h3>Filter</h3>
+<ul>
+<li><strong>Rolle</strong>: Zeigt nur Teilnehmer mit einer bestimmten Rolle</li>
+<li><strong>Verein</strong>: Zeigt nur Teilnehmer eines bestimmten Vereins</li>
+<li><strong>Filter Zurücksetzen</strong>: Zeigt wieder alle Teilnehmer</li>
+</ul>
+<hr />
+<h2>4. Flugzeug Verwaltung</h2>
+<p><strong>Pfad:</strong> <code>/flugzeuge/</code></p>
+<p>Verwaltet alle Motor- und Segelflugmodelle.</p>
+<h3>Flugzeug anlegen</h3>
+<ol>
+<li>Klicken Sie auf <strong>Neues Flugzeug</strong></li>
+<li>Geben Sie den <strong>Namen</strong> ein (Pflichtfeld)</li>
+<li>Wählen Sie den <strong>Typ</strong>: Segelflugzeug und/oder Schleppflugzeug</li>
+<li>Optional: Spannweite/Scale, Gewicht, Antrieb, Propeller, Fernsteuerung</li>
+<li>Ordnen Sie <strong>Pilot</strong> und <strong>Besitzer</strong> zu</li>
+<li>Klicken Sie auf <strong>Speichern</strong></li>
+</ol>
+<h3>Spannweite / Scale</h3>
+<p>Die Anzeige passt sich automatisch an:</p>
+<ul>
+<li>Werte <strong>über 4</strong> werden als Meter angezeigt (z.B. 4.50 m)</li>
+<li>Werte <strong>unter 4</strong> werden als Maßstab angezeigt (z.B. 1:3.50)</li>
+</ul>
+<h3>Flugzeug bearbeiten &amp; löschen</h3>
+<ul>
+<li><strong>Bearbeiten</strong>: Klicken Sie auf <strong>Bearbeiten</strong> in der Liste</li>
+<li><strong>Löschen</strong>: Auf der Bearbeiten-Seite über den <strong>Löschen</strong>-Button</li>
+</ul>
+<blockquote>
+<p><strong>Hinweis:</strong> Flugzeuge, die einem Team zugeordnet sind, können nicht gelöscht werden.</p>
+</blockquote>
+<h3>Zugang über Teilnehmer</h3>
+<p>Von der Teilnehmer-Bearbeitung aus können Sie direkt ein neues Flugzeug für den Teilnehmer anlegen. Nach dem Speichern kehren Sie automatisch zum Teilnehmer zurück.</p>
+<hr />
+<h2>5. Team Verwaltung</h2>
+<p><strong>Pfad:</strong> <code>/teams/</code></p>
+<p>Ein Team besteht aus einem Schlepper-Piloten mit Motorflugmodell und einem Segler-Piloten mit Segelflugmodell.</p>
+<h3>Team anlegen</h3>
+<ol>
+<li>Klicken Sie auf <strong>Neues Team</strong></li>
+<li>Wählen Sie den <strong>Schlepper-Piloten</strong> — die Flugzeug-Auswahl aktualisiert sich automatisch</li>
+<li>Wählen Sie das <strong>Schleppflugzeug</strong></li>
+<li>Wählen Sie den <strong>Segler-Piloten</strong> — die Flugzeug-Auswahl aktualisiert sich automatisch</li>
+<li>Wählen Sie das <strong>Segelflugzeug</strong></li>
+<li>Klicken Sie auf <strong>Speichern</strong></li>
+</ol>
+<blockquote>
+<p><strong>Wichtig:</strong> Nur Piloten mit der passenden Rolle (Schlepper/Segler) erscheinen in den Dropdowns. Die Flugzeug-Auswahl zeigt nur Flugzeuge, die dem gewählten Piloten zugeordnet sind.</p>
+</blockquote>
+<h3>Team bearbeiten</h3>
+<ol>
+<li>Klicken Sie auf <strong>Bearbeiten</strong> in der Liste</li>
+<li>Ändern Sie Piloten, Flugzeuge oder die Team-Nummer</li>
+<li><strong>Aktivieren/Deaktivieren</strong>: Der Button im Seitenkopf schaltet das Team aktiv/inaktiv</li>
+<li><strong>Löschen</strong>: Über den Löschen-Button mit Bestätigungsdialog</li>
+</ol>
+<h3>Status</h3>
+<p>| Status | Anzeige | Bedeutung |
+|--------|---------|-----------|
+| Aktiv | grüner Badge | Team nimmt am Wettbewerb teil |
+| Inaktiv | grauer Badge, Zeile grau | Team ist deaktiviert (bleibt erhalten) |</p>
+<h3>Sonderfunktionen</h3>
+<ul>
+<li><strong>Teams neu nummerieren</strong>: Nummeriert alle aktiven Teams lückenlos durch (mit Bestätigung)</li>
+<li><strong>Teamliste</strong>: Erzeugt eine druckbare PDF-Liste aller aktiven Teams</li>
+</ul>
+<hr />
+<h2>6. Figuren Verwaltung</h2>
+<p><strong>Pfad:</strong> <code>/figures/</code></p>
+<p>Verwaltet die Bewertungsfiguren gemäß der DMFV-Ausschreibung. Jede Figur hat einen K-Faktor (Koeffizient), der die Gewichtung in der Gesamtwertung bestimmt.</p>
+<h3>Felder</h3>
+<p>| Feld | Beschreibung |
+|------|-------------|
+| Code | Kurzbezeichnung (z.B. &quot;S&quot;, &quot;PR&quot;) |
+| Name (DE) | Deutscher Name der Figur |
+| Sortierung | Reihenfolge in der Anzeige |
+| Maximalwert | Höchste vergebbare Punktzahl |
+| K-Faktor | Multiplikator für die Wertung |
+| Aktiv/Inaktiv | Ob die Figur im aktuellen Wettbewerb bewertet wird |</p>
+<h3>Aktiv / Inaktiv</h3>
+<p>Der <strong>Aktiv/Inaktiv</strong>-Button auf der Bearbeiten-Seite steuert, ob eine Figur in der Wertung erscheint:</p>
+<ul>
+<li><strong>Grüner Button &quot;Aktiv&quot;</strong>: Figur wird bewertet</li>
+<li><strong>Grauer Button &quot;Inaktiv&quot;</strong>: Figur wird übersprungen</li>
+</ul>
+<h3>Beschreibung</h3>
+<p>Jede Figur enthält die vollständige Beschreibung und Bewertungsgrundlage aus der DMFV-Ausschreibung. Diese dient als Referenz für die Punktrichter.</p>
+<hr />
+<h2>7. Wettbewerb (Events)</h2>
+<p><strong>Pfad:</strong> <code>/contest/</code></p>
+<p>Hier werden die einzelnen Wettbewerbe (Events) angelegt und verwaltet.</p>
+<h3>Event anlegen</h3>
+<ol>
+<li>Klicken Sie auf <strong>Neuer Wettbewerb</strong></li>
+<li>Füllen Sie das Formular aus:
+<ul>
+<li><strong>Name</strong>: z.B. &quot;NRW-Cup 2026 Bocholt&quot;</li>
+<li><strong>Verein</strong>: Ausrichtender Verein</li>
+<li><strong>Datum</strong>: Wettbewerbsdatum</li>
+<li><strong>Ort</strong>: Stadt, Straße, PLZ</li>
+</ul>
+</li>
+<li>Klicken Sie auf <strong>Speichern</strong></li>
+</ol>
+<blockquote>
+<p><strong>Hinweis:</strong> Durchgänge werden automatisch erstellt (3 pro Wettbewerb). Die Anzahl muss nicht manuell eingegeben werden.</p>
+</blockquote>
+<h3>Status-Workflow</h3>
+<p>Ein Event durchläuft folgende Zustände:</p>
+<pre><code>Pending → Active → Completed → Published
+</code></pre>
+<p>| Status | Bedeutung |
+|--------|-----------|
+| Pending | Angelegt, noch nicht aktiv |
+| Active | Laufender Wettbewerb, Änderungen erlaubt |
+| Completed | Abgeschlossen, <strong>gesperrt</strong> — keine Änderungen mehr |
+| Published | Veröffentlicht, <strong>gesperrt</strong> |</p>
+<h3>Sperren / Entsperren</h3>
+<p>Jedes Event hat einen <strong>Gesperrt/Entsperrt</strong>-Button:</p>
+<ul>
+<li><strong>Roter Button &quot;Gesperrt&quot;</strong>: Event ist abgeschlossen, alle Änderungen blockiert</li>
+<li><strong>Gelber Button &quot;Entsperrt&quot;</strong>: Event ist offen für Änderungen</li>
+</ul>
+<p>Klicken Sie auf den Button, um den Status zu wechseln (mit Bestätigung).</p>
+<blockquote>
+<p><strong>Wichtig:</strong> Ein gesperrtes Event blockiert Änderungen überall im System — Startliste, Wertung, Startreihenfolge. Siehe <a href="#16-sperrmechanismus">Sperrmechanismus</a>.</p>
+</blockquote>
+<h3>Weitere Aktionen</h3>
+<ul>
+<li><strong>Bearbeiten</strong>: Name, Datum, Ort, Status ändern (inkl. Löschen und Sperren/Entsperren)</li>
+<li><strong>Bewertungen Löschen</strong>: Öffnet einen Dialog zum gezielten Löschen von Wertungsdaten</li>
+</ul>
+<h3>Bewertungen Löschen</h3>
+<p>Über den Button <strong>Bewertungen Löschen</strong> können Wertungsdaten entfernt werden. Es gibt zwei Optionen:</p>
+<p><strong>1. Nur Bewertungen löschen</strong> (Standard)</p>
+<ul>
+<li>Entfernt alle Scores (Bewertungsbögen) und Team-Rundenzuordnungen</li>
+<li>Die Durchgänge (D1, D2, D3...) bleiben erhalten</li>
+<li>Geeignet wenn: Sie die Bewertungen neu eingeben möchten, aber die Durchgangs-Struktur behalten wollen</li>
+</ul>
+<p><strong>2. Auch alle Durchgänge löschen</strong> (Checkbox)</p>
+<ul>
+<li>Entfernt zusätzlich alle Durchgänge komplett</li>
+<li>Das Event wird auf den Ausgangszustand zurückgesetzt (keine Durchgänge, keine Bewertungen)</li>
+<li>Geeignet wenn: Sie komplett von vorne beginnen möchten</li>
+</ul>
+<p><strong>Auswahl des Lösch-Bereichs:</strong></p>
+<ul>
+<li><em>Alle Wettbewerbe mit Status 'Geplant'</em>: Nur geplante Events betroffen</li>
+<li><em>Alle Wettbewerbe mit Status 'Aktiv'</em>: Nur aktive Events betroffen</li>
+<li><em>Alle Wertungen</em>: Alle nicht-abgeschlossenen Events betroffen</li>
+<li><em>Nur für [Event-Name]</em>: Nur ein bestimmtes Event betroffen</li>
+</ul>
+<blockquote>
+<p><strong>Wichtig:</strong> Abgeschlossene Wettbewerbe (Status &quot;Completed&quot;) sind immer geschützt und werden nicht gelöscht.</p>
+</blockquote>
+<hr />
+<h2>8. Startliste / Formular</h2>
+<p><strong>Pfad:</strong> <code>/formular/</code></p>
+<p>Die zentrale Seite für die Verwaltung der Startreihenfolge und den Druck von Dokumenten.</p>
+<h3>Event auswählen</h3>
+<p>Wählen Sie im Dropdown den gewünschten Wettbewerb aus. Gesperrte Events sind mit <strong>(Gesperrt)</strong> markiert.</p>
+<h3>Startreihenfolge festlegen (Runde 1)</h3>
+<ol>
+<li><strong>Drag &amp; Drop</strong>: Ziehen Sie die Teams in die gewünschte Reihenfolge</li>
+<li><strong>Manuell</strong>: Geben Sie die gewünschte Position direkt in das Nummernfeld ein</li>
+<li><strong>Zufällig</strong>: Klicken Sie auf <strong>Zufällige Reihenfolge</strong> für eine zufällige Auslosung</li>
+</ol>
+<h3>Startliste sperren</h3>
+<p>Klicken Sie auf <strong>Entsperrt</strong> (gelber Button), um die Startliste zu sperren:</p>
+<ul>
+<li>Die Startreihenfolge wird gespeichert</li>
+<li>Runde 1 wird mit den entsprechenden Team-Zuordnungen angelegt</li>
+<li>Drag &amp; Drop und Positionsänderungen werden deaktiviert</li>
+</ul>
+<p>Um die Startliste wieder zu entsperren, klicken Sie auf <strong>Gesperrt</strong> (roter Button).</p>
+<h3>Dokumente</h3>
+<p>| Button | Funktion |
+|--------|----------|
+| <strong>PDF erstellen</strong> | Startliste als PDF zum Drucken |
+| <strong>Bewertungsbögen</strong> | Leere Bewertungsformulare für die Punktrichter |
+| <strong>Labels Excel</strong> | Excel-Datei für Niimbot D11 Etikettendrucker |
+| <strong>Email Startliste</strong> | Startliste per Email an Teilnehmer versenden |</p>
+<h3>Labels</h3>
+<p>Der Label-Export erzeugt eine Excel-Datei mit Etiketten im Format 40mm x 12mm:</p>
+<pre><code>Team 15: Durchgang: 2
+Mueller / Schmidt
+</code></pre>
+<p>Wählen Sie die Anzahl der Durchgänge (3-6) und laden Sie die Datei herunter.</p>
+<hr />
+<h2>9. Startliste Verwaltung</h2>
+<p><strong>Pfad:</strong> <code>/start_order/</code></p>
+<p>Verwaltet die Startreihenfolge für alle Durchgänge ab Runde 2.</p>
+<h3>Reihenfolge für weitere Runden</h3>
+<p>| Methode | Beschreibung |
+|---------|-------------|
+| <strong>Aus Ergebnissen generieren</strong> | Reihenfolge basiert auf der Platzierung des vorherigen Durchgangs (letztplatziertes Team startet zuerst) |
+| <strong>Manuell anpassen</strong> | Positionen direkt ändern |
+| <strong>Randomisieren</strong> | Zufällige Reihenfolge |</p>
+<h3>Drucken</h3>
+<p>Klicken Sie auf <strong>Drucken</strong>, um die Startliste eines bestimmten Durchgangs als PDF zu erzeugen.</p>
+<blockquote>
+<p><strong>Hinweis:</strong> Der <strong>Drucken</strong>-Button für Durchgang N ist erst aktiv, wenn Durchgang N-1 den Status <strong>Abgeschlossen</strong> hat. Solange der vorherige Durchgang noch läuft, ist der Button ausgegraut. Durchgang 1 kann jederzeit gedruckt werden.</p>
+</blockquote>
+<blockquote>
+<p><strong>Hinweis:</strong> Bei gesperrten Wettbewerben wird ein Banner <strong>&quot;Abgeschlossen — nur Ansicht&quot;</strong> angezeigt und alle Bearbeitungsfunktionen sind deaktiviert.</p>
+</blockquote>
+<hr />
+<h2>10. Wertung &amp; Ergebnisse</h2>
+<p><strong>Pfad:</strong> <code>/scoring/list</code></p>
+<p>Die Hauptseite für die Punkteingabe und Ergebnisanzeige.</p>
+<h3>Übersicht</h3>
+<p>Die Seite ist in mehrere Bereiche aufgeteilt:</p>
+<ol>
+<li><strong>Kopfbereich</strong>: Event- und Runden-Auswahl, Punktrichter-Filter</li>
+<li><strong>Wertungstabelle</strong>: Alle Teams mit ihren Punkten pro Punktrichter</li>
+<li><strong>Rangliste</strong>: Aktuelle Gesamtplatzierung</li>
+</ol>
+<h3>Punkte eingeben</h3>
+<ol>
+<li>Wählen Sie das <strong>Event</strong> und den <strong>Durchgang</strong></li>
+<li>Klicken Sie auf ein Team, um den Wertungsbogen zu öffnen</li>
+<li>Der Wertungsbogen zeigt alle aktiven Figuren mit ihren K-Faktoren</li>
+<li>Geben Sie die Punkte ein (0-10 pro Figur)</li>
+<li>Optional: Fügen Sie eine Bemerkung hinzu</li>
+<li>Klicken Sie auf <strong>Speichern</strong></li>
+</ol>
+<blockquote>
+<p><strong>Tipp Dateneingabe:</strong> Verwenden Sie die <strong>Pfeiltasten (Hoch/Runter)</strong> auf der Tastatur, um den Wert schnell um 0,5 zu erhöhen oder zu verringern. So geben Sie z.B. 6,5 ein: Tippen Sie <code>6</code>, dann einmal <strong>Pfeil hoch</strong> — fertig! Das erspart die Suche nach dem Komma bzw. Punkt auf der Tastatur.</p>
+</blockquote>
+<h3>Navigation zwischen Punktrichtern</h3>
+<p>Auf dem Bewertungsbogen können Sie mit den Buttons <strong>Voriger</strong> und <strong>Nächster</strong> direkt zum Bewertungsbogen des vorherigen oder nächsten Punktrichters für dasselbe Team wechseln, ohne zur Übersichtsliste zurückkehren zu müssen.</p>
+<h3>Wertungsberechnung</h3>
+<p>Die Berechnung erfolgt automatisch und unterscheidet zwischen <strong>Qualitätswertung</strong> (subjektive Figuren, von Punktrichtern bewertet) und <strong>Messwertung</strong> (objektive Messwerte, vom Messteam erfasst). Siehe <a href="#18-messwertung--qualit%C3%A4tswertung">Messwertung &amp; Qualitätswertung</a> für eine ausführliche Erklärung.</p>
+<p><strong>Kurzfassung:</strong></p>
+<ol>
+<li><strong>Qualitätswertung</strong> pro Punktrichter = Summe aller (Figurenpunkte × K-Faktor)</li>
+<li>Bei 4+ Punktrichtern: Höchste und niedrigste Wertung streichen</li>
+<li><strong>Durchschnitt</strong> der verbleibenden Qualitätswertungen</li>
+<li><strong>Messwertung</strong> = Flugzeit + Landegenauigkeit + Seilabwurf (einmalig, nicht gemittelt)</li>
+<li><strong>Rohwert</strong> = Qualitätswertung (Durchschnitt) + Messwertung</li>
+<li><strong>Prozent</strong> = Rohwert / höchster Rohwert des Durchgangs × 100</li>
+<li><strong>Gesamt</strong> = Summe aller Durchgänge (bei 3+ Runden: Streichwertung)</li>
+</ol>
+<h3>Wertung sperren (Admin)</h3>
+<p>Gesperrte Wertungen können nicht versehentlich geändert werden:</p>
+<ol>
+<li>Melden Sie sich als Admin an (Passwort erforderlich)</li>
+<li>Öffnen Sie die Wertung</li>
+<li>Klicken Sie auf <strong>Sperren</strong> / <strong>Entsperren</strong></li>
+</ol>
+<h3>Nächsten Durchgang generieren</h3>
+<ol>
+<li>Klicken Sie auf <strong>Nächste Runde generieren</strong></li>
+<li>Die Startreihenfolge wird automatisch aus der aktuellen Platzierung erstellt</li>
+<li>Leere Bewertungsbögen werden für die neue Runde angelegt</li>
+</ol>
+<h3>Team-Ergebnisse</h3>
+<p>In der Wertungsübersicht können Sie auf den <strong>Punkte-Badge</strong> (blaue Zahl) eines Teams klicken, um die detaillierten Ergebnisse anzuzeigen.</p>
+<ul>
+<li><strong>Anzeigen</strong>: Detaillierte Ergebnisse pro Team und Durchgang (alle Punktrichter-Wertungen, Qualitäts- und Messwertung, normalisiertes Ergebnis)</li>
+<li><strong>PDF</strong>: Erzeugt ein detailliertes Bewertungsblatt als PDF</li>
+<li><strong>Drucken</strong>: Direkt aus der Ergebnisansicht drucken (A4 Querformat)</li>
+<li><strong>Email</strong>: Versendet die Ergebnisse direkt an die Piloten</li>
+</ul>
+<blockquote>
+<p><strong>Hinweis:</strong> Nicht gewählte Kürfiguren (Platzrunde/Platzüberflug-Varianten) werden in der Ergebnisansicht automatisch ausgeblendet.</p>
+</blockquote>
+<hr />
+<h2>11. Berichte &amp; Export</h2>
+<h3>PDF-Dokumente</h3>
+<p>| Dokument | Wo | Beschreibung |
+|----------|-----|-------------|
+| Startliste | Formular | Liste aller Teams mit Startreihenfolge |
+| Bewertungsbögen | Formular | Leere Formulare für Punktrichter |
+| Teamliste | Teams | Alle aktiven Teams |
+| Runden-Startliste | Start Order | Startreihenfolge pro Durchgang |
+| Team-Scoresheet | Wertung | Detailliertes Bewertungsblatt pro Team (Organisatoren-Ansicht: alle Punktrichter-Spalten) |
+| Gesamtergebnisse | Wertung | Rangliste mit allen Durchgängen |</p>
+<h3>Excel-Export</h3>
+<p>| Export | Wo | Beschreibung |
+|--------|-----|-------------|
+| Labels | Formular | Etiketten für Niimbot D11 |
+| Gesamtergebnisse | Wertung | Rangliste mit Formeln in Excel |</p>
+<h3>Email-Versand</h3>
+<p>Alle Email-Funktionen prüfen zuerst, ob der Email-Server erreichbar ist. Siehe <a href="#17-email-funktionen">Email-Funktionen</a>.</p>
+<hr />
+<h2>12. Systemverwaltung</h2>
+<p><strong>Pfad:</strong> <code>/system/</code> (Admin-Passwort erforderlich)</p>
+<h3>Backup</h3>
+<ul>
+<li><strong>Backup erstellen</strong>: Erzeugt eine ZIP-Datei mit der kompletten Datenbank und allen Dateien</li>
+<li><strong>Herunterladen</strong>: Backup-Datei auf den eigenen Rechner laden</li>
+<li><strong>Löschen</strong>: Alte Backups entfernen</li>
+</ul>
+<blockquote>
+<p><strong>Empfehlung:</strong> Erstellen Sie vor jedem Wettbewerbstag ein Backup.</p>
+</blockquote>
+<h3>Benutzer</h3>
+<p>Verwaltung der Systembenutzer (aktuell für zukünftige Authentifizierung vorbereitet):</p>
+<ul>
+<li>Benutzer anlegen, bearbeiten, löschen</li>
+<li>Rollen zuweisen</li>
+</ul>
+<h3>Logs</h3>
+<p>Das System protokolliert alle wichtigen Aktionen:</p>
+<ul>
+<li><strong>Audit-Log anzeigen</strong>: Wer hat wann was geändert</li>
+<li><strong>Log-Dateien</strong>: Technische Protokolle herunterladen</li>
+<li><strong>Bereinigen</strong>: Alte Logs löschen</li>
+<li><strong>Logging ein/aus</strong>: Protokollierung aktivieren oder deaktivieren</li>
+</ul>
+<h3>Wettbewerb Sichtbarkeit</h3>
+<p>Im Abschnitt <strong>Wettbewerb Sichtbarkeit</strong> können Events für normale Benutzer ausgeblendet werden:</p>
+<ul>
+<li><strong>Verbergen</strong>: Das Event verschwindet aus allen öffentlichen Seiten (Wertung, Formular, Berichte, Wettbewerb)</li>
+<li><strong>Anzeigen</strong>: Stellt die Sichtbarkeit wieder her</li>
+<li>Verborgene Events sind <strong>nur hier</strong> (Systemeinstellungen) sichtbar und bleiben mit allen Daten in der Datenbank erhalten</li>
+</ul>
+<blockquote>
+<p><strong>Verwendung:</strong> Nützlich um vergangene oder Test-Events aus dem aktiven Betrieb auszublenden, ohne sie zu löschen.</p>
+</blockquote>
+<h3>Email-Konfiguration</h3>
+<p>Die Email-Einstellungen werden über die <code>.env</code>-Datei konfiguriert:</p>
+<pre><code>MAIL_SERVER=smtp.ionos.co.uk
+MAIL_PORT=465
+MAIL_USERNAME=name@domain.de
+MAIL_PASSWORD=geheim
+MAIL_ENABLED=true
+</code></pre>
+<hr />
+<h2>13. Datenbereinigung</h2>
+<p><strong>Pfad:</strong> <code>/cleanup/</code> (Admin-Passwort erforderlich)</p>
+<blockquote>
+<p><strong>Warnung:</strong> Alle Aktionen hier sind destruktiv und können nicht rückgängig gemacht werden. Erstellen Sie vorher ein Backup.</p>
+</blockquote>
+<p>| Aktion | Beschreibung |
+|--------|-------------|
+| <strong>Event bereinigen</strong> | Entfernt alle Durchgänge und Wertungen eines Events |
+| <strong>Teilnehmer zwangslöschen</strong> | Löscht auch bei bestehenden Zuordnungen |
+| <strong>Flugzeug zwangslöschen</strong> | Löscht und entfernt Team-Zuordnungen |
+| <strong>Team zwangslöschen</strong> | Löscht mit allen Wertungsdaten |</p>
+<hr />
+<h2>14. Testdaten</h2>
+<p><strong>Pfad:</strong> <code>/testdata/</code></p>
+<p>Generiert realistische Testdaten für Entwicklung und Demonstration.</p>
+<h3>Testdaten generieren</h3>
+<ol>
+<li>Wählen Sie das <strong>Event</strong> (nur Events mit Status <strong>Geplant</strong> verfügbar — bei nur einem Event wird es automatisch vorausgewählt)</li>
+<li>Wählen Sie <strong>Teams</strong> und <strong>Punktrichter</strong> (standardmäßig alle ausgewählt)</li>
+<li>Stellen Sie die <strong>Variabilität</strong> ein (wie stark die Punkte streuen)</li>
+<li>Wählen Sie die <strong>Anzahl Durchgänge</strong></li>
+<li>Klicken Sie auf <strong>Generieren</strong></li>
+</ol>
+<p>Die generierten Punkte verwenden eine Gaußverteilung für realistische Ergebnisse.</p>
+<blockquote>
+<p><strong>Wichtig:</strong> Testdaten können ausschließlich für Events mit Status <strong>Geplant</strong> (Pending) generiert werden. Aktive oder abgeschlossene Wettbewerbe sind geschützt.</p>
+</blockquote>
+<hr />
+<h2>15. Typischer Wettbewerbs-Ablauf</h2>
+<h3>Vorbereitung (Tage/Wochen vorher)</h3>
+<ol>
+<li><strong>Teilnehmer anlegen</strong>: Alle Piloten, Punktrichter und Wettkampfleitung</li>
+<li><strong>Flugzeuge anlegen</strong>: Motor- und Segelflugmodelle mit Zuordnung zu Piloten</li>
+<li><strong>Teams zusammenstellen</strong>: Schlepper + Segler Paare bilden</li>
+<li><strong>Event anlegen</strong>: Name, Datum, Ort, geschätzte Durchgänge</li>
+<li><strong>Figuren prüfen</strong>: Aktive Figuren und K-Faktoren kontrollieren</li>
+</ol>
+<h3>Wettbewerbstag</h3>
+<h4>Vor dem ersten Durchgang</h4>
+<ol>
+<li><strong>Backup erstellen</strong> (System → Backup)</li>
+<li><strong>Event auf &quot;Active&quot; setzen</strong> (Wettbewerb)</li>
+<li><strong>Startliste erstellen</strong> (Formular)
+<ul>
+<li>Teams in Reihenfolge bringen (Auslosung oder Zufällig)</li>
+<li>Startliste <strong>sperren</strong></li>
+<li>Startliste <strong>drucken</strong> und <strong>verteilen</strong></li>
+<li>Bewertungsbögen <strong>drucken</strong></li>
+</ul>
+</li>
+<li><strong>Labels drucken</strong> (optional, für Niimbot D11)</li>
+</ol>
+<h4>Während des Durchgangs</h4>
+<ol>
+<li>Punktrichter bewerten auf Papier-Bewertungsbögen</li>
+<li>Nach jedem Team: <strong>Punkte eingeben</strong> (Wertung)</li>
+<li>Alternativ: Alle Punkte gesammelt nach dem Durchgang eingeben</li>
+</ol>
+<h4>Nach dem Durchgang</h4>
+<ol>
+<li><strong>Ergebnisse prüfen</strong> (Rangliste kontrollieren)</li>
+<li><strong>Nächste Runde generieren</strong> (automatische Startreihenfolge)</li>
+<li>Neue Startliste <strong>drucken</strong></li>
+<li>Optional: Zwischenergebnisse per <strong>Email versenden</strong></li>
+</ol>
+<h4>Nach dem letzten Durchgang</h4>
+<ol>
+<li><strong>Endergebnisse prüfen</strong> und kontrollieren</li>
+<li><strong>Event sperren</strong> (Completed)</li>
+<li>Ergebnisse als <strong>PDF exportieren</strong></li>
+<li>Ergebnisse per <strong>Email versenden</strong></li>
+<li>Optional: Ergebnisse als <strong>Excel exportieren</strong></li>
+<li><strong>Backup erstellen</strong></li>
+</ol>
+<hr />
+<h2>16. Sperrmechanismus</h2>
+<p>Das System hat einen globalen Sperrmechanismus, der abgeschlossene Wettbewerbe vor versehentlichen Änderungen schützt.</p>
+<h3>Wann ist ein Event gesperrt?</h3>
+<p>Ein Event ist gesperrt, wenn sein Status <strong>Completed</strong> oder <strong>Published</strong> ist.</p>
+<h3>Was wird blockiert?</h3>
+<p>| Bereich | Blockierte Aktionen |
+|---------|-------------------|
+| <strong>Formular</strong> | Startreihenfolge ändern, Sperren/Entsperren, Randomisieren |
+| <strong>Startliste</strong> | Reihenfolge generieren, ändern, randomisieren |
+| <strong>Wertung</strong> | Punkte eingeben, Punkte ändern, nächste Runde generieren |</p>
+<h3>Wie entsperren?</h3>
+<ol>
+<li>Gehen Sie zu <strong>Wettbewerb</strong> (<code>/contest/</code>)</li>
+<li>Klicken Sie auf den <strong>Gesperrt</strong>-Button des Events</li>
+<li>Bestätigen Sie die Entsperrung</li>
+</ol>
+<p>Das Event wird auf &quot;Active&quot; zurückgesetzt und alle Änderungen sind wieder möglich.</p>
+<h3>Sichtbarkeit</h3>
+<ul>
+<li><strong>Formular</strong>: Buttons werden ausgeblendet, Drag &amp; Drop deaktiviert</li>
+<li><strong>Startliste</strong>: Banner &quot;Abgeschlossen — nur Ansicht&quot;, alle Buttons ausgeblendet</li>
+<li><strong>Wertung</strong>: Server gibt Fehlermeldung bei Änderungsversuchen</li>
+</ul>
+<hr />
+<h2>17. Email-Funktionen</h2>
+<h3>Verfügbarkeit</h3>
+<p>Bevor ein Email-Dialog geöffnet wird, prüft das System automatisch, ob der Email-Server erreichbar ist. Falls nicht:</p>
+<ul>
+<li>Es erscheint die Meldung <strong>&quot;Email-Server nicht erreichbar&quot;</strong></li>
+<li>Der Empfänger-Dialog öffnet sich nicht</li>
+</ul>
+<p>Dies ist besonders relevant, wenn das System auf dem Pi ohne Internetverbindung läuft.</p>
+<h3>Empfänger-Auswahl (Team-Ergebnisse)</h3>
+<p>Beim Versenden von Team-Ergebnissen erscheint ein Dialog mit zwei Bereichen:</p>
+<p><strong>Pilot-Empfänger:</strong></p>
+<ul>
+<li>Die Email-Adressen beider Piloten werden vorausgefüllt</li>
+<li>Beide Felder sind editierbar — Sie können die Adresse ändern oder leer lassen</li>
+</ul>
+<p><strong>Wettkampfleitung:</strong></p>
+<ul>
+<li>Alle Teilnehmer mit der Rolle &quot;Wettbewerbsleitung&quot; werden als Checkboxen angezeigt</li>
+<li>Wenn mindestens eine WKL-Checkbox angehakt ist, geht die Email <strong>nur</strong> an die WKL — die Pilot-Felder werden ignoriert</li>
+<li>Nützlich zum schnellen Weiterleiten an einen Ausschuss-Mitglieder statt an die Piloten</li>
+</ul>
+<h3>Verfügbare Emails</h3>
+<p>| Email | Seite | Inhalt |
+|-------|-------|--------|
+| Startliste | Formular | Startreihenfolge als PDF |
+| Team-Ergebnisse | Wertung | Detaillierte Bewertung pro Team (Organisatoren-Scoresheet, ohne Drucken/Schliessen-Buttons) |
+| Gesamtergebnisse | Wertung | Komplette Rangliste |</p>
+<h3>Fallback bei fehlenden Email-Adressen</h3>
+<p>Wenn ein Team keine Email-Adressen eingetragen hat, wird die Email automatisch an die Admin-Adresse (<code>ADMIN_EMAIL</code> in der <code>.env</code>-Datei, Standard: <code>MAIL_USERNAME</code>) weitergeleitet. Die Erfolgsmeldung zeigt dann: <em>&quot;Keine Team-Adressen — gesendet an Admin: ...&quot;</em> — so ist klar, dass es ein Fallback war und keine echte Zustellung an die Piloten.</p>
+<hr />
+<h2>18. Messwertung &amp; Qualitätswertung</h2>
+<p>Die DMFV-Ausschreibung (Fassung 2025-Rev0, Abschnitt III) unterscheidet zwei Bewertungsarten:</p>
+<h3>Qualitätswertung (subjektiv)</h3>
+<blockquote>
+<p><em>„Die Qualitätswertung der einzelnen Figuren des Flugprogramms erfolgt durch mindestens 3 und maximal 5 vom DMFV zugelassenen Punktrichtern. [...] Jeweils die höchste und niedrigste Wertung einer Figur wird gestrichen.&quot;</em>
+— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
+</blockquote>
+<p>Jeder Punktrichter bewertet diese Figuren unabhängig mit 0-10 Punkten. Der K-Faktor multipliziert die Punkte:</p>
+<p>| Figur | Punkte | K-Faktor | Max |
+|-------|--------|----------|-----|
+| Bodenstart | 0-10 | 15 | 150 |
+| Platzrunde | 0-10 | 20 | 200 |
+| Platzrunde M-Figur | 0-10 | 22 | 220 |
+| Platzrunde M-K-Figur | 0-10 | 23 | 230 |
+| Platzüberflug | 0-10 | 10 | 100 |
+| Platzüberflug Oval | 0-10 | 13 | 130 |
+| Platzüberflug Kreis | 0-10 | 12 | 120 |
+| Ausklinken | 0-10 | 10 | 100 |
+| Verfahrenskurve Segler | 0-10 | 10 | 100 |
+| Seilabwurf (Anflug) | 0-10 | 15 | 150 |
+| Landeanflug Motor | 0-10 | 10 | 100 |
+| Landung Motor | 0-10 | 10 | 100 |
+| Landequalität Segler | 0-10 | 10 | 100 |
+| Landung Segler | 0-10 | 10 | 100 |
+| Naturgetreues Erscheinungsbild | 0-10 | 15 | 150 |</p>
+<p><strong>Berechnung:</strong> Bei 5 Punktrichtern werden die höchste und niedrigste Wertung pro Figur gestrichen. Die verbleibenden 3 Wertungen werden gemittelt.</p>
+<h3>Messwertung (objektiv)</h3>
+<blockquote>
+<p><em>„Die Bewertung aller messbaren Größen (Genauigkeit der Landung, Seilabwurf, Flugzeit) übernimmt ein Messteam (wird vom ausrichtenden Verein gestellt). Die Zeitwertung des Seglers wird mit 2 Stoppuhren von zwei Personen gemessen.&quot;</em>
+— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
+</blockquote>
+<p>Diese Werte werden <strong>einmalig gemessen</strong> und sind für alle Punktrichter identisch:</p>
+<p>| Messwert | Code | Berechnung | Max |
+|----------|------|-----------|-----|
+| Flugzeit Segler | SEGZEIT | MAX(0, 300 - ABS(200 - Zeit) × 3) | 300 |
+| Seilabwurf Genauigkeit | SEILZ | Direktwert aus Landefeld | 30 |
+| Landegenauigkeit Motor | LANDGM | Direktwert aus Landefeld | 30 |
+| Landegenauigkeit Segler | LANS | Direktwert aus Landefeld | 30 |</p>
+<p><strong>Flugzeitberechnung:</strong> Die Sollflugzeit beträgt 200 Sekunden. Pro Sekunde Abweichung werden 3 Punkte abgezogen, bis maximal 0 Punkte.</p>
+<p><strong>Landegenauigkeit:</strong> Aus der Skizze der Ausschreibung ergeben sich die Landefelder: 0, 5, 10, 20, 30 Punkte je nach Auftreffpunkt.</p>
+<h3>Gesamtwertung eines Durchgangs</h3>
+<blockquote>
+<p><em>„Die Wertung jedes Durchgangs setzt sich zusammen aus der Punktzahl der Messwerte und der Punktzahl der Qualitätswertung. Diese werden dann in eine Prozentwertung umgerechnet, hierbei entsprechen 100% der höchsten geflogenen Wertung des jeweiligen Durchgangs.&quot;</em>
+— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
+</blockquote>
+<p><strong>Rohwert</strong> = Durchschnitt Qualitätswertung + Messwertung</p>
+<p>Maximal erreichbar: 1.740 bis 1.800 Punkte (abhängig von gewähltem Pflicht-/Kürprogramm).</p>
+<h3>Automatische Messwert-Übernahme im System</h3>
+<p>Da die Messwerte objektive Fakten sind, die nicht pro Punktrichter variieren, überträgt das System sie automatisch:</p>
+<p><strong>Ablauf:</strong></p>
+<ol>
+<li>Ein Punktrichter (oder der Messteam-Eingeber) gibt die Messwerte auf seinem Bewertungsbogen ein und speichert</li>
+<li>Das System kopiert SEGZEIT, LANDGM, LANS und SEILZ automatisch auf alle anderen Bewertungsbögen desselben Teams im selben Durchgang</li>
+<li>Wird ein Messwert korrigiert und erneut gespeichert, wird die Korrektur ebenfalls auf alle Bögen übertragen</li>
+</ol>
+<p><strong>Anzeige auf dem Bewertungsbogen:</strong></p>
+<p>| Situation | Wert-Feld | Punkte-Spalte | Im Total |
+|-----------|-----------|---------------|----------|
+| <strong>Messwert-Inhaber</strong> (erster Bogen) | Normal | Punkte berechnet | Ja |
+| <strong>Alle anderen Bögen</strong> | Hellblau hinterlegt | <code>-</code> (leer) | Nein |
+| <strong>Neuer Bogen (Eingabe)</strong> | Normal (editierbar) | Punkte berechnet | Ja |</p>
+<ul>
+<li>Der <strong>erste Bewertungsbogen</strong> (Messwert-Inhaber) zeigt die Messwerte normal an — mit berechneten Punkten und im Gesamttotal enthalten</li>
+<li><strong>Alle weiteren Bögen</strong> zeigen die Messwerte mit hellblauem Hintergrund als Referenz — die Punkte werden dort <em>nicht</em> angezeigt und <em>nicht</em> zum Einzeltotal addiert, da sie bereits über den Inhaber-Bogen in die Gesamtwertung einfließen</li>
+<li>Unter der Tabelle erscheint der Hinweis: <em>„Messwerte werden automatisch auf alle Punktwerter übertragen&quot;</em></li>
+</ul>
+<p><strong>Warum?</strong> Ohne die automatische Übernahme können Messwerte verloren gehen, wenn sie versehentlich auf dem falschen Bewertungsbogen eingetragen werden. Durch die Replikation sind die Werte auf allen Bögen sichtbar und fließen genau einmal in die Gesamtwertung ein.</p>
+<h3>Streichwertung (Durchgänge)</h3>
+<blockquote>
+<p><em>„Zur Berechnung des Gesamtergebnisses wird ein Streichdurchgang (bei Durchführung von 3 oder mehr kompletten Durchgängen) abgezogen. Die verbleibenden Durchgänge werden in der Prozentwertung miteinander addiert.&quot;</em>
+— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
+</blockquote>
+<p>| Anzahl Durchgänge | Streichwertung | Endstand |
+|-------------------|---------------|----------|
+| 1-2 | Keine | Summe aller Prozentwertungen |
+| 3 | Niedrigster gestrichen | Summe der 2 besten |
+| 4 | Niedrigster gestrichen | Summe der 3 besten |</p>
+<h3>Referenzdokument</h3>
+<p>Die vollständige Ausschreibung ist lokal verfügbar:
+<code>/home/NRWcup_docs/Ausschreibung-2025-Rev-0.pdf</code></p>
+<p>Quelle: <a href="https://dmfv.aero/wp-content/uploads/2022/01/Ausschreibung-2025-Rev-0.pdf">DMFV Ausschreibung 2025</a></p>
+<hr />
+<h2>19. Häufige Fragen</h2>
+<h3>&quot;Ich kann einen Teilnehmer nicht löschen&quot;</h3>
+<p>Der Teilnehmer ist noch einem Team zugeordnet. Bearbeiten Sie zuerst das Team und entfernen Sie die Zuordnung, oder löschen Sie das Team.</p>
+<h3>&quot;Die Flugzeug-Auswahl im Team ist leer&quot;</h3>
+<p>Dem gewählten Piloten sind keine Flugzeuge zugeordnet. Gehen Sie zu Flugzeuge und weisen Sie dem Piloten ein Flugzeug zu.</p>
+<h3>&quot;Ich kann keine Punkte eingeben&quot;</h3>
+<ul>
+<li>Prüfen Sie, ob der Wettbewerb <strong>gesperrt</strong> ist (Status Completed/Published)</li>
+<li>Prüfen Sie, ob die Wertung <strong>gesperrt</strong> ist (Admin-Sperre)</li>
+<li>Prüfen Sie, ob es Durchgänge gibt (Startliste muss gesperrt sein)</li>
+</ul>
+<h3>&quot;Die Startliste lässt sich nicht ändern&quot;</h3>
+<ul>
+<li>Die Startliste ist <strong>gesperrt</strong> — klicken Sie auf den roten &quot;Gesperrt&quot;-Button</li>
+<li>Oder: Der Wettbewerb ist <strong>abgeschlossen</strong> — entsperren Sie ihn zuerst unter Wettbewerb</li>
+</ul>
+<h3>&quot;Email kommt nicht an&quot;</h3>
+<ul>
+<li>Prüfen Sie die Email-Server Erreichbarkeit (System → Email-Check)</li>
+<li>Prüfen Sie die <code>.env</code>-Konfiguration</li>
+<li>Auf dem Pi ohne Internet: Email funktioniert nicht</li>
+</ul>
+<h3>&quot;Wie mache ich ein Backup?&quot;</h3>
+<p>System → Backup → <strong>Neues Backup erstellen</strong>. Die ZIP-Datei enthält die komplette Datenbank und alle Anwendungsdateien.</p>
+<h3>&quot;Streichwertung — wie funktioniert das?&quot;</h3>
+<p>Ab 3 Durchgängen wird automatisch der schlechteste Durchgang gestrichen. Bei 2 Durchgängen zählen beide. Die Streichwertung ist immer der niedrigste Prozent-Wert. Siehe <a href="#18-messwertung--qualit%C3%A4tswertung">Messwertung &amp; Qualitätswertung</a> für Details.</p>
+<h3>&quot;Warum zeigt mein Bewertungsbogen hellblaue Felder?&quot;</h3>
+<p>Hellblau hinterlegte Felder sind <strong>Messwerte</strong> (Flugzeit, Landegenauigkeit, Seilabwurf), die automatisch vom ersten Bewertungsbogen übernommen wurden. Sie dienen als Referenz und werden nicht erneut zum Total addiert. Siehe <a href="#18-messwertung--qualit%C3%A4tswertung">Messwertung &amp; Qualitätswertung</a>.</p>
+<h3>&quot;Warum unterscheiden sich die Totale der Punktrichter?&quot;</h3>
+<p>Der <strong>erste Punktrichter</strong> (Messwert-Inhaber) zeigt ein höheres Total, weil die Messwertpunkte (Flugzeit, Landegenauigkeit, Seilabwurf) dort eingerechnet sind. Bei den anderen Punktrichtern werden die Messwerte als hellblau angezeigt und nicht im Total gezählt, da sie nur einmal in die Gesamtwertung einfließen.</p>
+<h3>&quot;Kann ich ein gelöschtes Team wiederherstellen?&quot;</h3>
+<p>Nein. Gelöschte Daten können nur über ein Backup wiederhergestellt werden.</p>
+<hr />
+<p><em>Dieses Handbuch bezieht sich auf die Ausschreibung DM-Seglerschlepp des DMFV, Fassung 2025-Rev0.</em>
+<em>Quelle: https://dmfv.aero/wp-content/uploads/2022/01/Ausschreibung-2025-Rev-0.pdf</em></p>
     </div>
 </div>
 

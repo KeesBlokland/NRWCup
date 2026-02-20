@@ -252,12 +252,12 @@ def score_list():
         round_id = request.args.get('round_id', type=int)
         judge_id = request.args.get('judge_id', type=int)
         
-        # Get all events
-        events = Event.query.order_by(Event.event_date.desc()).all()
-        
+        # Get all visible events
+        events = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all()
+
         # Get active event if not specified
         if not event_id:
-            active_event = Event.query.filter_by(status='Active').first()
+            active_event = Event.query.filter_by(status='Active', is_hidden=False).first()
             if active_event:
                 event_id = active_event.event_id
             elif events:
@@ -960,9 +960,9 @@ def generate_scoresheets():
     """Generate blank scoresheets for the next round only if current round has scores"""
     try:
         # Get active event
-        active_event = Event.query.filter_by(status='Active').first()
+        active_event = Event.query.filter_by(status='Active', is_hidden=False).first()
         if not active_event:
-            active_event = Event.query.order_by(Event.event_date.desc()).first()
+            active_event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
 
         if not active_event:
             flash('Keine Veranstaltung gefunden', 'error')
@@ -1090,9 +1090,9 @@ def team_results():
         round_id = request.args.get('round_id', type=int)
         team_id = request.args.get('team_id', type=int)
         
-        # Get events
-        events = Event.query.order_by(Event.event_date.desc()).all()
-        
+        # Get visible events
+        events = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all()
+
         # Default to first event
         if not event_id and events:
             event_id = events[0].event_id

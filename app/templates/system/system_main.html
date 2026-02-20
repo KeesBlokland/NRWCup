@@ -79,6 +79,51 @@ Last Updated: 2024-12-04
         </div>
     </div>
 
+    <!-- Event Visibility -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Wettbewerb Sichtbarkeit</h5>
+                </div>
+                <div class="card-body p-2">
+                    <p class="text-muted small mb-2">Verborgene Wettbewerbe sind nur hier sichtbar — nicht für Dateneingabe-Benutzer.</p>
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr><th>Name</th><th>Datum</th><th>Status</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr {% if event.is_hidden %}class="text-muted"{% endif %}>
+                                <td>{{ event.name }}</td>
+                                <td>{{ event.event_date.strftime('%d.%m.%Y') if event.event_date }}</td>
+                                <td>
+                                    {% if event.is_hidden %}
+                                        <span class="badge bg-dark">Verborgen</span>
+                                    {% elif event.status == 'Active' %}
+                                        <span class="badge bg-success">Aktiv</span>
+                                    {% elif event.status == 'Pending' %}
+                                        <span class="badge bg-warning">Geplant</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Abgeschlossen</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('system.toggle_event_hidden', event_id=event.event_id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm {% if event.is_hidden %}btn-outline-success{% else %}btn-outline-dark{% endif %}">
+                                            {% if event.is_hidden %}Anzeigen{% else %}Verbergen{% endif %}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- System Information -->
     <div class="row mt-4">
         <div class="col-12">

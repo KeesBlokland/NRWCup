@@ -94,6 +94,7 @@ class Event(db.Model):
     location_id = db.Column(db.Integer, db.ForeignKey('locations.location_id'))
     event_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(10), default='Pending')  # 'Pending', 'Active', 'Completed', 'Published'
+    is_hidden = db.Column(db.Boolean, default=False)
     verein = db.Column(db.String(50), nullable=False)
     estimated_rounds = db.Column(db.Integer, default=4)
     

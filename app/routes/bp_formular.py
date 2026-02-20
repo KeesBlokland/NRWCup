@@ -123,7 +123,7 @@ def extract_last_name(full_name):
 def index():
     """Display active teams for start list generation and all round start lists"""
     # Get events
-    events = Event.query.order_by(Event.event_date.desc()).all()
+    events = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all()
     active_teams = Team.query.filter_by(status='active').all()
     
     # Get lock status
@@ -257,9 +257,9 @@ def toggle_lock():
     """Toggle the lock state of the startlist and generate scoresheets if locking"""
     try:
         # Check if active event is completed/published
-        active_event = Event.query.filter_by(status='Active').first()
+        active_event = Event.query.filter_by(status='Active', is_hidden=False).first()
         if not active_event:
-            active_event = Event.query.order_by(Event.event_date.desc()).first()
+            active_event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
         if active_event and active_event.status in ('Completed', 'Published'):
             return jsonify({'status': 'error', 'message': 'Abgeschlossene Wettbewerbe können nicht geändert werden'}), 403
 
@@ -395,10 +395,10 @@ def api_next_round_order():
     """API endpoint to display the next round order based on existing scores - PURELY INFORMATIONAL"""
     try:
         # Get active event
-        active_event = Event.query.filter_by(status='Active').first()
+        active_event = Event.query.filter_by(status='Active', is_hidden=False).first()
         if not active_event:
-            active_event = Event.query.order_by(Event.event_date.desc()).first()
-            
+            active_event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
+
         if not active_event:
             return jsonify({
                 'status': 'error',

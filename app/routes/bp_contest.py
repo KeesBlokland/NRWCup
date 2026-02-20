@@ -79,7 +79,7 @@ def process_location_data(form):
 def index():
     """Display contest overview"""
     try:
-        events = contest_service.get_all_events(order_by_date=True)
+        events = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all()
         return render_template('contest/contest_main.html', events=events)
     except SQLAlchemyError as e:
         logger.error(f"Database error in contest.index: {str(e)}")

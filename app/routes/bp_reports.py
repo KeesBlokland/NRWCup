@@ -38,8 +38,8 @@ def standings():
                 if active_event:
                     event_id = active_event.event_id
                 else:
-                    # Get most recent event
-                    event = Event.query.order_by(Event.event_date.desc()).first()
+                    # Get most recent visible event
+                    event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
                     if event:
                         event_id = event.event_id
             

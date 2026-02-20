@@ -86,6 +86,13 @@ with app.app_context():
         db.session.add(config)
         db.session.commit()
 
+    # Add is_hidden column to events table if not present (safe to run every startup)
+    try:
+        db.session.execute(db.text("ALTER TABLE events ADD COLUMN is_hidden BOOLEAN DEFAULT 0"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()  # Column already exists — ignore
+
     # Initialize drop-worst-round threshold if it doesn't exist
     drop_config = SystemConfig.query.filter_by(config_key='drop_worst_round_threshold').first()
     if not drop_config:

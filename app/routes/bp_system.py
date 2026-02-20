@@ -7,7 +7,7 @@ Description: Complete blueprint for system management including backup, users, a
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
-from app.models import db, User, AuditLog, SystemConfig
+from app.models import db, User, AuditLog, SystemConfig, Event
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy.exc import SQLAlchemyError
@@ -137,15 +137,18 @@ def index():
     try:
         stats = get_system_stats()
         log_files = get_log_files_info()
-        
+
         # Check logging status
         logging_config = SystemConfig.query.filter_by(config_key='logging_enabled').first()
         is_logging_enabled = logging_config is not None and logging_config.config_value == 'true'
-        
-        return render_template('system/system_main.html', 
-                             stats=stats, 
+
+        events = Event.query.order_by(Event.event_date.desc()).all()
+
+        return render_template('system/system_main.html',
+                             stats=stats,
                              log_files=log_files,
-                             is_logging_enabled=is_logging_enabled)
+                             is_logging_enabled=is_logging_enabled,
+                             events=events)
     except Exception as e:
         flash('Fehler beim Laden der Systemübersicht', 'error')
         return render_template('system/system_main.html', stats={
@@ -478,5 +481,21 @@ def toggle_logging():
     except Exception as e:
         db.session.rollback()
         flash(f'Fehler: {str(e)}', 'error')
-        
+
+    return redirect(url_for('system.index'))
+
+@system_bp.route('/toggle_event_hidden/<int:event_id>', methods=['POST'])
+@admin_required
+def toggle_event_hidden(event_id):
+    """Toggle visibility of an event (admin only)"""
+    try:
+        event = Event.query.get_or_404(event_id)
+        event.is_hidden = not event.is_hidden
+        db.session.commit()
+        state = 'verborgen' if event.is_hidden else 'sichtbar'
+        flash(f'Wettbewerb "{event.name}" ist jetzt {state}.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.error(f"Error toggling event visibility: {str(e)}")
+        flash('Fehler beim Ändern der Sichtbarkeit', 'error')
     return redirect(url_for('system.index'))

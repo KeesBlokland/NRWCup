@@ -33,21 +33,21 @@ def index():
             if active_event:
                 event_id = active_event.event_id
             else:
-                # Get most recent event
-                event = Event.query.order_by(Event.event_date.desc()).first()
+                # Get most recent visible event
+                event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
                 if event:
                     event_id = event.event_id
-        
+
         if not event_id:
             flash('No event selected', 'warning')
-            return render_template('start_order/start_order_main.html', 
-                                  events=Event.query.order_by(Event.event_date.desc()).all())
-        
+            return render_template('start_order/start_order_main.html',
+                                  events=Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all())
+
         # Get event
         event = Event.query.get_or_404(event_id)
-        
-        # Get all events for the selector
-        events = Event.query.order_by(Event.event_date.desc()).all()
+
+        # Get all visible events for the selector
+        events = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all()
         
         # Get rounds for this event
         rounds = start_order_service.get_rounds_for_event(event_id)
@@ -66,8 +66,8 @@ def index():
     except Exception as e:
         logger.error(f"Error in start_order index: {str(e)}")
         flash(f'Error loading start orders: {str(e)}', 'error')
-        return render_template('start_order/start_order_main.html', 
-                              events=Event.query.order_by(Event.event_date.desc()).all())
+        return render_template('start_order/start_order_main.html',
+                              events=Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all())
 
 @start_order_bp.route('/generate', methods=['POST'])
 def generate():

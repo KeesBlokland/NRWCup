@@ -14,11 +14,14 @@ Last Updated: 2026-02-18
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Backup-Verwaltung</h2>
+        <div>
+            <a href="{{ url_for('system.index') }}" class="btn btn-secondary me-2">Zurück</a>
         <form method="POST" class="d-inline">
             <button type="submit" class="btn btn-primary">
                 Neues Backup erstellen
             </button>
         </form>
+        </div>
     </div>
 
     <!-- Backup List -->

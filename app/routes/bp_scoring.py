@@ -1222,7 +1222,8 @@ def email_team_results():
         html_content = render_template('scoring/team_scoresheet_pdf.html',
                                        team_data=team_data,
                                        round_obj=round_obj,
-                                       event=event)
+                                       event=event,
+                                       is_email=True)
 
         # Recipients — use addresses from request if provided, else look up from DB
         provided = [r.strip() for r in (data.get('recipients') or []) if r and r.strip()]

@@ -158,10 +158,12 @@
     </tbody>
 </table>
 
+{% if not is_email %}
 <div class="no-print">
     <button onclick="window.print()" style="padding:5px 14px; cursor:pointer;">Drucken</button>
     <button onclick="window.close(); if(!window.closed) history.back();" style="padding:5px 14px; cursor:pointer; margin-left:8px;">Schließen</button>
 </div>
+{% endif %}
 
 </body>
 </html>

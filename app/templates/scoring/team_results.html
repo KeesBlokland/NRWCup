@@ -48,22 +48,6 @@
         {% set current_event = events|selectattr('event_id', 'equalto', selected_event_id)|first %}
         {% set current_round = rounds|selectattr('round_id', 'equalto', selected_round_id)|first %}
         {% set MESS_CODES = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'] %}
-        {% set EXCLUSIVE_CODES = ['PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'] %}
-        {# Build set of unchosen exclusive figures (all judges have 0 or missing) #}
-        {% set unchosen = [] %}
-        {% for code in EXCLUSIVE_CODES %}
-            {% set has_value = [] %}
-            {% for score in team_data.scores %}
-                {% for sv in score.values %}
-                    {% if sv.task_type and sv.task_type.code == code and sv.value and sv.value > 0 %}
-                        {% set _ = has_value.append(1) %}
-                    {% endif %}
-                {% endfor %}
-            {% endfor %}
-            {% if has_value|length == 0 %}
-                {% set _ = unchosen.append(code) %}
-            {% endif %}
-        {% endfor %}
 
         <div class="card">
             <div class="card-header">
@@ -99,7 +83,7 @@
                     </thead>
                     <tbody>
                         {% for figure in team_data.figures %}
-                          {% if figure.code not in unchosen %}
+                          {% if figure.code not in unchosen_codes %}
                             <tr>
                                 <td class="py-0">{{ figure.name_de }}</td>
                                 <td class="text-center py-0">{{ figure.k_factor or 1 }}</td>

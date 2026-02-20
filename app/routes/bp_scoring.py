@@ -1132,6 +1132,27 @@ def team_results():
                         db.joinedload(Score.judge)
                     ).filter_by(team_round_id=team_round.team_round_id).all()
 
+                    EXCLUSIVE_GROUPS = [
+                        ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
+                        ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+                    ]
+                    type_id_to_code = {f.type_id: f.code for f in figures}
+                    unchosen_codes = set()
+                    for group in EXCLUSIVE_GROUPS:
+                        group_type_ids = {f.type_id for f in figures if f.code in group}
+                        chosen_type_id = next(
+                            (sv.task_type_id for s in scores
+                             for sv in s.values
+                             if sv.task_type_id in group_type_ids
+                             and sv.value and sv.value > 0),
+                            None
+                        )
+                        if chosen_type_id:
+                            chosen_code = type_id_to_code[chosen_type_id]
+                            unchosen_codes.update(c for c in group if c != chosen_code)
+                        else:
+                            unchosen_codes.update(group)
+
                     team_data = {
                         'team': team,
                         'figures': figures,
@@ -1145,6 +1166,7 @@ def team_results():
                              rounds=rounds,
                              teams=teams,
                              team_data=team_data,
+                             unchosen_codes=unchosen_codes if team_data else set(),
                              selected_event_id=event_id,
                              selected_round_id=round_id,
                              selected_team_id=team_id)

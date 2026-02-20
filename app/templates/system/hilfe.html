@@ -1,0 +1,25 @@
+{# File: app/templates/system/hilfe.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Benutzerhandbuch — NRW Cup</h4>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-sm">Zurück</a>
+</div>
+<div class="card">
+    <div class="card-body handbuch-content">
+        {{ content | safe }}
+    </div>
+</div>
+
+<style>
+.handbuch-content h2 { margin-top: 1.5rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.3rem; }
+.handbuch-content h3 { margin-top: 1.2rem; color: #495057; }
+.handbuch-content table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+.handbuch-content table th, .handbuch-content table td { border: 1px solid #dee2e6; padding: 0.4rem 0.6rem; }
+.handbuch-content table th { background: #f8f9fa; }
+.handbuch-content blockquote { border-left: 4px solid #dee2e6; padding-left: 1rem; color: #6c757d; margin: 0.5rem 0; }
+.handbuch-content code { background: #f8f9fa; padding: 0.1rem 0.3rem; border-radius: 3px; }
+.handbuch-content pre { background: #f8f9fa; padding: 0.75rem; border-radius: 4px; overflow-x: auto; }
+</style>
+{% endblock %}

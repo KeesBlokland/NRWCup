@@ -484,6 +484,23 @@ def toggle_logging():
 
     return redirect(url_for('system.index'))
 
+@system_bp.route('/hilfe')
+def hilfe():
+    """Render Benutzerhandbuch from markdown file"""
+    from markdown_it import MarkdownIt
+    md = MarkdownIt()
+    candidates = [
+        os.path.join(PROJECT_ROOT, 'Benutzerhandbuch.md'),
+        os.path.join(PROJECT_ROOT, '..', 'NRWcup_docs', 'Benutzerhandbuch.md'),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            with open(path, encoding='utf-8') as f:
+                content = md.render(f.read())
+            return render_template('system/hilfe.html', content=content)
+    return "Benutzerhandbuch nicht gefunden", 404
+
+
 @system_bp.route('/toggle_event_hidden/<int:event_id>', methods=['POST'])
 @admin_required
 def toggle_event_hidden(event_id):

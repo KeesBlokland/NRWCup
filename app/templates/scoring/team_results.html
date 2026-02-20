@@ -180,9 +180,55 @@
                 </table>
             </div>
         </div>
+        <!-- Email Modal -->
+        <div class="modal fade no-print" id="emailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Ergebnisse per Email senden</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info py-2 mb-3 small">
+                            Standardmäßig wird die Email an die Team-Piloten gesendet.<br>
+                            <strong>Wenn Wettkampfleitung ausgewählt wird, geht die Email NUR an diese — nicht an das Team.</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Schlepper-Pilot</label>
+                            <input type="email" class="form-control" id="emailPilot1"
+                                   value="{{ team_data.team.schlepper_pilot.email if team_data.team.schlepper_pilot else '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Segler-Pilot</label>
+                            <input type="email" class="form-control" id="emailPilot2"
+                                   value="{{ team_data.team.segler_pilot.email if team_data.team.segler_pilot else '' }}">
+                        </div>
+                        {% if wkl_users %}
+                        <hr>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">Wettkampfleitung</label>
+                            {% for u in wkl_users %}
+                            <div class="form-check">
+                                <input class="form-check-input wkl-check" type="checkbox"
+                                       id="wkl_{{ u.teilnehmer_id }}"
+                                       value="{{ u.email }}">
+                                <label class="form-check-label" for="wkl_{{ u.teilnehmer_id }}">
+                                    {{ u.name }}{% if u.email %} &lt;{{ u.email }}&gt;{% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                        <button type="button" class="btn btn-primary" onclick="sendEmail()">Senden</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endif %}
 
-   
 </div>
 
 <style>
@@ -258,12 +304,36 @@ function emailResults() {
         return;
     }
 
-    if (!confirm('Ergebnisse per Email an die Team-Piloten senden?')) return;
+    new bootstrap.Modal(document.getElementById('emailModal')).show();
+}
+
+function sendEmail() {
+    const teamId = {{ selected_team_id if selected_team_id else 'null' }};
+    const roundId = {{ selected_round_id if selected_round_id else 'null' }};
+    const eventId = {{ selected_event_id if selected_event_id else 'null' }};
+
+    const wklEmails = Array.from(document.querySelectorAll('.wkl-check:checked')).map(cb => cb.value);
+    let recipients;
+    if (wklEmails.length > 0) {
+        // Wettkampfleitung selected — send ONLY to them, never to the team
+        recipients = wklEmails;
+    } else {
+        const email1 = document.getElementById('emailPilot1').value.trim();
+        const email2 = document.getElementById('emailPilot2').value.trim();
+        recipients = [email1, email2].filter(e => e);
+    }
+
+    if (recipients.length === 0) {
+        alert('Bitte mindestens eine Email-Adresse eingeben.');
+        return;
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('emailModal')).hide();
 
     fetch('/scoring/email_team_results', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team_id: teamId, round_id: roundId, event_id: eventId })
+        body: JSON.stringify({ team_id: teamId, round_id: roundId, event_id: eventId, recipients: recipients })
     })
     .then(response => response.json())
     .then(data => {

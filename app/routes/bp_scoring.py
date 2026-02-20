@@ -1160,6 +1160,8 @@ def team_results():
                         'team_round': team_round
                     }
         
+        wkl_users = Teilnehmer.query.filter_by(is_wettkampfleitung=True).order_by(Teilnehmer.name).all()
+
         return render_template('scoring/team_results.html',
                              events=events,
                              event=event,
@@ -1167,6 +1169,7 @@ def team_results():
                              teams=teams,
                              team_data=team_data,
                              unchosen_codes=unchosen_codes if team_data else set(),
+                             wkl_users=wkl_users,
                              selected_event_id=event_id,
                              selected_round_id=round_id,
                              selected_team_id=team_id)
@@ -1221,17 +1224,22 @@ def email_team_results():
                                        round_obj=round_obj,
                                        event=event)
 
-        # Recipients
-        recipients = []
-        if team.schlepper_pilot and team.schlepper_pilot.email:
-            recipients.append(team.schlepper_pilot.email)
-        if team.segler_pilot and team.segler_pilot.email:
-            recipients.append(team.segler_pilot.email)
-        admin_fallback = not recipients
-        if admin_fallback:
-            if not Config.ADMIN_EMAIL:
-                return jsonify({'success': False, 'message': 'Keine Email-Adressen für dieses Team und keine Admin-Email konfiguriert'})
-            recipients = [Config.ADMIN_EMAIL]
+        # Recipients — use addresses from request if provided, else look up from DB
+        provided = [r.strip() for r in (data.get('recipients') or []) if r and r.strip()]
+        if provided:
+            recipients = provided
+            admin_fallback = False
+        else:
+            recipients = []
+            if team.schlepper_pilot and team.schlepper_pilot.email:
+                recipients.append(team.schlepper_pilot.email)
+            if team.segler_pilot and team.segler_pilot.email:
+                recipients.append(team.segler_pilot.email)
+            admin_fallback = not recipients
+            if admin_fallback:
+                if not Config.ADMIN_EMAIL:
+                    return jsonify({'success': False, 'message': 'Keine Email-Adressen für dieses Team und keine Admin-Email konfiguriert'})
+                recipients = [Config.ADMIN_EMAIL]
 
         msg = MIMEMultipart()
         msg['From'] = Config.MAIL_USERNAME

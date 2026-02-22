@@ -5,7 +5,7 @@ Wants=network-manager.service
 
 [Service]
 Type=simple
-User=root
+User=pi
 WorkingDirectory=/home/NRWcup
 ExecStart=/usr/bin/python3 /home/NRWcup/app_main.py
 Restart=on-failure

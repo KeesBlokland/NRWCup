@@ -17,8 +17,8 @@ HOTSPOT_IP="192.168.4.1"
 DHCP_RANGE="192.168.4.2,192.168.4.100,255.255.255.0,24h"
 
 # NRWCup Flask App Settings
-FLASK_APP_PATH="/home/pi/NRWCup"
-FLASK_VENV_PATH="/home/pi/NRWCup/venv"
+FLASK_APP_PATH="/home/NRWcup"
+FLASK_VENV_PATH="/home/NRWcup/venv"
 FLASK_SCRIPT="app_main.py"
 
 #==============================================================
@@ -881,8 +881,8 @@ detect_flask_port() {
        echo "$port"
    else
        # Check app_main.py for port configuration
-       if [ -f "/home/pi/NRWCup/app_main.py" ]; then
-           port=$(grep -oE 'port\s*=\s*[0-9]+' /home/pi/NRWCup/app_main.py | grep -oE '[0-9]+' | head -1)
+       if [ -f "/home/NRWcup/app_main.py" ]; then
+           port=$(grep -oE 'port\s*=\s*[0-9]+' /home/NRWcup/app_main.py | grep -oE '[0-9]+' | head -1)
            if [ -n "$port" ]; then
                echo "$port"
                return

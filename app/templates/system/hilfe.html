@@ -11,7 +11,7 @@
     <div class="card-body handbuch-content">
 <h1>NRW Cup — Benutzerhandbuch</h1>
 <p><strong>Verwaltungssystem für Seglerschlepp-Wettbewerbe</strong></p>
-<p>Version 1.0 — Februar 2026</p>
+<p>Version 1.1 — Februar 2026</p>
 <hr />
 <h2>Inhaltsverzeichnis</h2>
 <ol>
@@ -36,7 +36,7 @@
 <li><a href="#19-h%C3%A4ufige-fragen">Häufige Fragen</a></li>
 </ol>
 <hr />
-<h2>1. Überblick</h2>
+<h2 id="1-überblick">1. Überblick</h2>
 <p>Das NRW Cup System verwaltet den kompletten Ablauf eines Seglerschlepp-Wettbewerbs:</p>
 <ul>
 <li><strong>Stammdaten</strong>: Teilnehmer (Piloten, Punktrichter, Wettbewerbsleitung), Flugzeuge, Teams</li>
@@ -55,18 +55,18 @@
 </thead>
 <tbody>
 <tr>
-<td>Entwicklung</td>
-<td>http://192.168.2.30:5000</td>
+<td>Live (Internet)</td>
+<td>https://nrwcup.scale-f-schlepp.de</td>
 </tr>
 <tr>
 <td>Wettkampf System</td>
-<td>Hotspot: http://192.168.4.1:5000</td>
+<td>Hotspot: http://192.168.5.1:5000</td>
 </tr>
 </tbody>
 </table>
-<p>Es ist kein Login für die normale Nutzung erforderlich. Administrative Funktionen (System, Cleanup) sind durch ein Admin-Passwort geschützt.</p>
+<p>Die Live-Website ist nur zugänglich mit <strong>Benutzername und Passwort</strong> (beim Organisationsleiter erhältlich). Administrative Funktionen (System, Cleanup) sind zusätzlich durch ein Admin-Passwort geschützt.</p>
 <hr />
-<h2>2. Startseite &amp; Navigation</h2>
+<h2 id="2-startseite--navigation">2. Startseite &amp; Navigation</h2>
 <p>Die Startseite zeigt Kacheln für alle Bereiche. Die Navigationsleiste am oberen Rand ist auf jeder Seite verfügbar:</p>
 <table>
 <thead>
@@ -112,7 +112,7 @@
 </table>
 <p>Die Menüpunkte <strong>Datenbereinigung</strong> und <strong>Systemeinstellungen</strong> sind im Admin-Bereich verfügbar.</p>
 <hr />
-<h2>3. Teilnehmer Verwaltung</h2>
+<h2 id="3-teilnehmer-verwaltung">3. Teilnehmer Verwaltung</h2>
 <p><strong>Pfad:</strong> <code>/teilnehmer/</code></p>
 <p>Hier werden alle Personen verwaltet, die am Wettbewerb beteiligt sind.</p>
 <h3>Rollen</h3>
@@ -178,7 +178,7 @@
 <li><strong>Filter Zurücksetzen</strong>: Zeigt wieder alle Teilnehmer</li>
 </ul>
 <hr />
-<h2>4. Flugzeug Verwaltung</h2>
+<h2 id="4-flugzeug-verwaltung">4. Flugzeug Verwaltung</h2>
 <p><strong>Pfad:</strong> <code>/flugzeuge/</code></p>
 <p>Verwaltet alle Motor- und Segelflugmodelle.</p>
 <h3>Flugzeug anlegen</h3>
@@ -207,7 +207,7 @@
 <h3>Zugang über Teilnehmer</h3>
 <p>Von der Teilnehmer-Bearbeitung aus können Sie direkt ein neues Flugzeug für den Teilnehmer anlegen. Nach dem Speichern kehren Sie automatisch zum Teilnehmer zurück.</p>
 <hr />
-<h2>5. Team Verwaltung</h2>
+<h2 id="5-team-verwaltung">5. Team Verwaltung</h2>
 <p><strong>Pfad:</strong> <code>/teams/</code></p>
 <p>Ein Team besteht aus einem Schlepper-Piloten mit Motorflugmodell und einem Segler-Piloten mit Segelflugmodell.</p>
 <h3>Team anlegen</h3>
@@ -257,7 +257,7 @@
 <li><strong>Teamliste</strong>: Erzeugt eine druckbare PDF-Liste aller aktiven Teams</li>
 </ul>
 <hr />
-<h2>6. Figuren Verwaltung</h2>
+<h2 id="6-figuren-verwaltung">6. Figuren Verwaltung</h2>
 <p><strong>Pfad:</strong> <code>/figures/</code></p>
 <p>Verwaltet die Bewertungsfiguren gemäß der DMFV-Ausschreibung. Jede Figur hat einen K-Faktor (Koeffizient), der die Gewichtung in der Gesamtwertung bestimmt.</p>
 <h3>Felder</h3>
@@ -304,7 +304,7 @@
 <h3>Beschreibung</h3>
 <p>Jede Figur enthält die vollständige Beschreibung und Bewertungsgrundlage aus der DMFV-Ausschreibung. Diese dient als Referenz für die Punktrichter.</p>
 <hr />
-<h2>7. Wettbewerb (Events)</h2>
+<h2 id="7-wettbewerb-events">7. Wettbewerb (Events)</h2>
 <p><strong>Pfad:</strong> <code>/contest/</code></p>
 <p>Hier werden die einzelnen Wettbewerbe (Events) angelegt und verwaltet.</p>
 <h3>Event anlegen</h3>
@@ -393,7 +393,7 @@
 <p><strong>Wichtig:</strong> Abgeschlossene Wettbewerbe (Status &quot;Completed&quot;) sind immer geschützt und werden nicht gelöscht.</p>
 </blockquote>
 <hr />
-<h2>8. Startliste / Formular</h2>
+<h2 id="8-startliste--formular">8. Startliste / Formular</h2>
 <p><strong>Pfad:</strong> <code>/formular/</code></p>
 <p>Die zentrale Seite für die Verwaltung der Startreihenfolge und den Druck von Dokumenten.</p>
 <h3>Event auswählen</h3>
@@ -446,7 +446,7 @@ Mueller / Schmidt
 </code></pre>
 <p>Wählen Sie die Anzahl der Durchgänge (3-6) und laden Sie die Datei herunter.</p>
 <hr />
-<h2>9. Startliste Verwaltung</h2>
+<h2 id="9-startliste-verwaltung">9. Startliste Verwaltung</h2>
 <p><strong>Pfad:</strong> <code>/start_order/</code></p>
 <p>Verwaltet die Startreihenfolge für alle Durchgänge ab Runde 2.</p>
 <h3>Reihenfolge für weitere Runden</h3>
@@ -481,7 +481,7 @@ Mueller / Schmidt
 <p><strong>Hinweis:</strong> Bei gesperrten Wettbewerben wird ein Banner <strong>&quot;Abgeschlossen — nur Ansicht&quot;</strong> angezeigt und alle Bearbeitungsfunktionen sind deaktiviert.</p>
 </blockquote>
 <hr />
-<h2>10. Wertung &amp; Ergebnisse</h2>
+<h2 id="10-wertung--ergebnisse">10. Wertung &amp; Ergebnisse</h2>
 <p><strong>Pfad:</strong> <code>/scoring/list</code></p>
 <p>Die Hauptseite für die Punkteingabe und Ergebnisanzeige.</p>
 <h3>Übersicht</h3>
@@ -505,6 +505,38 @@ Mueller / Schmidt
 </blockquote>
 <h3>Navigation zwischen Punktrichtern</h3>
 <p>Auf dem Bewertungsbogen können Sie mit den Buttons <strong>Voriger</strong> und <strong>Nächster</strong> direkt zum Bewertungsbogen des vorherigen oder nächsten Punktrichters für dasselbe Team wechseln, ohne zur Übersichtsliste zurückkehren zu müssen.</p>
+<h3>Kürfiguren wählen</h3>
+<p>Bei den Kürfiguren muss für jede Exklusivgruppe <strong>genau eine</strong> Variante ausgewählt werden. Die Auswahl erfolgt auf dem Wertungsbogen von Richter 1 und wird automatisch auf die Bögen von Richter 2 und 3 übernommen.</p>
+<ul>
+<li><strong>Platzrunde-Gruppe</strong>: Basis (PLTZR) <strong>oder</strong> M-Figur (PLTZR-M) <strong>oder</strong> M-K-Figur (PLTZR-MK)</li>
+<li><strong>Platzüberflug-Gruppe</strong>: Basis (PLTZU) <strong>oder</strong> Oval (PLTZU-OV) <strong>oder</strong> Kreis (PLTZU-KR)</li>
+</ul>
+<p>Nicht gewählte Varianten erhalten automatisch 0 Punkte. Auf den Bögen von Richter 2/3 erscheinen nicht gewählte Varianten blau/schreibgeschützt.</p>
+<h3>Messwerte eingeben</h3>
+<p>Messwerte (SEGZEIT, SEILZ, LANDGM, LANS) werden <strong>einmalig</strong> für das gesamte Team eingegeben und gelten für alle Punktrichter identisch.</p>
+<ul>
+<li>Messwerte werden auf dem Wertungsbogen von <strong>Richter 1</strong> eingegeben</li>
+<li>Sie werden automatisch auf alle anderen Bögen repliziert</li>
+<li>Auf den Bögen von Richter 2/3 erscheinen die Messwert-Felder <strong>hellblau hinterlegt</strong> und schreibgeschützt — sie dienen als Referenz und fließen dort nicht nochmals in das Total ein</li>
+</ul>
+<blockquote>
+<p><strong>Wichtig:</strong> Korrekturen an Messwerten können NUR auf dem Bogen von Richter 1 vorgenommen werden.</p>
+</blockquote>
+<h3>3-Richter-Ansicht</h3>
+<p>Neben den einzelnen Wertungsbögen gibt es eine <strong>kombinierte Ansicht</strong>, die alle drei Richter eines Teams auf einer einzigen Seite zeigt.</p>
+<p><strong>Aufrufen:</strong> In der Wertungsübersicht gibt es pro Team einen Button <strong>3 Richter</strong>.</p>
+<table>
+<thead>
+<tr><th>Bereich</th><th>Inhalt</th></tr>
+</thead>
+<tbody>
+<tr><td>Qualitätswertung</td><td>Drei Spalten nebeneinander (je eine pro Richter)</td></tr>
+<tr><td>Messwerte</td><td>Einmalig unten — ein gemeinsames Eingabefeld für alle drei Richter</td></tr>
+<tr><td>Totale</td><td>Richter 1: Qualität + Messwerte; Richter 2/3: nur Qualität</td></tr>
+<tr><td>Speichern</td><td>Separater Button pro Richter-Spalte</td></tr>
+</tbody>
+</table>
+<p>Ist ein Bogen gesperrt, erscheint statt des Speichern-Buttons ein Link <strong>Bogen ansehen / Entsperren</strong>, der zum einzelnen Wertungsbogen führt.</p>
 <h3>Wertungsberechnung</h3>
 <p>Die Berechnung erfolgt automatisch und unterscheidet zwischen <strong>Qualitätswertung</strong> (subjektive Figuren, von Punktrichtern bewertet) und <strong>Messwertung</strong> (objektive Messwerte, vom Messteam erfasst). Siehe <a href="#18-messwertung--qualit%C3%A4tswertung">Messwertung &amp; Qualitätswertung</a> für eine ausführliche Erklärung.</p>
 <p><strong>Kurzfassung:</strong></p>
@@ -542,7 +574,7 @@ Mueller / Schmidt
 <p><strong>Hinweis:</strong> Nicht gewählte Kürfiguren (Platzrunde/Platzüberflug-Varianten) werden in der Ergebnisansicht automatisch ausgeblendet.</p>
 </blockquote>
 <hr />
-<h2>11. Berichte &amp; Export</h2>
+<h2 id="11-berichte--export">11. Berichte &amp; Export</h2>
 <h3>PDF-Dokumente</h3>
 <table>
 <thead>
@@ -610,7 +642,7 @@ Mueller / Schmidt
 <h3>Email-Versand</h3>
 <p>Alle Email-Funktionen prüfen zuerst, ob der Email-Server erreichbar ist. Siehe <a href="#17-email-funktionen">Email-Funktionen</a>.</p>
 <hr />
-<h2>12. Systemverwaltung</h2>
+<h2 id="12-systemverwaltung">12. Systemverwaltung</h2>
 <p><strong>Pfad:</strong> <code>/system/</code> (Admin-Passwort erforderlich)</p>
 <h3>Backup</h3>
 <ul>
@@ -654,7 +686,7 @@ MAIL_PASSWORD=geheim
 MAIL_ENABLED=true
 </code></pre>
 <hr />
-<h2>13. Datenbereinigung</h2>
+<h2 id="13-datenbereinigung">13. Datenbereinigung</h2>
 <p><strong>Pfad:</strong> <code>/cleanup/</code> (Admin-Passwort erforderlich)</p>
 <blockquote>
 <p><strong>Warnung:</strong> Alle Aktionen hier sind destruktiv und können nicht rückgängig gemacht werden. Erstellen Sie vorher ein Backup.</p>
@@ -686,7 +718,7 @@ MAIL_ENABLED=true
 </tbody>
 </table>
 <hr />
-<h2>14. Testdaten</h2>
+<h2 id="14-testdaten">14. Testdaten</h2>
 <p><strong>Pfad:</strong> <code>/testdata/</code></p>
 <p>Generiert realistische Testdaten für Entwicklung und Demonstration.</p>
 <h3>Testdaten generieren</h3>
@@ -702,7 +734,7 @@ MAIL_ENABLED=true
 <p><strong>Wichtig:</strong> Testdaten können ausschließlich für Events mit Status <strong>Geplant</strong> (Pending) generiert werden. Aktive oder abgeschlossene Wettbewerbe sind geschützt.</p>
 </blockquote>
 <hr />
-<h2>15. Typischer Wettbewerbs-Ablauf</h2>
+<h2 id="15-typischer-wettbewerbs-ablauf">15. Typischer Wettbewerbs-Ablauf</h2>
 <h3>Vorbereitung (Tage/Wochen vorher)</h3>
 <ol>
 <li><strong>Teilnehmer anlegen</strong>: Alle Piloten, Punktrichter und Wettkampfleitung</li>
@@ -749,7 +781,7 @@ MAIL_ENABLED=true
 <li><strong>Backup erstellen</strong></li>
 </ol>
 <hr />
-<h2>16. Sperrmechanismus</h2>
+<h2 id="16-sperrmechanismus">16. Sperrmechanismus</h2>
 <p>Das System hat einen globalen Sperrmechanismus, der abgeschlossene Wettbewerbe vor versehentlichen Änderungen schützt.</p>
 <h3>Wann ist ein Event gesperrt?</h3>
 <p>Ein Event ist gesperrt, wenn sein Status <strong>Completed</strong> oder <strong>Published</strong> ist.</p>
@@ -790,7 +822,7 @@ MAIL_ENABLED=true
 <li><strong>Wertung</strong>: Server gibt Fehlermeldung bei Änderungsversuchen</li>
 </ul>
 <hr />
-<h2>17. Email-Funktionen</h2>
+<h2 id="17-email-funktionen">17. Email-Funktionen</h2>
 <h3>Verfügbarkeit</h3>
 <p>Bevor ein Email-Dialog geöffnet wird, prüft das System automatisch, ob der Email-Server erreichbar ist. Falls nicht:</p>
 <ul>
@@ -841,7 +873,7 @@ MAIL_ENABLED=true
 <h3>Fallback bei fehlenden Email-Adressen</h3>
 <p>Wenn ein Team keine Email-Adressen eingetragen hat, wird die Email automatisch an die Admin-Adresse (<code>ADMIN_EMAIL</code> in der <code>.env</code>-Datei, Standard: <code>MAIL_USERNAME</code>) weitergeleitet. Die Erfolgsmeldung zeigt dann: <em>&quot;Keine Team-Adressen — gesendet an Admin: ...&quot;</em> — so ist klar, dass es ein Fallback war und keine echte Zustellung an die Piloten.</p>
 <hr />
-<h2>18. Messwertung &amp; Qualitätswertung</h2>
+<h2 id="18-messwertung--qualitätswertung">18. Messwertung &amp; Qualitätswertung</h2>
 <p>Die DMFV-Ausschreibung (Fassung 2025-Rev0, Abschnitt III) unterscheidet zwei Bewertungsarten:</p>
 <h3>Qualitätswertung (subjektiv)</h3>
 <blockquote>
@@ -1084,7 +1116,7 @@ MAIL_ENABLED=true
 <code>/home/NRWcup_docs/Ausschreibung-2025-Rev-0.pdf</code></p>
 <p>Quelle: <a href="https://dmfv.aero/wp-content/uploads/2022/01/Ausschreibung-2025-Rev-0.pdf">DMFV Ausschreibung 2025</a></p>
 <hr />
-<h2>19. Häufige Fragen</h2>
+<h2 id="19-häufige-fragen">19. Häufige Fragen</h2>
 <h3>&quot;Ich kann einen Teilnehmer nicht löschen&quot;</h3>
 <p>Der Teilnehmer ist noch einem Team zugeordnet. Bearbeiten Sie zuerst das Team und entfernen Sie die Zuordnung, oder löschen Sie das Team.</p>
 <h3>&quot;Die Flugzeug-Auswahl im Team ist leer&quot;</h3>
@@ -1116,6 +1148,20 @@ MAIL_ENABLED=true
 <p>Der <strong>erste Punktrichter</strong> (Messwert-Inhaber) zeigt ein höheres Total, weil die Messwertpunkte (Flugzeit, Landegenauigkeit, Seilabwurf) dort eingerechnet sind. Bei den anderen Punktrichtern werden die Messwerte als hellblau angezeigt und nicht im Total gezählt, da sie nur einmal in die Gesamtwertung einfließen.</p>
 <h3>&quot;Kann ich ein gelöschtes Team wiederherstellen?&quot;</h3>
 <p>Nein. Gelöschte Daten können nur über ein Backup wiederhergestellt werden.</p>
+<h3>Notfall-Schnellhilfe</h3>
+<table>
+<thead>
+<tr><th>Problem</th><th>Lösung</th></tr>
+</thead>
+<tbody>
+<tr><td>Seite lädt nicht</td><td>Pi an? Mit Hotspot verbunden? Browser neu laden. URL: http://192.168.5.1:5000</td></tr>
+<tr><td>Messwerte bei Richter 2/3 eingeben?</td><td>Nicht möglich — nur auf Richter-1-Bogen oder über die 3-Richter-Ansicht</td></tr>
+<tr><td>Kürfigur falsch gewählt</td><td>Richter-1-Bogen öffnen, korrigieren, speichern</td></tr>
+<tr><td>Wertung ist gesperrt</td><td>Admin-Login &rarr; Entsperren</td></tr>
+<tr><td>Runde versehentlich geschlossen</td><td>Nächste Runde kann nicht rückgängig gemacht werden — Kontakt Organisationsleiter</td></tr>
+<tr><td>Drucker nicht verbunden</td><td>PDF speichern, auf anderem Weg drucken</td></tr>
+</tbody>
+</table>
 <hr />
 <p><em>Dieses Handbuch bezieht sich auf die Ausschreibung DM-Seglerschlepp des DMFV, Fassung 2025-Rev0.</em>
 <em>Quelle: https://dmfv.aero/wp-content/uploads/2022/01/Ausschreibung-2025-Rev-0.pdf</em></p>

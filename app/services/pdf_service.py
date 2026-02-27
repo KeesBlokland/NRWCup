@@ -222,7 +222,7 @@ class PdfService:
         event = Event.query.get(round_obj.event_id)
         event_year = event.event_date.year if event and event.event_date else datetime.now().year
 
-        elements.append(Paragraph(f"NRW Cup {event_year} — Startfolge Durchgang {round_obj.round_number}", styles['Heading2']))
+        elements.append(Paragraph(f"NRW Cup {event_year} - Startfolge Durchgang {round_obj.round_number}", styles['Heading2']))
         if event and event.event_date:
             elements.append(Paragraph(event.event_date.strftime('%d.%m.%Y'), styles['Normal']))
         elements.append(Spacer(1, 20))

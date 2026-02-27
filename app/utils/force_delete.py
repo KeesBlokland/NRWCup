@@ -181,10 +181,11 @@ def force_delete_team(team_id):
         team_round_ids = [tr.team_round_id for tr in team_rounds]
         
         # Delete scores and score values for each team round
-        score_ids = []
-        for team_round_id in team_round_ids:
-            scores = Score.query.filter_by(team_round_id=team_round_id).all()
-            score_ids.extend([score.score_id for score in scores])
+        if team_round_ids:
+            scores = Score.query.filter(Score.team_round_id.in_(team_round_ids)).all()
+            score_ids = [s.score_id for s in scores]
+        else:
+            score_ids = []
         
         # Delete score values first
         if score_ids:

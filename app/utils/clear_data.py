@@ -110,18 +110,19 @@ def clear_event_data(event_id, clear_scores_only=True):
         team_round_ids = [tr.team_round_id for tr in team_rounds]
         
         # Delete scores and score values
-        score_ids = []
-        for team_round_id in team_round_ids:
-            scores = Score.query.filter_by(team_round_id=team_round_id).all()
-            score_ids.extend([score.score_id for score in scores])
-        
+        if team_round_ids:
+            scores = Score.query.filter(Score.team_round_id.in_(team_round_ids)).all()
+            score_ids = [s.score_id for s in scores]
+        else:
+            score_ids = []
+
         # Delete score values first
         if score_ids:
             ScoreValue.query.filter(ScoreValue.score_id.in_(score_ids)).delete(synchronize_session=False)
             # Then delete scores
             deleted_scores = Score.query.filter(Score.score_id.in_(score_ids)).delete(synchronize_session=False)
             result['scores_deleted'] = deleted_scores
-        
+
         if clear_scores_only:
             # Just clear team round scores but don't delete them
             for team_round in team_rounds:
@@ -170,18 +171,19 @@ def clear_round_data(round_id):
         team_round_ids = [tr.team_round_id for tr in team_rounds]
         
         # Delete scores and score values
-        score_ids = []
-        for team_round_id in team_round_ids:
-            scores = Score.query.filter_by(team_round_id=team_round_id).all()
-            score_ids.extend([score.score_id for score in scores])
-        
+        if team_round_ids:
+            scores = Score.query.filter(Score.team_round_id.in_(team_round_ids)).all()
+            score_ids = [s.score_id for s in scores]
+        else:
+            score_ids = []
+
         # Delete score values first
         if score_ids:
             ScoreValue.query.filter(ScoreValue.score_id.in_(score_ids)).delete(synchronize_session=False)
             # Then delete scores
             deleted_scores = Score.query.filter(Score.score_id.in_(score_ids)).delete(synchronize_session=False)
             result['scores_deleted'] = deleted_scores
-        
+
         # Delete team rounds
         deleted_team_rounds = TeamRound.query.filter(TeamRound.team_round_id.in_(team_round_ids)).delete(synchronize_session=False)
         result['team_rounds_deleted'] = deleted_team_rounds

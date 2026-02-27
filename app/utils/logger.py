@@ -11,28 +11,28 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 class DBLogger:
     _instance = None
     _file_handler_installed = False
+    _level_checked = False
 
     @classmethod
     def get_logger(cls):
         if cls._instance is None:
             cls._instance = cls._setup_logger()
 
-        # Check if we're in a Flask app context
-        try:
-            from flask import current_app
-            if current_app:
-                from app.models import SystemConfig
-                try:
-                    config = SystemConfig.query.filter_by(config_key='logging_enabled').first()
-                    enabled = config and config.config_value == 'true'
-                    if enabled:
-                        cls._instance.setLevel(logging.INFO)
-                    else:
-                        cls._instance.setLevel(logging.ERROR)
-                except Exception:
-                    pass
-        except Exception:
-            pass
+        # Read logging_enabled from DB once per process startup only
+        if not cls._level_checked:
+            try:
+                from flask import current_app
+                if current_app:
+                    from app.models import SystemConfig
+                    try:
+                        config = SystemConfig.query.filter_by(config_key='logging_enabled').first()
+                        enabled = config and config.config_value == 'true'
+                        cls._instance.setLevel(logging.INFO if enabled else logging.ERROR)
+                        cls._level_checked = True
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
         return cls._instance
 

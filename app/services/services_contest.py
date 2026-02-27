@@ -10,6 +10,9 @@ from sqlalchemy import desc
 from app.models import db, Event, Location, Round
 from app.utils.utils_base_service import BaseService
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ContestService(BaseService):
     """Service for Contest/Event operations"""

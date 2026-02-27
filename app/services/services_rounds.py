@@ -157,7 +157,7 @@ class RoundService(BaseService):
             Dict with deletion statistics
         """
         try:
-            return utils_clear_event_data(event_id, clear_scores_only)
+            return clear_event_data(event_id, clear_scores_only)
         except Exception as e:
             logger.error(f"Error in clear_event_data: {str(e)}")
             return {'rounds_deleted': 0, 'scores_deleted': 0, 'team_rounds_deleted': 0}

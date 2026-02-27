@@ -6,18 +6,13 @@ Description: Service for managing start orders for competition rounds
 """
 
 from app.models import db, Event, Round, Team, TeamRound
-from app.utils.utils_base_service import BaseService
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
 logger = logging.getLogger(__name__)
 
-class StartOrderService(BaseService):
+class StartOrderService:
     """Service for managing start orders"""
-    
-    def __init__(self):
-        # Don't initialize with a model since we're working with multiple models
-        pass
     
     def get_rounds_for_event(self, event_id):
         """

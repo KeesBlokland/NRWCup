@@ -17,5 +17,3 @@ def setup_db_events(db):
         # Log slower queries with more detail
         if total > 0.5:  # Log queries taking more than 500ms
             DBLogger.warning(f"Slow Query ({total:.3f}s): {statement}")
-        else:
-            DBLogger.info(f"SQL: {statement}")

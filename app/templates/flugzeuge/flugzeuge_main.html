@@ -107,20 +107,4 @@
     </div>
 </div>
 
-<script>
-// Ensure all decimal display uses dots instead of commas
-document.addEventListener('DOMContentLoaded', function() {
-    // Convert any comma-formatted numbers in the table to dot format
-    const tables = document.querySelectorAll('table');
-    tables.forEach(table => {
-        const cells = table.querySelectorAll('td');
-        cells.forEach(cell => {
-            // Only process cells that contain numbers with commas
-            if (cell.textContent.match(/\d+,\d+/)) {
-                cell.textContent = cell.textContent.replace(/(\d+),(\d+)/g, '$1.$2');
-            }
-        });
-    });
-});
-</script>
 {% endblock %}

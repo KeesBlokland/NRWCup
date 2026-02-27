@@ -831,6 +831,89 @@ def view_score(score_id):
         flash('Fehler beim Laden der Bewertung', 'error')
         return redirect(url_for('scoring.score_list'))
 
+@scoring_bp.route('/combined/<int:round_id>/<int:team_id>')
+def combined_view(round_id, team_id):
+    """Show all 3 judge score columns for one team/round on a single page."""
+    try:
+        round_obj = Round.query.get_or_404(round_id)
+        team = Team.query.get_or_404(team_id)
+        event = Event.query.get(round_obj.event_id) if round_obj.event_id else None
+        if not event:
+            event = Event.query.filter_by(status='Active').first()
+
+        team_round = TeamRound.query.filter_by(
+            round_id=round_id, team_id=team_id
+        ).first()
+
+        active_figures = scoring_service.get_active_figures()
+        judges = scoring_service.get_judges()
+
+        MESSWERT_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+        KUER_GROUPS = {
+            'platzrunde': ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
+            'platzueberflug': ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+        }
+
+        # Build per-judge data: value_map, is_messwertung_owner, locked, score_id
+        all_scores = []
+        if team_round:
+            all_scores = Score.query.options(
+                db.joinedload(Score.values).joinedload(ScoreValue.task_type)
+            ).filter_by(team_round_id=team_round.team_round_id)\
+             .order_by(Score.score_id).all()
+
+        # Kuer choices: first non-zero value across all scores wins
+        kuer_choices = {}
+        for group, codes in KUER_GROUPS.items():
+            chosen = None
+            for s in all_scores:
+                for sv in s.values:
+                    if sv.task_type and sv.task_type.code in codes and sv.value and sv.value > 0:
+                        chosen = sv.task_type.code
+                        break
+                if chosen:
+                    break
+            kuer_choices[group] = chosen
+
+        judge_data = []
+        for idx, score in enumerate(all_scores):
+            value_map = {}
+            for sv in score.values:
+                if sv.task_type:
+                    value_map[sv.task_type.code] = sv.value
+            judge_data.append({
+                'score': score,
+                'value_map': value_map,
+                'is_owner': (idx == 0),
+            })
+
+        # Pad to 3 slots (empty dict for judges without a score record yet)
+        while len(judge_data) < 3:
+            judge_data.append({'score': None, 'value_map': {}, 'is_owner': False})
+
+        quality_figures = [f for f in active_figures if f.code not in MESSWERT_CODES]
+        mess_figures    = [f for f in active_figures if f.code in MESSWERT_CODES]
+
+        return render_template(
+            'scoring/combined_score_form.html',
+            round_obj=round_obj,
+            team=team,
+            event=event,
+            figures=active_figures,
+            quality_figures=quality_figures,
+            mess_figures=mess_figures,
+            judges=judges,
+            judge_data=judge_data,
+            team_round=team_round,
+            kuer_choices=kuer_choices,
+        )
+    except Exception as e:
+        logger.error(f"Error in combined_view: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        flash('Fehler beim Laden der kombinierten Ansicht', 'error')
+        return redirect(url_for('scoring.score_list'))
+
+
 @scoring_bp.route('/generate_next_round', methods=['POST'])
 def generate_next_round():
     """Generate the next round with scoresheets based on previous round results"""

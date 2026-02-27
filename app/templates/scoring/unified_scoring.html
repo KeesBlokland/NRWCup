@@ -205,6 +205,13 @@
                                                 {% endif %}
                                             {% endif %}
                                         {% endfor %}
+                                        {% if round_obj and selected_round %}
+                                            <a href="{{ url_for('scoring.combined_view', round_id=round_obj.round_id, team_id=team.team_id) }}"
+                                               class="btn btn-outline-primary btn-sm"
+                                               title="Alle 3 Richter auf einer Seite">
+                                                3 Richter
+                                            </a>
+                                        {% endif %}
                                     </div>
                                 </td>
                                 <td class="text-center">

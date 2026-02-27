@@ -1,0 +1,360 @@
+{# File: app/templates/scoring/combined_score_form.html | Last Updated: 2026-02-27 #}
+{% extends "base.html" %}
+
+{% block title %}NRW Cup {{ current_year }} - 3 Richter{% endblock %}
+
+{% block content %}
+<div class="container-fluid scoresheet-container">
+  <div class="card">
+    <div class="card-header py-1">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          {% if event %}{{ event.name }} - {% endif %}3 Richter Ansicht
+        </h5>
+        <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" class="club-logo">
+      </div>
+    </div>
+
+    <div class="card-body p-2">
+
+      <!-- Header: round / team info -->
+      <div class="row g-2 mb-3">
+        <div class="col-auto">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Durchgang</span>
+            <input type="text" class="form-control" value="{{ round_obj.round_number }}" readonly style="width:3rem">
+          </div>
+        </div>
+        <div class="col-auto">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Team</span>
+            <input type="text" class="form-control" value="{{ team.team_nummer }}" readonly style="width:3rem">
+          </div>
+        </div>
+        <div class="col">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Piloten</span>
+            <input type="text" class="form-control" value="
+              {%- if team.schlepper_pilot and team.segler_pilot -%}
+                {{ team.schlepper_pilot.name }} / {{ team.segler_pilot.name }}
+              {%- elif team.schlepper_pilot -%}
+                {{ team.schlepper_pilot.name }}
+              {%- elif team.segler_pilot -%}
+                {{ team.segler_pilot.name }}
+              {%- else -%}-{%- endif -%}
+            " readonly>
+          </div>
+        </div>
+        <div class="col-auto">
+          <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary btn-sm">Zuruck</a>
+        </div>
+      </div>
+
+      <!-- 3-column score table -->
+      {# quality_figures and mess_figures are passed in from the route #}
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle" style="font-size:0.82rem">
+          <thead class="table-light">
+            <tr>
+              <th style="width:28%">Figur</th>
+              {% for ci in range(3) %}
+                {% set jd = judge_data[ci] %}
+                <th class="text-center" style="width:24%">
+                  {% if jd.score %}
+                    {{ jd.score.judge.name if jd.score.judge else 'Richter ' ~ (ci+1) }}
+                    {% if jd.score.locked %}&#128274;{% endif %}
+                  {% else %}
+                    Richter {{ ci+1 }}
+                  {% endif %}
+                </th>
+              {% endfor %}
+            </tr>
+          </thead>
+
+          <tbody>
+            <!-- Quality figures -->
+            {% for figure in quality_figures %}
+              {% set is_platzrunde   = figure.code in ['PLTZR','PLTZR-M','PLTZR-MK'] %}
+              {% set is_platzueber   = figure.code in ['PLTZU','PLTZU-OV','PLTZU-KR'] %}
+              <tr>
+                <td>
+                  {{ figure.name_de }}
+                  <input type="hidden" class="figure-max" id="max_{{ figure.code }}" value="{{ figure.max_value if figure.max_value is not none else 10 }}">
+                </td>
+
+                {% for ci in range(3) %}
+                  {% set jd = judge_data[ci] %}
+                  {% set val = jd.value_map.get(figure.code) %}
+                  {% set locked = jd.score and jd.score.locked and not session.get('is_admin') %}
+
+                  {# Kur disabled: non-owner judge, variant not chosen #}
+                  {% set kuer_dis = false %}
+                  {% if jd.score %}
+                    {% if is_platzrunde and kuer_choices.get('platzrunde') and kuer_choices.get('platzrunde') != figure.code %}
+                      {% set kuer_dis = true %}
+                    {% elif is_platzueber and kuer_choices.get('platzueberflug') and kuer_choices.get('platzueberflug') != figure.code %}
+                      {% set kuer_dis = true %}
+                    {% endif %}
+                  {% endif %}
+
+                  <td>
+                    {% if jd.score %}
+                      <div class="input-group input-group-sm">
+                        <input type="number"
+                               class="form-control form-control-sm decimal-dot c{{ ci }}-quality{% if kuer_dis %} score-input-readonly{% endif %}"
+                               id="c{{ ci }}_score_{{ figure.code }}"
+                               data-figure-code="{{ figure.code }}"
+                               data-kfactor="{{ figure.k_factor or 1 }}"
+                               data-col="{{ ci }}"
+                               {% if is_platzrunde %}data-group="platzrunde"{% endif %}
+                               {% if is_platzueber %}data-group="platzueberflug"{% endif %}
+                               value="{{ val if val is not none else '' }}"
+                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
+                               step="0.5"
+                               {% if locked or kuer_dis %}readonly{% endif %}
+                               oninput="colOnInput({{ ci }}, this)">
+                        <span class="input-group-text score-label-sm" style="min-width:2.8rem"
+                              id="c{{ ci }}_pts_{{ figure.code }}">
+                          {{ ('%.1f' % (val * (figure.k_factor or 1))) if val is not none and val != '' else '' }}
+                        </span>
+                      </div>
+                    {% else %}
+                      <span class="text-muted small">-</span>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+
+            <!-- Messwerte: single shared entry row (owned by Richter 1) -->
+            <tr class="table-secondary">
+              <td colspan="4" class="py-1">
+                <small class="fw-bold text-muted">MESSWERTE</small>
+                <small class="text-muted ms-2">(einmalig -- gilt fuer alle 3 Richter)</small>
+              </td>
+            </tr>
+
+            {% set owner = judge_data[0] %}
+            {% set owner_locked = owner.score and owner.score.locked and not session.get('is_admin') %}
+
+            {% for figure in mess_figures %}
+              {% set val = owner.value_map.get(figure.code) %}
+              <tr>
+                <td>{{ figure.name_de }}</td>
+                <td colspan="3">
+                  {% if owner.score %}
+                    {% if figure.code in ['LANDGM','LANS','SEILZ'] %}
+                      <select class="form-select form-select-sm mess-input"
+                              id="mess_score_{{ figure.code }}"
+                              style="max-width:8rem"
+                              {% if owner_locked %}disabled{% endif %}>
+                        <option value="">-</option>
+                        {% for v in [0,5,10,20,30] %}
+                          <option value="{{ v }}" {% if val is not none and val|int == v %}selected{% endif %}>{{ v }}</option>
+                        {% endfor %}
+                      </select>
+                    {% elif figure.code == 'SEGZEIT' %}
+                      <div class="input-group input-group-sm" style="max-width:12rem">
+                        <input type="number"
+                               class="form-control form-control-sm mess-input"
+                               id="mess_score_SEGZEIT"
+                               value="{{ val if val is not none else '' }}"
+                               min="0" max="300" step="1"
+                               {% if owner_locked %}readonly{% endif %}
+                               oninput="onSegzeitInput(this.value)">
+                        <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
+                          {%- if val is not none and val != '' -%}
+                            {{ '%.1f' % [0, 300 - ((val - 200)|abs * 3)]|max }}
+                          {%- endif -%}
+                        </span>
+                      </div>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted small">Kein Bogen fuer Richter 1</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+
+            <!-- Totals: col 0 = quality + Messwerte, cols 1/2 = quality only -->
+            <tr class="table-light fw-bold">
+              <td>Gesamt</td>
+              {% for ci in range(3) %}
+                <td class="text-center">
+                  <input type="text" class="form-control form-control-sm text-end fw-bold"
+                         id="c{{ ci }}_total" readonly>
+                </td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div><!-- table-responsive -->
+
+      <div class="text-muted score-label-sm mb-3">* Flugzeit: MAX(0, 300 - ABS(200 - Zeit) x 3)</div>
+
+      <!-- Per-judge save forms (hidden inputs carry the values) -->
+      <div class="row g-3">
+        {% for ci in range(3) %}
+          {% set jd = judge_data[ci] %}
+          {% if jd.score %}
+            <div class="col-md-4">
+              <div class="card card-body py-2{% if jd.score.locked %} border-warning{% endif %}">
+                <div class="mb-2">
+                  <strong>{{ jd.score.judge.name if jd.score.judge else 'Richter ' ~ (ci+1) }}</strong>
+                </div>
+
+                {% if jd.score.locked %}
+                  <a href="{{ url_for('scoring.view_score', score_id=jd.score.score_id) }}"
+                     class="btn btn-warning btn-sm w-100">
+                    Bogen ansehen / Entsperren
+                  </a>
+                {% else %}
+                  <form method="POST"
+                        action="{{ url_for('scoring.update_score', score_id=jd.score.score_id) }}"
+                        id="form_col{{ ci }}"
+                        class="combined-save-form"
+                        data-col="{{ ci }}">
+                    <input type="hidden" name="score_id" value="{{ jd.score.score_id }}">
+                    {% for figure in quality_figures %}
+                      <input type="hidden" name="score_{{ figure.code }}" id="h{{ ci }}_{{ figure.code }}" value="">
+                    {% endfor %}
+                    {% if ci == 0 %}
+                      {% for figure in mess_figures %}
+                        <input type="hidden" name="score_{{ figure.code }}" id="h0_{{ figure.code }}" value="">
+                      {% endfor %}
+                    {% endif %}
+                    <input type="hidden" name="notes" id="h{{ ci }}_notes" value="{{ jd.score.notes or '' }}">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                      Speichern Richter {{ ci+1 }}
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          {% else %}
+            <div class="col-md-4">
+              <div class="card card-body py-2 border-secondary">
+                <span class="text-muted small">Richter {{ ci+1 }} - kein Bogen vorhanden</span>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div><!-- row -->
+
+    </div><!-- card-body -->
+  </div><!-- card -->
+</div>
+
+<script>
+// --- per-column quality helpers ---
+
+function colPoints(ci, figureCode, kfactor, rawVal) {
+    var pts = (rawVal === '' || rawVal === null || isNaN(parseFloat(rawVal)))
+              ? '' : (parseFloat(rawVal) * kfactor).toFixed(1);
+    var el = document.getElementById('c' + ci + '_pts_' + figureCode);
+    if (el) el.textContent = pts;
+}
+
+// Shared Segzeit input -> update display, then refresh only col 0 total (owner)
+function onSegzeitInput(rawVal) {
+    var el = document.getElementById('mess_pts_SEGZEIT');
+    if (!el) return;
+    if (rawVal === '' || rawVal === null) {
+        el.textContent = '';
+    } else {
+        var t = parseFloat(rawVal);
+        el.textContent = isNaN(t) ? '' : Math.max(0, 300 - Math.abs(200 - t) * 3).toFixed(1);
+    }
+    colTotal(0);
+}
+
+function getMesswertPoints() {
+    // SEGZEIT formula result + direct values for SEILZ/LANDGM/LANS
+    var total = 0;
+    var segEl = document.getElementById('mess_pts_SEGZEIT');
+    if (segEl && segEl.textContent !== '') total += parseFloat(segEl.textContent) || 0;
+    ['mess_score_SEILZ','mess_score_LANDGM','mess_score_LANS'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.value !== '') total += parseFloat(el.value) || 0;
+    });
+    return total;
+}
+
+function colTotal(ci) {
+    var total = 0;
+    document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
+        var kf = parseFloat(inp.dataset.kfactor) || 1;
+        var v  = parseFloat(inp.value);
+        if (!isNaN(v)) total += v * kf;
+    });
+    // Only col 0 (Richter 1) includes Messwerte -- same as single-judge form
+    if (ci === 0) total += getMesswertPoints();
+    var totEl = document.getElementById('c' + ci + '_total');
+    if (totEl) totEl.value = total > 0 ? total.toFixed(1) : '';
+}
+
+function colOnInput(ci, inp) {
+    var kf = parseFloat(inp.dataset.kfactor) || 1;
+    colPoints(ci, inp.dataset.figureCode, kf, inp.value);
+    var grp = inp.dataset.group;
+    if (grp && inp.value !== '') {
+        document.querySelectorAll('.c' + ci + '-quality[data-group="' + grp + '"]').forEach(function(other) {
+            if (other !== inp) {
+                other.value = '';
+                colPoints(ci, other.dataset.figureCode, parseFloat(other.dataset.kfactor) || 1, '');
+            }
+        });
+    }
+    colTotal(ci);
+}
+
+// On submit: copy visible inputs into the form's hidden fields
+document.querySelectorAll('.combined-save-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        var ci = parseInt(form.dataset.col);
+        // Quality figures
+        document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
+            var hid = document.getElementById('h' + ci + '_' + inp.dataset.figureCode);
+            if (hid) hid.value = inp.value;
+        });
+        // Messwerte: only col 0 (Richter 1) submits them
+        if (ci === 0) {
+            ['SEGZEIT','LANDGM','LANS','SEILZ'].forEach(function(code) {
+                var src = document.getElementById('mess_score_' + code);
+                var hid = document.getElementById('h0_' + code);
+                if (src && hid) hid.value = src.value;
+            });
+        }
+    });
+});
+
+// Messwert selects (SEILZ, LANDGM, LANS) -> refresh all totals on change
+document.addEventListener('DOMContentLoaded', function() {
+    ['mess_score_SEILZ','mess_score_LANDGM','mess_score_LANS'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', function() { colTotal(0); });
+    });
+
+    for (var ci = 0; ci < 3; ci++) {
+        // Init quality points displays
+        document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
+            if (inp.value !== '') {
+                colPoints(ci, inp.dataset.figureCode, parseFloat(inp.dataset.kfactor) || 1, inp.value);
+            }
+        });
+        // Comma -> dot
+        document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
+            inp.addEventListener('input', function() {
+                if (this.value.includes(',')) this.value = this.value.replace(',', '.');
+            });
+        });
+        // Init totals (picks up any pre-filled Messwerte too)
+        colTotal(ci);
+    }
+
+    // Init Segzeit display if pre-filled
+    var segInp = document.getElementById('mess_score_SEGZEIT');
+    if (segInp && segInp.value !== '') onSegzeitInput(segInp.value);
+});
+</script>
+{% endblock %}

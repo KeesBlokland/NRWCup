@@ -204,18 +204,20 @@ class EmailService:
                 server = smtplib.SMTP_SSL(Config.MAIL_SERVER, Config.MAIL_PORT)
             else:
                 server = smtplib.SMTP(Config.MAIL_SERVER, Config.MAIL_PORT)
-                
+
                 if Config.MAIL_USE_TLS:
                     server.starttls()
-            
-            # Login if credentials are provided
-            if Config.MAIL_USERNAME and Config.MAIL_PASSWORD:
-                server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
-            
-            # Send email
-            server.sendmail(Config.MAIL_DEFAULT_SENDER, recipients, msg.as_string())
-            server.quit()
-            
+
+            try:
+                # Login if credentials are provided
+                if Config.MAIL_USERNAME and Config.MAIL_PASSWORD:
+                    server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
+
+                # Send email
+                server.sendmail(Config.MAIL_DEFAULT_SENDER, recipients, msg.as_string())
+            finally:
+                server.quit()
+
             return {'success': True, 'message': 'Email sent successfully'}
             
         except Exception as e:

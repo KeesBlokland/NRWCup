@@ -6,6 +6,7 @@ Description: Base controller utility class for common route operations
 """
 
 from flask import render_template, redirect, url_for, request, flash
+from werkzeug.exceptions import HTTPException
 from app.models import db
 
 class BaseController:
@@ -75,6 +76,8 @@ class BaseController:
                 return redirect(url_for(f'{self.route_prefix}.index'))
                 
             return render_template(f'{self.template_prefix}/{self.template_prefix}_edit.html', item=record)
+        except HTTPException:
+            raise
         except Exception as e:
             db.session.rollback()
             flash(f'Fehler beim Bearbeiten des {self.display_name}: {str(e)}', 'error')
@@ -88,8 +91,10 @@ class BaseController:
             db.session.commit()
             
             flash(f'{self.display_name} erfolgreich gelöscht', 'success')
+        except HTTPException:
+            raise
         except Exception as e:
             db.session.rollback()
             flash(f'Fehler beim Löschen des {self.display_name}: {str(e)}', 'error')
-            
+
         return redirect(url_for(f'{self.route_prefix}.index'))

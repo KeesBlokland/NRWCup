@@ -15,25 +15,25 @@
 <hr />
 <h2>Inhaltsverzeichnis</h2>
 <ol>
-<li><a href="#s1">Überblick</a></li>
-<li><a href="#s2">Startseite &amp; Navigation</a></li>
-<li><a href="#s3">Teilnehmer Verwaltung</a></li>
-<li><a href="#s4">Flugzeug Verwaltung</a></li>
-<li><a href="#s5">Team Verwaltung</a></li>
-<li><a href="#s6">Figuren Verwaltung</a></li>
-<li><a href="#s7">Wettbewerb (Events)</a></li>
-<li><a href="#s8">Startliste / Formular</a></li>
-<li><a href="#s9">Startliste Verwaltung</a></li>
-<li><a href="#s10">Wertung &amp; Ergebnisse</a></li>
-<li><a href="#s11">Berichte &amp; Export</a></li>
-<li><a href="#s12">Systemverwaltung</a></li>
-<li><a href="#s13">Datenbereinigung</a></li>
-<li><a href="#s14">Testdaten</a></li>
-<li><a href="#s15">Typischer Wettbewerbs-Ablauf</a></li>
-<li><a href="#s16">Sperrmechanismus</a></li>
-<li><a href="#s17">Email-Funktionen</a></li>
-<li><a href="#s18">Messwertung &amp; Qualitätswertung</a></li>
-<li><a href="#s19">Häufige Fragen</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s1')">Überblick</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s2')">Startseite &amp; Navigation</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s3')">Teilnehmer Verwaltung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s4')">Flugzeug Verwaltung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s5')">Team Verwaltung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s6')">Figuren Verwaltung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s7')">Wettbewerb (Events)</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s8')">Startliste / Formular</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s9')">Startliste Verwaltung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s10')">Wertung &amp; Ergebnisse</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s11')">Berichte &amp; Export</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s12')">Systemverwaltung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s13')">Datenbereinigung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s14')">Testdaten</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s15')">Typischer Wettbewerbs-Ablauf</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s16')">Sperrmechanismus</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s17')">Email-Funktionen</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s18')">Messwertung &amp; Qualitätswertung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s19')">Häufige Fragen</a></li>
 </ol>
 <hr />
 <h2 id="s1">1. Überblick</h2>
@@ -1178,4 +1178,12 @@ MAIL_ENABLED=true
 .handbuch-content code { background: #f8f9fa; padding: 0.1rem 0.3rem; border-radius: 3px; }
 .handbuch-content pre { background: #f8f9fa; padding: 0.75rem; border-radius: 4px; overflow-x: auto; }
 </style>
+<script>
+function jumpTo(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var top = el.getBoundingClientRect().top + window.scrollY - 130;
+    window.scrollTo({ top: top, behavior: 'smooth' });
+}
+</script>
 {% endblock %}

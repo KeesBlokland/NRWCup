@@ -114,31 +114,16 @@ Last Updated: 2024-12-05
 </div>
 
 <script>
-// Form validation
-(function () {
-    'use strict'
-    var forms = document.querySelectorAll('.needs-validation')
-    Array.prototype.slice.call(forms).forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-        }, false)
-    })
+// Dynamic form field visibility
+document.getElementById('score_type').addEventListener('change', function() {
+    const isEnum = this.value === 'enum';
+    const rangeFields = document.querySelectorAll('#min_value, #max_value, #decimal_places');
+    const allowedValuesField = document.getElementById('allowed_values');
 
-    // Dynamic form field visibility
-    document.getElementById('score_type').addEventListener('change', function() {
-        const isEnum = this.value === 'enum';
-        const rangeFields = document.querySelectorAll('#min_value, #max_value, #decimal_places');
-        const allowedValuesField = document.getElementById('allowed_values');
-
-        rangeFields.forEach(field => {
-            field.parentElement.style.display = isEnum ? 'none' : 'block';
-        });
-        allowedValuesField.parentElement.style.display = isEnum ? 'block' : 'none';
+    rangeFields.forEach(field => {
+        field.parentElement.style.display = isEnum ? 'none' : 'block';
     });
-})()
+    allowedValuesField.parentElement.style.display = isEnum ? 'block' : 'none';
+});
 </script>
 {% endblock %}

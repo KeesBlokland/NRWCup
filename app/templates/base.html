@@ -195,5 +195,22 @@ Description: Base template with updated navigation and clickable logo
             });
         });
     </script>
+<script>
+// Bootstrap form validation - applied globally to all .needs-validation forms
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

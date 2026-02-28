@@ -8,7 +8,7 @@ Description: Specialized service for Team model with improved numbering system
 
 from sqlalchemy import or_
 from app.models import db, Team, Teilnehmer, Flugzeuge
-from app.utils.utils_base_service import BaseService
+from app.services.base_service import BaseService
 
 class TeamService(BaseService):
     """Service for Team operations"""

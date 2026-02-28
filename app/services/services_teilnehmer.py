@@ -8,7 +8,7 @@ Description: Specialized service for Teilnehmer model with fixed can_delete meth
 
 from sqlalchemy import or_
 from app.models import db, Teilnehmer
-from app.utils.utils_base_service import BaseService
+from app.services.base_service import BaseService
 
 class TeilnehmerService(BaseService):
     """Service for Teilnehmer operations"""

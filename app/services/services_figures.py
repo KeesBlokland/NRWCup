@@ -7,7 +7,7 @@ Description: Specialized service for TaskType (figures) model
 
 from sqlalchemy import nullslast
 from app.models import db, TaskType, Score, ScoreValue
-from app.utils.utils_base_service import BaseService
+from app.services.base_service import BaseService
 
 class FiguresService(BaseService):
     """Service for TaskType operations"""

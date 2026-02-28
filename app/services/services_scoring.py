@@ -8,7 +8,7 @@ Description: Scoring service with Messwertung/Qualitätswertung separation
 
 from sqlalchemy import or_
 from app.models import db, Score, TaskType, TeamRound, Teilnehmer, Team, Round, Event, ScoreValue, SystemConfig
-from app.utils.utils_base_service import BaseService
+from app.services.base_service import BaseService
 from datetime import datetime
 import logging
 import json

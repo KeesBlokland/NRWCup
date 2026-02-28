@@ -8,7 +8,7 @@ Description: Specialized service for Contest/Event management with fixed locatio
 
 from sqlalchemy import desc
 from app.models import db, Event, Location, Round
-from app.utils.utils_base_service import BaseService
+from app.services.base_service import BaseService
 from datetime import datetime
 import logging
 

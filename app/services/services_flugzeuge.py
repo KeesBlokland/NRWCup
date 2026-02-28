@@ -7,7 +7,7 @@ Description: Enhanced service for Flugzeuge (aircraft) model with improved error
 
 from sqlalchemy import or_
 from app.models import db, Flugzeuge, Teilnehmer
-from app.utils.utils_base_service import BaseService
+from app.services.base_service import BaseService
 import logging
 
 logger = logging.getLogger(__name__)

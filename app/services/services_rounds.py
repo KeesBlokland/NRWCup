@@ -7,7 +7,7 @@ Description: Service for managing rounds and related functionality with fixed da
 """
 
 from app.models import db, Round, TeamRound, Score, ScoreValue, Event
-from app.utils.utils_base_service import BaseService
+from app.services.base_service import BaseService
 from app.utils.clear_data import clear_event_data, clear_round_data
 import logging
 

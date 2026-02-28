@@ -85,13 +85,18 @@ class ScoringService(BaseService):
                 # Messwerte are being submitted — replace everything
                 ScoreValue.query.filter_by(score_id=score.score_id).delete()
             else:
-                # Only quality scores — keep Messwerte intact
-                messwertung_type_ids = [t.type_id for t in TaskType.query.filter(
-                    TaskType.code.in_(messwertung_codes)).all()]
-                ScoreValue.query.filter(
-                    ScoreValue.score_id == score.score_id,
-                    ~ScoreValue.task_type_id.in_(messwertung_type_ids)
-                ).delete(synchronize_session='fetch')
+                # Only quality scores — only delete ScoreValues for codes being
+                # submitted now. Previously saved scores for fields left empty
+                # (not submitted) are preserved intact.
+                submitted_codes = [c for c, v in score_values.items()
+                                   if v is not None and v != '']
+                if submitted_codes:
+                    submitted_type_ids = [t.type_id for t in TaskType.query.filter(
+                        TaskType.code.in_(submitted_codes)).all()]
+                    ScoreValue.query.filter(
+                        ScoreValue.score_id == score.score_id,
+                        ScoreValue.task_type_id.in_(submitted_type_ids)
+                    ).delete(synchronize_session='fetch')
         else:
             # Create new score
             score = self.model_class(

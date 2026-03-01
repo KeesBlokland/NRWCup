@@ -198,3 +198,10 @@ class AuditLog(db.Model):
     
     # Relationships
     user = db.relationship("User")
+
+class BugReport(db.Model):
+    __tablename__ = 'bug_reports'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(10), default='new', nullable=False)  # new / done

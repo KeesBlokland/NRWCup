@@ -140,6 +140,7 @@ BLUEPRINTS = [
     ('app.routes.bp_testdata', 'testdata_bp', '/testdata'),
     ('app.routes.bp_cleanup', 'cleanup_bp', '/cleanup'),
     ('app.routes.bp_start_order', 'start_order_bp', '/start_order'),
+    ('app.routes.bp_bugreport', 'bugreport_bp', '/bugreport'),
 ]
 
 registered = []

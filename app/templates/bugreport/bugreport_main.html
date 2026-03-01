@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}NRW Cup {{ current_year }} - Notizen{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Notizen &amp; Bugreports</h2>
+        <span class="badge bg-secondary">{{ reports|length }} Eintr&auml;ge</span>
+    </div>
+
+    <!-- Entry form -->
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Neue Notiz</h5></div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('bugreport.index') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-2">
+                    <textarea class="form-control" name="description" rows="3"
+                        placeholder="Beschreibung des Problems oder der Notiz..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report list -->
+    {% if reports %}
+    <table class="table table-sm table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th style="width:140px">Datum</th>
+                <th>Beschreibung</th>
+                <th style="width:80px">Status</th>
+                <th style="width:100px"></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in reports %}
+            <tr class="{{ 'table-secondary text-muted' if r.status == 'done' else '' }}">
+                <td><small>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</small></td>
+                <td style="{{ 'text-decoration:line-through' if r.status == 'done' else '' }}">
+                    {{ r.description }}
+                </td>
+                <td>
+                    <span class="badge {{ 'bg-success' if r.status == 'done' else 'bg-warning text-dark' }}">
+                        {{ 'Erledigt' if r.status == 'done' else 'Neu' }}
+                    </span>
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('bugreport.toggle', report_id=r.id) }}"
+                          class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                title="{{ 'Wieder oeffnen' if r.status == 'done' else 'Als erledigt markieren' }}">
+                            {{ 'Oeffnen' if r.status == 'done' else 'Erledigt' }}
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('bugreport.delete', report_id=r.id) }}"
+                          class="d-inline"
+                          onsubmit="return confirm('Notiz loeschen?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">X</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">Noch keine Notizen.</p>
+    {% endif %}
+</div>
+{% endblock %}

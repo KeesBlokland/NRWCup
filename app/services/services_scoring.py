@@ -214,8 +214,8 @@ class ScoringService(BaseService):
         judge who scored the wrong variant gets their value moved to the correct one.
         """
         KUER_GROUPS = [
-            ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
-            ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+            ['PLTZR', 'PLTZR-M'],
+            ['PLTZU', 'PLTZU-OV'],
         ]
 
         # Get all scores for this team_round, ordered by score_id (judge #1 first)
@@ -353,102 +353,104 @@ class ScoringService(BaseService):
     
     def aggregate_judge_scores(self, team_round_id):
         """
-        Aggregate judge scores correctly separating Qualitätswertung from Messwertung
-        
-        Qualitätswertung (subjective): Average across judges
-        Messwertung (objective): Add directly without averaging
+        Aggregate judge scores correctly separating Qualitaetswertung from Messwertung.
+
+        Qualitaetswertung (subjective, 0-10 per judge):
+          - Collect raw 0-10 values from each judge
+          - Drop rule (2026 rules, page 8):
+              3 judges -> no drop, average all
+              4 judges -> drop the highest
+              5 judges -> drop highest and lowest
+          - Round average to 3 decimal places
+          - Multiply by K-factor, round to whole integer Bewertungspunkte
+
+        Messwertung (objective, entered once, replicated to all judges):
+          - SEGZEIT: formula MAX(0, 200 - |200 - t|), K=1
+          - SEILZ / LANDGM / LANS: value IS the Bewertungspunkte, K=1
+          - Take the single non-zero value (zero IS a valid score)
         """
         try:
-            # Get all scores for this team round
             scores = Score.query.options(
                 db.joinedload(Score.values).joinedload(ScoreValue.task_type)
             ).filter_by(team_round_id=team_round_id).all()
-            
+
             if not scores:
                 return 0
-            
-            # Define which task types are Messwertung (objective measurements by measurement team)
-            messwertung_codes = {
-                'LANDGM',    # Genauigkeit der Landung (landing accuracy)
-                'LANS',      # Landing accuracy measurements  
-                'SEILZ',     # Seilabwurf (rope drop precision)
-                'SEGZEIT',   # Flugzeit (flight time - 2 stopwatches)
-            }
-            
-            # Separate scores by task type and judge
-            qualitaet_scores = {}  # {task_code: [judge1_score, judge2_score, ...]}
-            messwertung_scores = {}  # {task_code: [all values from all judges]}
+
+            MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+
+            # qualitaet_raw: {task_code: {'raws': [raw 0-10 per judge], 'k': k_factor}}
+            qualitaet_raw = {}
+            # messwertung_pts: {task_code: [computed Bewertungspunkte from all judges]}
+            messwertung_pts = {}
 
             for score in scores:
-                for score_value in score.values:
-                    if not score_value.task_type or score_value.value is None:
+                for sv in score.values:
+                    if not sv.task_type or sv.value is None:
                         continue
+                    code = sv.task_type.code
 
-                    task_code = score_value.task_type.code
-
-                    # Calculate the points for this score value
-                    if task_code == 'SEGZEIT':
-                        # Special calculation for Seglerzeit
-                        target_time = 200
-                        max_points = 300
-                        penalty_factor = 3
-                        time_diff = abs(target_time - score_value.value)
-                        points = max(0, max_points - (time_diff * penalty_factor))
+                    if code in MESSWERTUNG_CODES:
+                        if code == 'SEGZEIT':
+                            pts = max(0, 200 - abs(200 - sv.value))
+                        else:
+                            pts = sv.value  # K=1, value already equals Bewertungspunkte
+                        messwertung_pts.setdefault(code, []).append(pts)
                     else:
-                        # Standard calculation
-                        k_factor = score_value.task_type.k_factor or 1
-                        points = score_value.value * k_factor
+                        k = sv.task_type.k_factor or 1
+                        if code not in qualitaet_raw:
+                            qualitaet_raw[code] = {'raws': [], 'k': k}
+                        qualitaet_raw[code]['raws'].append(sv.value)
 
-                    if task_code in messwertung_codes:
-                        # Messwertung: collect from ALL judges, we'll pick the right one below
-                        if task_code not in messwertung_scores:
-                            messwertung_scores[task_code] = []
-                        messwertung_scores[task_code].append(points)
-                    else:
-                        # Qualitätswertung: Collect for averaging (subjective scores)
-                        if task_code not in qualitaet_scores:
-                            qualitaet_scores[task_code] = []
-                        qualitaet_scores[task_code].append(points)
-
-            # Calculate final score
             total_score = 0
 
-            # Add Messwertung scores directly (no averaging)
-            # Only ONE judge enters these — use the non-zero value from whichever judge has it.
-            # If all judges have 0, the result is 0 (genuine zero score).
-            for task_code, values in messwertung_scores.items():
+            # --- Messwertung ---
+            # Only one judge owns the entry; others hold a copy.
+            # Use the non-zero value. If all are zero, the score is genuinely 0.
+            for code, values in messwertung_pts.items():
                 non_zero = [v for v in values if v != 0]
                 if non_zero:
-                    # Use the non-zero value (should be exactly one judge)
                     chosen = non_zero[0]
                     if len(non_zero) > 1:
-                        logger.warning(f"Messwertung {task_code}: multiple non-zero values {non_zero}, using first")
+                        logger.warning(
+                            "Messwertung %s: multiple non-zero values %s, using first",
+                            code, non_zero
+                        )
                 else:
                     chosen = 0
                 total_score += chosen
-                logger.debug(f"Messwertung {task_code}: candidates={values} -> used {chosen}")
-            
-            # Average Qualitätswertung scores and add
-            for task_code, judge_scores in qualitaet_scores.items():
-                if judge_scores:
-                    # Apply dropping rule for 4+ judges
-                    if len(judge_scores) >= 4:
-                        # Drop lowest score
-                        judge_scores_filtered = sorted(judge_scores)[1:]
-                        avg_score = sum(judge_scores_filtered) / len(judge_scores_filtered)
-                        logger.debug(f"Qualitätswertung {task_code}: {judge_scores} -> dropped lowest -> {judge_scores_filtered} -> avg: {avg_score}")
-                    else:
-                        # Simple average for 3 or fewer judges
-                        avg_score = sum(judge_scores) / len(judge_scores)
-                        logger.debug(f"Qualitätswertung {task_code}: {judge_scores} -> avg: {avg_score}")
-                    
-                    total_score += avg_score
-            
-            logger.info(f"Team round {team_round_id} total score: {total_score}")
+                logger.debug("Messwertung %s: candidates=%s -> used %s", code, values, chosen)
+
+            # --- Qualitaetswertung ---
+            for code, data in qualitaet_raw.items():
+                raws = data['raws']
+                k = data['k']
+                if not raws:
+                    continue
+                n = len(raws)
+                if n >= 5:
+                    filtered = sorted(raws)[1:-1]   # drop highest and lowest
+                    drop_label = 'dropped highest+lowest'
+                elif n == 4:
+                    filtered = sorted(raws)[:-1]    # drop highest only
+                    drop_label = 'dropped highest'
+                else:
+                    filtered = raws                  # 3 or fewer: no drop
+                    drop_label = 'no drop'
+                avg = sum(filtered) / len(filtered)
+                avg_r = round(avg, 3)
+                figure_pts = round(avg_r * k)
+                total_score += figure_pts
+                logger.debug(
+                    "Qualitaetswertung %s: raw=%s %s -> avg=%.3f *%d -> %d pts",
+                    code, raws, drop_label, avg_r, k, figure_pts
+                )
+
+            logger.info("Team round %s total score: %s", team_round_id, total_score)
             return total_score
-            
+
         except Exception as e:
-            logger.error(f"Error aggregating scores for team_round {team_round_id}: {str(e)}")
+            logger.error("Error aggregating scores for team_round %s: %s", team_round_id, str(e))
             return 0
 
         
@@ -607,30 +609,25 @@ class ScoringService(BaseService):
         for i, standing in enumerate(standings, 1):
             standing['rank'] = i
         
-        # Endstand IS the sum of percentages — no further normalization
-        # With 4 rounds: max = 300 (3 × 100%), with 3 rounds: max = 200 (2 × 100%)
+        # Endstand IS the sum of Promille-Punkte -- no further normalization
+        # With 4 rounds (drop worst): max = 3000 (3 x 1000), with 3 rounds: max = 2000
         return standings, rounds_with_data
     
-    def calculate_seglerzeit(self, actual_time, target_time=200, max_points=300, penalty_factor=3):
+    def calculate_seglerzeit(self, actual_time):
         """
-        Calculate points for glider time:
-        MAX(0, 300 - (ABS(200-actual_time) * 3))
-        
+        Calculate points for glider time (2026 rules):
+        MAX(0, 200 - ABS(200 - actual_time))
+        Target is 200 seconds = 200 points, -1 point per second deviation.
+
         Args:
             actual_time: Actual time in seconds
-            target_time: Target time in seconds (default: 200)
-            max_points: Maximum points (default: 300)
-            penalty_factor: Penalty factor (default: 3)
-            
+
         Returns:
-            Calculated points
+            Calculated points (integer 0-200)
         """
         if actual_time is None:
             return 0
-            
-        time_diff = abs(target_time - actual_time) 
-        points = max(0, max_points - (time_diff * penalty_factor))
-        return points
+        return max(0, 200 - abs(200 - actual_time))
     
     def update_team_round_scores(self, team_round_id):
         """Update the raw and normalized scores for a team round"""

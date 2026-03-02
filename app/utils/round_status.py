@@ -85,11 +85,11 @@ def round_completion_status(round_id):
         # 9 always-mandatory figures (not part of any exclusive group)
         ALWAYS_MANDATORY = {'STRT', 'AUSKL', 'VKURV', 'SEILW', 'LANM', 'LANDM', 'LANDGS', 'LANDS', 'ERSCH'}
         # Exclusive groups: exactly ONE from each group must be scored
-        # Platzrunde: base OR M OR M-K
-        # Platzueberflug: base OR Oval OR Kreis
+        # Steigflug: base OR mit Figur-M
+        # Ueberflug: base OR mit 2 Halbkreisen
         EXCLUSIVE_GROUPS = [
-            {'PLTZR', 'PLTZR-M', 'PLTZR-MK'},     # Platzrunde (one of three)
-            {'PLTZU', 'PLTZU-OV', 'PLTZU-KR'},     # Platzueberflug (one of three)
+            {'PLTZR', 'PLTZR-M'},     # Steigflug (one of two)
+            {'PLTZU', 'PLTZU-OV'},    # Ueberflug (one of two)
         ]
         messwertung_type_ids = {all_types[c] for c in MESSWERTUNG_CODES if c in all_types}
         always_mandatory_ids = {all_types[c] for c in ALWAYS_MANDATORY if c in all_types}

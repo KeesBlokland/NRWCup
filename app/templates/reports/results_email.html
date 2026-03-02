@@ -119,9 +119,9 @@
                                 {% if i < standing.round_scores|length %}
                                     {% set score = standing.round_scores[i] %}
                                     {% if i in standing.dropped_indices %}
-                                        <span class="dropped">{{ "%.1f"|format(score / 10) }}%</span>
+                                        <span class="dropped">{{ "%.1f"|format(score) }} Pkt</span>
                                     {% else %}
-                                        {{ "%.1f"|format(score / 10) }}%
+                                        {{ "%.1f"|format(score) }} Pkt
                                     {% endif %}
                                 {% else %}
                                     -
@@ -129,7 +129,7 @@
                             </td>
                         {% endfor %}
                         
-                        <td class="total-col">{{ "%.1f"|format(standing.score / 10) }}%</td>
+                        <td class="total-col">{{ "%.1f"|format(standing.score) }} Pkt</td>
                     </tr>
                 {% endfor %}
             </table>

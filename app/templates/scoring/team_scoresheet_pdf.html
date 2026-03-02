@@ -35,7 +35,7 @@
 </div>
 
 {% set MESS_CODES = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'] %}
-{% set EXCLUSIVE_CODES = ['PLTZR', 'PLTZR-M', 'PLTZR-MK', 'PLTZU', 'PLTZU-OV', 'PLTZU-KR'] %}
+{% set EXCLUSIVE_CODES = ['PLTZR', 'PLTZR-M', 'PLTZU', 'PLTZU-OV'] %}
 
 {# Build set of unchosen exclusive figures #}
 {% set unchosen = [] %}
@@ -151,7 +151,7 @@
             <td class="fig">Normalisiert</td>
             <td></td>
             <td colspan="{{ team_data.scores|length }}">
-                {{ "%.1f%%"|format(team_data.team_round.normalized_score / 10) }}
+                {{ "%.1f"|format(team_data.team_round.normalized_score) }} Pkt
             </td>
         </tr>
         {% endif %}

@@ -152,9 +152,9 @@
                             {# Kür variant blue: on non-owner sheets, disable the unchosen variant #}
                             {% set is_kuer_disabled = false %}
                             {% if not is_messwertung_owner and kuer_choices %}
-                                {% if figure.code in ['PLTZR', 'PLTZR-M', 'PLTZR-MK'] and kuer_choices.get('platzrunde') and kuer_choices.get('platzrunde') != figure.code %}
+                                {% if figure.code in ['PLTZR', 'PLTZR-M'] and kuer_choices.get('platzrunde') and kuer_choices.get('platzrunde') != figure.code %}
                                     {% set is_kuer_disabled = true %}
-                                {% elif figure.code in ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'] and kuer_choices.get('platzueberflug') and kuer_choices.get('platzueberflug') != figure.code %}
+                                {% elif figure.code in ['PLTZU', 'PLTZU-OV'] and kuer_choices.get('platzueberflug') and kuer_choices.get('platzueberflug') != figure.code %}
                                     {% set is_kuer_disabled = true %}
                                 {% endif %}
                             {% endif %}
@@ -173,7 +173,7 @@
                                                {% if is_messwertung_blue %}disabled{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}disabled{% endif %}>
                                             <option value="">-</option>
-                                            {% for val in [0, 5, 10, 20, 30] %}
+                                            {% for val in [0, 10, 20, 30] %}
                                                 <option value="{{ val }}" {% if value == val %}selected{% endif %}>{{ val }}</option>
                                             {% endfor %}
                                         </select>
@@ -354,19 +354,15 @@
     }
     
     function calculateSeglerzeit(actualTime) {
-        // Calculate points for glider time
-        const targetTime = 200;
-        const maxPoints = 300;
-        const penaltyFactor = 3;
-        
+        // 2026 rules: MAX(0, 200 - |200 - t|)
         if (!actualTime && actualTime !== 0) {
             // If the input is empty, clear the points display
             document.getElementById('SEGZEIT_points').value = '';
             updateTotalPoints(); // Ensure we update total when clearing
             return;
         }
-        
-        const points = Math.max(0, maxPoints - (Math.abs(targetTime - parseFloat(actualTime)) * penaltyFactor));
+
+        const points = Math.max(0, 200 - Math.abs(200 - parseFloat(actualTime)));
         document.getElementById('SEGZEIT_points').value = points.toFixed(1);
         
         // Always update total points after calculation

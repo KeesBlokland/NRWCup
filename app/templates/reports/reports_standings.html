@@ -132,9 +132,9 @@ Description: Corrected raw score display and dropped rounds logic
                                             {% set round_obj = rounds[i] %}
                                             
                                             {% if i in standing.dropped_indices %}
-                                                <del class="text-muted dropped-score">{{ "%.1f%%"|format(score / 10) }}</del>
+                                                <del class="text-muted dropped-score">{{ "%.1f"|format(score) }} Pkt</del>
                                             {% else %}
-                                                {{ "%.1f%%"|format(score / 10) }}
+                                                {{ "%.1f"|format(score) }} Pkt
                                             {% endif %}
                                         {% else %}
                                             -
@@ -142,7 +142,7 @@ Description: Corrected raw score display and dropped rounds logic
                                     </td>
                                 {% endfor %}
                                 
-                                <td class="text-center fw-bold">{{ "%.1f%%"|format(standing.score / 10) }}</td>
+                                <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }} Pkt</td>
                             </tr>
                         {% endfor %}
                     </table>

@@ -423,9 +423,9 @@ def score_list():
                 if code in MESSWERTUNG_CODES:
                     if not is_owner:
                         continue
-                    # SEGZEIT uses special formula
+                    # SEGZEIT uses special formula: MAX(0, 200 - |200 - t|)
                     if code == 'SEGZEIT':
-                        points = max(0, 300 - (abs(200 - value) * 3))
+                        points = max(0, 200 - abs(200 - value))
                         raw_score += points
                         continue
 
@@ -763,8 +763,8 @@ def view_score(score_id):
         # Determine Kür choices for visual guidance
         # First score (by score_id) with a non-zero Kür value sets the variant
         KUER_GROUPS = {
-            'platzrunde': ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
-            'platzueberflug': ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+            'platzrunde': ['PLTZR', 'PLTZR-M'],
+            'platzueberflug': ['PLTZU', 'PLTZU-OV'],
         }
         kuer_choices = {}  # group -> chosen code (or None if not yet chosen)
         all_scores_for_tr = Score.query.filter_by(team_round_id=team_round.team_round_id)\
@@ -850,8 +850,8 @@ def combined_view(round_id, team_id):
 
         MESSWERT_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
         KUER_GROUPS = {
-            'platzrunde': ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
-            'platzueberflug': ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+            'platzrunde': ['PLTZR', 'PLTZR-M'],
+            'platzueberflug': ['PLTZU', 'PLTZU-OV'],
         }
 
         # Build per-judge data: value_map, is_messwertung_owner, locked, score_id
@@ -1216,8 +1216,8 @@ def team_results():
                     ).filter_by(team_round_id=team_round.team_round_id).all()
 
                     EXCLUSIVE_GROUPS = [
-                        ['PLTZR', 'PLTZR-M', 'PLTZR-MK'],
-                        ['PLTZU', 'PLTZU-OV', 'PLTZU-KR'],
+                        ['PLTZR', 'PLTZR-M'],
+                        ['PLTZU', 'PLTZU-OV'],
                     ]
                     type_id_to_code = {f.type_id: f.code for f in figures}
                     unchosen_codes = set()

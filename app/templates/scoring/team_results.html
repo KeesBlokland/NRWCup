@@ -172,7 +172,7 @@
                             <td>Normalisiert</td>
                             <td></td>
                             <td class="text-center" colspan="{{ team_data.scores|length }}">
-                                {{ "%.1f%%"|format(team_data.team_round.normalized_score / 10) }}
+                                {{ "%.1f"|format(team_data.team_round.normalized_score) }} Pkt
                             </td>
                         </tr>
                         {% endif %}

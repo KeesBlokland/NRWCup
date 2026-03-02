@@ -74,8 +74,8 @@
           <tbody>
             <!-- Quality figures -->
             {% for figure in quality_figures %}
-              {% set is_platzrunde   = figure.code in ['PLTZR','PLTZR-M','PLTZR-MK'] %}
-              {% set is_platzueber   = figure.code in ['PLTZU','PLTZU-OV','PLTZU-KR'] %}
+              {% set is_platzrunde   = figure.code in ['PLTZR','PLTZR-M'] %}
+              {% set is_platzueber   = figure.code in ['PLTZU','PLTZU-OV'] %}
               <tr>
                 <td>
                   {{ figure.name_de }}
@@ -149,7 +149,7 @@
                               style="max-width:8rem"
                               {% if owner_locked %}disabled{% endif %}>
                         <option value="">-</option>
-                        {% for v in [0,5,10,20,30] %}
+                        {% for v in [0,10,20,30] %}
                           <option value="{{ v }}" {% if val is not none and val|int == v %}selected{% endif %}>{{ v }}</option>
                         {% endfor %}
                       </select>
@@ -159,12 +159,12 @@
                                class="form-control form-control-sm mess-input"
                                id="mess_score_SEGZEIT"
                                value="{{ val if val is not none else '' }}"
-                               min="0" max="300" step="1"
+                               min="0" max="400" step="1"
                                {% if owner_locked %}readonly{% endif %}
                                oninput="onSegzeitInput(this.value)">
                         <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
                           {%- if val is not none and val != '' -%}
-                            {{ '%.1f' % [0, 300 - ((val - 200)|abs * 3)]|max }}
+                            {{ '%.1f' % [0, 200 - (val - 200)|abs]|max }}
                           {%- endif -%}
                         </span>
                       </div>
@@ -263,7 +263,7 @@ function onSegzeitInput(rawVal) {
         el.textContent = '';
     } else {
         var t = parseFloat(rawVal);
-        el.textContent = isNaN(t) ? '' : Math.max(0, 300 - Math.abs(200 - t) * 3).toFixed(1);
+        el.textContent = isNaN(t) ? '' : Math.max(0, 200 - Math.abs(200 - t)).toFixed(1);
     }
     colTotal(0);
 }

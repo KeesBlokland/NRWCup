@@ -267,7 +267,7 @@
                                         {% if team_round_key in team_rounds %}
                                             {% set team_round = team_rounds[team_round_key] %}
                                             {% if team_round.normalized_score is not none %}
-                                                <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(team_round.normalized_score / 10) }}</span>
+                                                <span class="badge bg-primary fs-6">{{ "%.1f"|format(team_round.normalized_score) }} Pkt</span>
                                             {% else %}
                                                 -
                                             {% endif %}
@@ -278,7 +278,7 @@
                                         {% set team_found = false %}
                                         {% for standing in standings %}
                                             {% if standing.team.team_id == team.team_id %}
-                                                <span class="badge bg-primary fs-6">{{ "%.1f%%"|format(standing.score / 10) }}</span>
+                                                <span class="badge bg-primary fs-6">{{ "%.1f"|format(standing.score) }} Pkt</span>
                                                 {% set team_found = true %}
                                             {% endif %}
                                         {% endfor %}
@@ -323,16 +323,16 @@
                                         {% if i < standing.round_scores|length %}
                                             {% set score = standing.round_scores[i] %}
                                             {% if i in standing.dropped_indices %}
-                                                <span class="text-muted text-decoration-line-through">{{ "%.1f%%"|format(score / 10) }}</span>
+                                                <span class="text-muted text-decoration-line-through">{{ "%.1f"|format(score) }} Pkt</span>
                                             {% else %}
-                                                {{ "%.1f%%"|format(score / 10) }}
+                                                {{ "%.1f"|format(score) }} Pkt
                                             {% endif %}
                                         {% else %}
                                             -
                                         {% endif %}
                                     </td>
                                 {% endfor %}
-                                <td class="text-center fw-bold">{{ "%.1f%%"|format(standing.score / 10) }}</td>
+                                <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }} Pkt</td>
                             </tr>
                         {% endfor %}
                     </table>
@@ -416,13 +416,13 @@
                 <p><strong>Punkte pro Durchgang</strong> =<br>
                 Summe Qualit&auml;tswertung (gemittelt) + Messwerte</p>
                 <p><strong>Normalisierung</strong>:<br>
-                H&ouml;chste Punktzahl im Durchgang = 100%</p>
+                H&ouml;chste Punktzahl im Durchgang = 1000 Pkt</p>
                 <p><strong>Endstand</strong>:<br>
                 Ab 3 Durchg&auml;ngen: schlechtester Durchgang wird gestrichen.<br>
-                Summe der verbleibenden Prozentwerte = Endstand.</p>
+                Summe der verbleibenden Durchgangspunkte = Endstand.</p>
                 <hr>
-                <p class="text-muted small mb-0"><strong>Max. Rohpunkte pro Durchgang:</strong> 1800<br>
-                <strong>Flugzeit:</strong> MAX(0, 300 - |200 - Zeit| &times; 3)</p>
+                <p class="text-muted small mb-0"><strong>Max. Bewertungspunkte pro Durchgang:</strong> 1640 (Standard) / 1690 (Variante)<br>
+                <strong>Flugzeit:</strong> MAX(0, 200 - |200 - Zeit|)</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schlie&szlig;en</button>

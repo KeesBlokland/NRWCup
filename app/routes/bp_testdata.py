@@ -203,94 +203,140 @@ def generate():
 
         db.session.commit()
 
-        # Get task types for generating values
+        # Get task types for generating values — build lookup dict to avoid repeated queries
         task_types = TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
+        task_type_by_code = {t.code: t for t in task_types}
 
         # Get selected judges
         judges = Teilnehmer.query.filter(Teilnehmer.teilnehmer_id.in_(judge_ids)).all()
-        # Use the scoring service — same as the real entry form
+
         from app.services.services_scoring import ScoringService
         scoring_service = ScoringService()
+
+        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
 
         rounds_created = 0
         scores_generated = 0
 
         for round_obj in rounds_to_process:
             # Step 1: Ensure TeamRounds + empty Scores exist
-            # Check if team_rounds already exist for this round
             existing_tr_count = TeamRound.query.filter_by(round_id=round_obj.round_id).count()
             if existing_tr_count == 0:
-                # First time: create team_rounds and empty score records
                 from app.routes.bp_formular import generate_scoresheets_for_round
                 generate_scoresheets_for_round(round_obj.round_id)
                 logger.info(f"Created scoresheets for round {round_obj.round_number} (was empty)")
-            else:
-                logger.info(f"Round {round_obj.round_number} already has {existing_tr_count} team_rounds — NOT wiping")
 
-            # Step 2: For each team, generate score values and submit via create_score()
             team_rounds = TeamRound.query.filter_by(round_id=round_obj.round_id).all()
+            std_dev = score_variability / 100 * 3
 
+            # Step 2: Bulk-insert ScoreValues directly — no per-score commits or recalculations
             for team_round in team_rounds:
-                # Skip teams not in our selected list
                 if team_round.team_id not in team_ids:
                     continue
 
-                # Select which variant each team uses (same for all judges)
                 chosen_variants = handle_mutually_exclusive_figures(task_types)
 
-                # Messwerte: generated once by judge 1 (first in list), never regenerated
-                # Check if this team_round already has Messwerte from a previous run
-                messwertung_codes = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ']
-                has_messwerte = db.session.query(ScoreValue).join(Score).join(TaskType).filter(
-                    Score.team_round_id == team_round.team_round_id,
-                    TaskType.code.in_(messwertung_codes)
-                ).first() is not None
+                # Generate Messwerte once per team (same for all judges)
+                segzeit_value = random.randint(170, 230)
+                landing_values = {
+                    'LANDGM': generate_landing_score(),
+                    'LANS':   generate_landing_score(),
+                    'SEILZ':  generate_landing_score()
+                }
 
-                if not has_messwerte:
-                    segzeit_value = random.randint(170, 230)
-                    landing_values = {
-                        'LANDGM': generate_landing_score(),
-                        'LANS': generate_landing_score(),
-                        'SEILZ': generate_landing_score()
-                    }
-
-                # Apply score variability
-                std_dev = score_variability / 100 * 3
+                # Clear existing ScoreValues for this team_round to avoid duplicates
+                score_ids = [s.score_id for s in Score.query.filter_by(
+                    team_round_id=team_round.team_round_id).all()]
+                if score_ids:
+                    ScoreValue.query.filter(ScoreValue.score_id.in_(score_ids)).delete(
+                        synchronize_session='fetch')
 
                 for judge in judges:
-                    score_values = {}
+                    # Get or create the Score record
+                    score = Score.query.filter_by(
+                        team_round_id=team_round.team_round_id,
+                        judge_id=judge.teilnehmer_id
+                    ).first()
+                    if not score:
+                        score = Score(
+                            team_round_id=team_round.team_round_id,
+                            judge_id=judge.teilnehmer_id,
+                            entered_at=datetime.utcnow(),
+                            notes="Test data"
+                        )
+                        db.session.add(score)
+                        db.session.flush()
+                    else:
+                        score.entered_at = datetime.utcnow()
 
+                    # Build values for this judge
                     for task_type in task_types:
-                        if task_type.code in messwertung_codes:
-                            # Messwerte: only on first judge, only if not already present
-                            if not has_messwerte and judge == judges[0]:
-                                if task_type.code == 'SEGZEIT':
-                                    score_values[task_type.code] = segzeit_value
-                                else:
-                                    score_values[task_type.code] = landing_values[task_type.code]
-                        elif task_type.code in STEIGFLUG_CODES:
-                            # Only score the chosen variant — leave others absent (like a real judge)
+                        code = task_type.code
+                        value = None
+
+                        if code in MESSWERTUNG_CODES:
+                            # Messwerte: only on first judge (replicated below)
+                            if judge == judges[0]:
+                                value = segzeit_value if code == 'SEGZEIT' else landing_values[code]
+                        elif code in STEIGFLUG_CODES:
                             if 'platzrunde' in chosen_variants and task_type.type_id == chosen_variants['platzrunde']:
-                                score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
-                        elif task_type.code in UEBERFLUG_CODES:
-                            # Only score the chosen variant — leave others absent (like a real judge)
+                                value = generate_gaussian_score(std_dev=std_dev)
+                        elif code in UEBERFLUG_CODES:
                             if 'platzu' in chosen_variants and task_type.type_id == chosen_variants['platzu']:
-                                score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
+                                value = generate_gaussian_score(std_dev=std_dev)
                         else:
                             value = generate_gaussian_score(std_dev=std_dev)
                             if task_type.max_value is not None:
                                 value = min(value, task_type.max_value)
-                            score_values[task_type.code] = value
 
-                    # Submit via create_score() — same as the real form
-                    scoring_service.create_score(
-                        team_round_id=team_round.team_round_id,
-                        judge_id=judge.teilnehmer_id,
-                        score_values=score_values,
-                        notes="Test data generated score"
-                    )
+                        if value is not None:
+                            db.session.add(ScoreValue(
+                                score_id=score.score_id,
+                                task_type_id=task_type.type_id,
+                                value=float(value)
+                            ))
                     scores_generated += 1
 
+                # Replicate Messwerte from judge[0] to all other judges for this team_round
+                judge0_score = Score.query.filter_by(
+                    team_round_id=team_round.team_round_id,
+                    judge_id=judges[0].teilnehmer_id
+                ).first()
+                if judge0_score and len(judges) > 1:
+                    mess_type_ids = [t.type_id for t in task_types if t.code in MESSWERTUNG_CODES]
+                    mess_values = {sv.task_type_id: sv.value for sv in ScoreValue.query.filter(
+                        ScoreValue.score_id == judge0_score.score_id,
+                        ScoreValue.task_type_id.in_(mess_type_ids)
+                    ).all()}
+                    for judge in judges[1:]:
+                        other_score = Score.query.filter_by(
+                            team_round_id=team_round.team_round_id,
+                            judge_id=judge.teilnehmer_id
+                        ).first()
+                        if other_score:
+                            for type_id, val in mess_values.items():
+                                db.session.add(ScoreValue(
+                                    score_id=other_score.score_id,
+                                    task_type_id=type_id,
+                                    value=val
+                                ))
+
+            # Single commit per round — all ScoreValues inserted at once
+            db.session.commit()
+
+            # Step 3: Calculate raw scores and normalize once per round
+            team_rounds_scored = TeamRound.query.filter_by(round_id=round_obj.round_id).all()
+            for tr in team_rounds_scored:
+                if tr.team_id in team_ids:
+                    tr.raw_score = scoring_service.aggregate_judge_scores(tr.team_round_id)
+
+            db.session.flush()
+            normalized = scoring_service.normalize_round_scores(round_obj.round_id)
+            for tr in team_rounds_scored:
+                if tr.team_id in normalized:
+                    tr.normalized_score = normalized[tr.team_id]
+
+            db.session.commit()
             rounds_created += 1
 
         if specific_round > 0:

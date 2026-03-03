@@ -96,7 +96,7 @@
                                                     {% if sv.task_type.code == 'SEGZEIT' %}
                                                         {# Messwert: show only in judge #1 column (first score = lowest score_id) #}
                                                         {% if is_first_judge %}
-                                                            {% set pts = [0, 300 - ((200 - sv.value)|abs * 3)]|max %}
+                                                            {% set pts = [0, 200 - (200 - sv.value)|abs]|max %}
                                                             {% if sv.value == 0 %}<span class="text-muted">0s (0)</span>{% else %}{{ sv.value }}s ({{ pts|round(0)|int }}){% endif %}
                                                         {% else %}—{% endif %}
                                                     {% elif sv.task_type.code in MESS_CODES %}
@@ -142,7 +142,7 @@
                         {% for sv in team_data.scores[0].values %}
                             {% if sv.value is not none and sv.task_type.code in MESS_CODES %}
                                 {% if sv.task_type.code == 'SEGZEIT' %}
-                                    {% set _ = mess_total.append([0, 300 - ((200 - sv.value)|abs * 3)]|max) %}
+                                    {% set _ = mess_total.append([0, 200 - (200 - sv.value)|abs]|max) %}
                                 {% else %}
                                     {% set _ = mess_total.append(sv.value) %}
                                 {% endif %}

@@ -156,11 +156,7 @@
         // Get the input element
         const input = document.activeElement;
         
-        const targetTime = 200;
-        const maxPoints = 300;
-        const penaltyFactor = 3;
-        
-        const points = Math.max(0, maxPoints - (Math.abs(targetTime - parseFloat(actualTime)) * penaltyFactor));
+        const points = Math.max(0, 200 - Math.abs(200 - parseFloat(actualTime)));
         
         // Get points element
         const pointsId = input.name.replace('score_', '') + '_points';

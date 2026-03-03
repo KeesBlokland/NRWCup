@@ -508,8 +508,8 @@ Mueller / Schmidt
 <h3>Kürfiguren wählen</h3>
 <p>Bei den Kürfiguren muss für jede Exklusivgruppe <strong>genau eine</strong> Variante ausgewählt werden. Die Auswahl erfolgt auf dem Wertungsbogen von Richter 1 und wird automatisch auf die Bögen von Richter 2 und 3 übernommen.</p>
 <ul>
-<li><strong>Platzrunde-Gruppe</strong>: Basis (PLTZR) <strong>oder</strong> M-Figur (PLTZR-M) <strong>oder</strong> M-K-Figur (PLTZR-MK)</li>
-<li><strong>Platzüberflug-Gruppe</strong>: Basis (PLTZU) <strong>oder</strong> Oval (PLTZU-OV) <strong>oder</strong> Kreis (PLTZU-KR)</li>
+<li><strong>Steigflug-Gruppe</strong>: Steigflug (PLTZR) <strong>oder</strong> Steigflug mit Figur-M (PLTZR-M)</li>
+<li><strong>Ueberflug-Gruppe</strong>: Ueberflug (PLTZU) <strong>oder</strong> Ueberflug mit 2 Halbkreisen (PLTZU-OV)</li>
 </ul>
 <p>Nicht gewählte Varianten erhalten automatisch 0 Punkte. Auf den Bögen von Richter 2/3 erscheinen nicht gewählte Varianten blau/schreibgeschützt.</p>
 <h3>Messwerte eingeben</h3>
@@ -571,7 +571,7 @@ Mueller / Schmidt
 <li><strong>Email</strong>: Versendet die Ergebnisse direkt an die Piloten</li>
 </ul>
 <blockquote>
-<p><strong>Hinweis:</strong> Nicht gewählte Kürfiguren (Platzrunde/Platzüberflug-Varianten) werden in der Ergebnisansicht automatisch ausgeblendet.</p>
+<p><strong>Hinweis:</strong> Nicht gewählte Kürfiguren (Steigflug/Ueberflug-Varianten) werden in der Ergebnisansicht automatisch ausgeblendet.</p>
 </blockquote>
 <hr />
 <h2 id="s11">11. Berichte &amp; Export</h2>
@@ -892,46 +892,34 @@ MAIL_ENABLED=true
 </thead>
 <tbody>
 <tr>
-<td>Bodenstart</td>
+<td>Start</td>
 <td>0-10</td>
 <td>15</td>
 <td>150</td>
 </tr>
 <tr>
-<td>Platzrunde</td>
+<td>Steigflug</td>
 <td>0-10</td>
 <td>20</td>
 <td>200</td>
 </tr>
 <tr>
-<td>Platzrunde M-Figur</td>
+<td>Steigflug mit Figur-M</td>
 <td>0-10</td>
 <td>22</td>
 <td>220</td>
 </tr>
 <tr>
-<td>Platzrunde M-K-Figur</td>
-<td>0-10</td>
-<td>23</td>
-<td>230</td>
-</tr>
-<tr>
-<td>Platzüberflug</td>
+<td>Ueberflug</td>
 <td>0-10</td>
 <td>10</td>
 <td>100</td>
 </tr>
 <tr>
-<td>Platzüberflug Oval</td>
+<td>Ueberflug mit 2 Halbkreisen</td>
 <td>0-10</td>
 <td>13</td>
 <td>130</td>
-</tr>
-<tr>
-<td>Platzüberflug Kreis</td>
-<td>0-10</td>
-<td>12</td>
-<td>120</td>
 </tr>
 <tr>
 <td>Ausklinken</td>
@@ -1026,12 +1014,11 @@ MAIL_ENABLED=true
 </tr>
 </tbody>
 </table>
-<p><strong>Flugzeitberechnung:</strong> Die Sollflugzeit beträgt 200 Sekunden. Pro Sekunde Abweichung werden 3 Punkte abgezogen, bis maximal 0 Punkte.</p>
-<p><strong>Landegenauigkeit:</strong> Aus der Skizze der Ausschreibung ergeben sich die Landefelder: 0, 5, 10, 20, 30 Punkte je nach Auftreffpunkt.</p>
+<p><strong>Flugzeitberechnung:</strong> Die Sollflugzeit betraegt 200 Sekunden. Formel: MAX(0, 200 - |200 - Zeit|). Pro Sekunde Abweichung wird 1 Punkt abgezogen, maximal 200 Punkte.</p>
+<p><strong>Landegenauigkeit:</strong> Aus der Skizze der Ausschreibung ergeben sich die Landefelder: 0, 10, 20, 30 Punkte je nach Auftreffpunkt (Erstkontakt Hauptfahrwerk).</p>
 <h3>Gesamtwertung eines Durchgangs</h3>
 <blockquote>
-<p><em>„Die Wertung jedes Durchgangs setzt sich zusammen aus der Punktzahl der Messwerte und der Punktzahl der Qualitätswertung. Diese werden dann in eine Prozentwertung umgerechnet, hierbei entsprechen 100% der höchsten geflogenen Wertung des jeweiligen Durchgangs.&quot;</em>
-— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
+<p>Die Wertung jedes Durchgangs setzt sich zusammen aus der Punktzahl der Messwerte und der Punktzahl der Qualitaetswertung. Diese werden in Promille-Punkte umgerechnet: das beste Team des Durchgangs erhaelt 1000 Punkte, alle anderen proportional dazu.</p>
 </blockquote>
 <p><strong>Rohwert</strong> = Durchschnitt Qualitätswertung + Messwertung</p>
 <p>Maximal erreichbar: 1.740 bis 1.800 Punkte (abhängig von gewähltem Pflicht-/Kürprogramm).</p>
@@ -1082,8 +1069,7 @@ MAIL_ENABLED=true
 <p><strong>Warum?</strong> Ohne die automatische Übernahme können Messwerte verloren gehen, wenn sie versehentlich auf dem falschen Bewertungsbogen eingetragen werden. Durch die Replikation sind die Werte auf allen Bögen sichtbar und fließen genau einmal in die Gesamtwertung ein.</p>
 <h3>Streichwertung (Durchgänge)</h3>
 <blockquote>
-<p><em>„Zur Berechnung des Gesamtergebnisses wird ein Streichdurchgang (bei Durchführung von 3 oder mehr kompletten Durchgängen) abgezogen. Die verbleibenden Durchgänge werden in der Prozentwertung miteinander addiert.&quot;</em>
-— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
+<p>Zur Berechnung des Gesamtergebnisses wird der schlechteste Durchgang gestrichen (ab 3 vollstaendig geflogenen Durchgaengen). Die Promille-Punkte der verbleibenden Durchgaenge werden addiert.</p>
 </blockquote>
 <table>
 <thead>
@@ -1097,7 +1083,7 @@ MAIL_ENABLED=true
 <tr>
 <td>1-2</td>
 <td>Keine</td>
-<td>Summe aller Prozentwertungen</td>
+<td>Summe aller Promille-Punkte</td>
 </tr>
 <tr>
 <td>3</td>

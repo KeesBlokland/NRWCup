@@ -59,7 +59,7 @@
                         <select class="form-select" id="targetRoundSelect" name="target_round_id" required>
                             <option value="">- Durchgang auswählen -</option>
                             {% for round in rounds %}
-                                {% if round.round_number > 1 %}
+                                {% if round.round_number > 2 %}
                                     <option value="{{ round.round_id }}">Durchgang {{ round.round_number }}</option>
                                 {% endif %}
                             {% endfor %}
@@ -68,8 +68,8 @@
 
                     <div class="col-md-7">
                         <p class="text-muted mt-4">
-                            Die Startfolge wird automatisch basierend auf den Ergebnissen des vorherigen Durchgangs generiert.
-                            Teams mit den niedrigsten Punktzahlen starten zuerst.
+                            Durchgang 1 und 2: Zufällige Reihenfolge (Knopf unten).<br>
+                            Ab Durchgang 3: Umgekehrte Gesamtwertung — schlechtestes Team startet zuerst.
                         </p>
                     </div>
 
@@ -92,7 +92,7 @@
                             <h4 class="mb-0">Durchgang {{ round.round_number }} Startfolge</h4>
                             <div>
                                 {% if event.status not in ['Completed', 'Published'] %}
-                                    {% if round.round_number == 1 %}
+                                    {% if round.round_number <= 2 %}
                                         <form method="POST" action="{{ url_for('start_order.randomize', round_id=round.round_id) }}" class="d-inline">
                                             <button type="submit" class="btn btn-outline-secondary">
                                                 Zufällige Reihenfolge

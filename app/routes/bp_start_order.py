@@ -93,18 +93,8 @@ def generate():
             flash('Target round not found', 'error')
             return redirect(url_for('start_order.index', event_id=event_id))
             
-        # Find the previous round automatically (by round number)
-        prev_round = Round.query.filter(
-            Round.event_id == event_id,
-            Round.round_number < target_round.round_number
-        ).order_by(Round.round_number.desc()).first()
-        
-        if not prev_round:
-            flash('No previous round found. Cannot generate start order.', 'error')
-            return redirect(url_for('start_order.index', event_id=event_id))
-        
-        # Generate start order
-        result = start_order_service.generate_start_order_from_scores(prev_round.round_id, target_round.round_id)
+        # Generate start order based on cumulative overall standings
+        result = start_order_service.generate_start_order_from_scores(event_id, target_round.round_id)
         
         if result['success']:
             flash(result['message'], 'success')

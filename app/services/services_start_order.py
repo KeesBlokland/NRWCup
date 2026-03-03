@@ -51,58 +51,76 @@ class StartOrderService:
         
         return result
     
-    def generate_start_order_from_scores(self, prev_round_id, target_round_id):
+    def generate_start_order_from_scores(self, event_id, target_round_id):
         """
-        Generate start order for a target round based on previous round scores.
-        Teams with lower scores start first.
-        
+        Generate start order for a target round based on cumulative overall standings
+        (sum of normalized_scores from all completed rounds before this one).
+        Teams with lowest cumulative score start first (worst team first).
+
         Args:
-            prev_round_id: Previous round ID to use for scores
+            event_id: Event ID
             target_round_id: Target round ID to update start orders
-            
+
         Returns:
             Dict with success status and message
         """
         try:
-            # Get all team rounds with scores from previous round
-            prev_team_rounds = TeamRound.query.filter_by(round_id=prev_round_id)\
-                .filter(TeamRound.raw_score != None)\
-                .order_by(TeamRound.raw_score)\
-                .all()
-                
-            if not prev_team_rounds:
-                return {
-                    'success': False, 
-                    'message': 'No scores found for the previous round'
-                }
-            
             # Get the target round
             target_round = Round.query.get(target_round_id)
             if not target_round:
                 return {
-                    'success': False, 
+                    'success': False,
                     'message': 'Target round not found'
                 }
-            
+
+            # Get all completed rounds before the target round
+            completed_rounds = Round.query.filter(
+                Round.event_id == event_id,
+                Round.round_number < target_round.round_number,
+                Round.status == 'Completed'
+            ).all()
+
+            if not completed_rounds:
+                return {
+                    'success': False,
+                    'message': 'Keine abgeschlossenen Durchgänge gefunden'
+                }
+
+            # Sum normalized_scores per team across all completed rounds
+            team_totals = {}  # team_id -> cumulative normalized score
+            for round_obj in completed_rounds:
+                team_rounds = TeamRound.query.filter_by(round_id=round_obj.round_id)\
+                    .filter(TeamRound.normalized_score != None).all()
+                for tr in team_rounds:
+                    team_totals[tr.team_id] = team_totals.get(tr.team_id, 0.0) + tr.normalized_score
+
+            if not team_totals:
+                return {
+                    'success': False,
+                    'message': 'Keine Normalisierungswerte gefunden — Durchgänge müssen abgeschlossen sein'
+                }
+
+            # Sort ascending: lowest cumulative score starts first
+            sorted_teams = sorted(team_totals.items(), key=lambda x: x[1])
+
             # Clear any existing team rounds for the target round
             TeamRound.query.filter_by(round_id=target_round_id).delete()
-            
+
             # Create new team rounds with updated start order
-            for start_pos, team_round in enumerate(prev_team_rounds, 1):
-                # Create or update team round
+            teams_added = set()
+            for start_pos, (team_id, _) in enumerate(sorted_teams, 1):
                 new_team_round = TeamRound(
                     round_id=target_round_id,
-                    team_id=team_round.team_id,
+                    team_id=team_id,
                     start_order=start_pos,
                     status='Pending'
                 )
                 db.session.add(new_team_round)
-            
-            # Also add any active teams that weren't in the previous round
+                teams_added.add(team_id)
+
+            # Also add any active teams not yet scored (append at end)
             active_teams = Team.query.filter_by(status='active').all()
-            teams_added = set(tr.team_id for tr in prev_team_rounds)
-            
-            start_pos = len(prev_team_rounds) + 1
+            start_pos = len(sorted_teams) + 1
             for team in active_teams:
                 if team.team_id not in teams_added:
                     new_team_round = TeamRound(
@@ -113,12 +131,12 @@ class StartOrderService:
                     )
                     db.session.add(new_team_round)
                     start_pos += 1
-            
+
             db.session.commit()
-            
+
             return {
                 'success': True,
-                'message': f'Start order for round {target_round.round_number} generated based on round scores'
+                'message': f'Startfolge für Durchgang {target_round.round_number} nach Gesamtwertung generiert'
             }
             
         except SQLAlchemyError as e:

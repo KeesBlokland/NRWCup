@@ -130,8 +130,12 @@
                 </div>
 
                 <div class="mt-4 text-center">
-                    <button type="submit" class="btn btn-primary">Testwertungen Generieren</button>
+                    <button type="submit" class="btn btn-primary" id="generateBtn">Testwertungen Generieren</button>
                     <a href="{{ url_for('testdata.clear_all') }}" class="btn btn-outline-danger">Zur Löschseite</a>
+                </div>
+                <div id="generateProgress" class="mt-3 text-center d-none">
+                    <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                    <span class="text-muted">Generiere Testdaten, bitte warten...</span>
                 </div>
             </form>
         </div>
@@ -143,6 +147,13 @@
     function updateVariabilityValue(value) {
         document.getElementById('variabilityValue').textContent = value;
     }
+
+    document.querySelector('form').addEventListener('submit', function() {
+        var btn = document.getElementById('generateBtn');
+        btn.disabled = true;
+        btn.textContent = 'Generiere...';
+        document.getElementById('generateProgress').classList.remove('d-none');
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
         // Select/Deselect All Teams

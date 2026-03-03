@@ -862,6 +862,25 @@ def combined_view(round_id, team_id):
             ).filter_by(team_round_id=team_round.team_round_id)\
              .order_by(Score.score_id).all()
 
+            # Auto-create Score records for any judges not yet in this team_round
+            existing_judge_ids = {s.judge_id for s in all_scores}
+            new_scores_created = False
+            for judge in judges:
+                if judge.teilnehmer_id not in existing_judge_ids:
+                    new_score = Score(
+                        team_round_id=team_round.team_round_id,
+                        judge_id=judge.teilnehmer_id,
+                        entered_at=datetime.utcnow()
+                    )
+                    db.session.add(new_score)
+                    new_scores_created = True
+            if new_scores_created:
+                db.session.commit()
+                all_scores = Score.query.options(
+                    db.joinedload(Score.values).joinedload(ScoreValue.task_type)
+                ).filter_by(team_round_id=team_round.team_round_id)\
+                 .order_by(Score.score_id).all()
+
         # Kuer choices: first non-zero value across all scores wins
         kuer_choices = {}
         for group, codes in KUER_GROUPS.items():

@@ -4,7 +4,7 @@
 {% block title %}NRW Cup {{ current_year }} - {{ judges|length }} Richter{% endblock %}
 
 {% block content %}
-<div class="container-fluid scoresheet-container">
+<div class="container-fluid">
   <div class="card">
     <div class="card-header py-1">
       <div class="d-flex justify-content-between align-items-center">
@@ -53,7 +53,7 @@
       <!-- 3-column score table -->
       {# quality_figures and mess_figures are passed in from the route #}
       <div class="table-responsive">
-        <table class="table table-sm table-bordered align-middle" style="font-size:0.82rem">
+        <table class="table table-sm table-bordered align-middle w-100" style="font-size:{% if judges|length > 3 %}0.75rem{% else %}0.82rem{% endif %}">
           <thead class="table-light">
             <tr>
               <th style="width:28%">Figur</th>
@@ -78,7 +78,10 @@
               {% set is_platzueber   = figure.code in ['PLTZU','PLTZU-OV'] %}
               <tr>
                 <td>
-                  {{ figure.name_de }}
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span>{{ figure.name_de }}</span>
+                    <span class="text-muted score-label-sm ms-1">x{{ figure.k_factor or 1 }}</span>
+                  </div>
                   <input type="hidden" class="figure-max" id="max_{{ figure.code }}" value="{{ figure.max_value if figure.max_value is not none else 10 }}">
                 </td>
 
@@ -99,25 +102,19 @@
 
                   <td>
                     {% if jd.score %}
-                      <div class="input-group input-group-sm">
-                        <input type="number"
-                               class="form-control form-control-sm decimal-dot c{{ ci }}-quality{% if kuer_dis %} score-input-readonly{% endif %}"
-                               id="c{{ ci }}_score_{{ figure.code }}"
-                               data-figure-code="{{ figure.code }}"
-                               data-kfactor="{{ figure.k_factor or 1 }}"
-                               data-col="{{ ci }}"
-                               {% if is_platzrunde %}data-group="platzrunde"{% endif %}
-                               {% if is_platzueber %}data-group="platzueberflug"{% endif %}
-                               value="{{ val if val is not none else '' }}"
-                               min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
-                               step="0.5"
-                               {% if locked or kuer_dis %}readonly{% endif %}
-                               oninput="colOnInput({{ ci }}, this)">
-                        <span class="input-group-text score-label-sm" style="min-width:2.8rem"
-                              id="c{{ ci }}_pts_{{ figure.code }}">
-                          {{ ('%.1f' % (val * (figure.k_factor or 1))) if val is not none and val != '' else '' }}
-                        </span>
-                      </div>
+                      <input type="number"
+                             class="form-control form-control-sm decimal-dot c{{ ci }}-quality{% if kuer_dis %} score-input-readonly{% endif %}"
+                             id="c{{ ci }}_score_{{ figure.code }}"
+                             data-figure-code="{{ figure.code }}"
+                             data-kfactor="{{ figure.k_factor or 1 }}"
+                             data-col="{{ ci }}"
+                             {% if is_platzrunde %}data-group="platzrunde"{% endif %}
+                             {% if is_platzueber %}data-group="platzueberflug"{% endif %}
+                             value="{{ val if val is not none else '' }}"
+                             min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
+                             step="0.5"
+                             {% if locked or kuer_dis %}readonly{% endif %}
+                             oninput="colOnInput({{ ci }}, this)">
                     {% else %}
                       <span class="text-muted small">-</span>
                     {% endif %}
@@ -154,19 +151,22 @@
                         {% endfor %}
                       </select>
                     {% elif figure.code == 'SEGZEIT' %}
-                      <div class="input-group input-group-sm" style="max-width:12rem">
-                        <input type="number"
-                               class="form-control form-control-sm mess-input"
-                               id="mess_score_SEGZEIT"
-                               value="{{ val if val is not none else '' }}"
-                               min="0" max="400" step="1"
-                               {% if owner_locked %}readonly{% endif %}
-                               oninput="onSegzeitInput(this.value)">
-                        <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
-                          {%- if val is not none and val != '' -%}
-                            {{ '%.1f' % [0, 200 - (val - 200)|abs]|max }}
-                          {%- endif -%}
-                        </span>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="input-group input-group-sm" style="max-width:12rem">
+                          <input type="number"
+                                 class="form-control form-control-sm mess-input"
+                                 id="mess_score_SEGZEIT"
+                                 value="{{ val if val is not none else '' }}"
+                                 min="0" max="400" step="1"
+                                 {% if owner_locked %}readonly{% endif %}
+                                 oninput="onSegzeitInput(this.value)">
+                          <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
+                            {%- if val is not none and val != '' -%}
+                              {{ '%.1f' % [0, 200 - (val - 200)|abs]|max }}
+                            {%- endif -%}
+                          </span>
+                        </div>
+                        <span class="text-muted score-label-sm">MAX(0, 200 - ABS(200 - Zeit))</span>
                       </div>
                     {% endif %}
                   {% else %}
@@ -186,60 +186,54 @@
                 </td>
               {% endfor %}
             </tr>
+
+            <!-- Save buttons row, aligned with judge columns -->
+            <tr>
+              <td></td>
+              {% for ci in range(judges|length) %}
+                {% set jd = judge_data[ci] %}
+                <td class="text-center py-1">
+                  {% if jd.score %}
+                    {% if jd.score.locked %}
+                      <a href="{{ url_for('scoring.view_score', score_id=jd.score.score_id) }}"
+                         class="btn btn-warning btn-sm w-100">
+                        Bogen ansehen / Entsperren
+                      </a>
+                    {% else %}
+                      <button type="submit" form="form_col{{ ci }}" class="btn btn-primary btn-sm w-100">
+                        Speichern Richter {{ ci+1 }}
+                      </button>
+                    {% endif %}
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
           </tbody>
         </table>
       </div><!-- table-responsive -->
 
-      <div class="text-muted score-label-sm mb-3">* Flugzeit: MAX(0, 200 - ABS(200 - Zeit))</div>
-
-      <!-- Per-judge save forms (hidden inputs carry the values) -->
-      <div class="row g-3">
-        {% for ci in range(judges|length) %}
-          {% set jd = judge_data[ci] %}
-          {% if jd.score %}
-            <div class="col-md-{{ 12 // judges|length }}">
-              <div class="card card-body py-2{% if jd.score.locked %} border-warning{% endif %}">
-                <div class="mb-2">
-                  <strong>{{ jd.score.judge.name if jd.score.judge else 'Richter ' ~ (ci+1) }}</strong>
-                </div>
-
-                {% if jd.score.locked %}
-                  <a href="{{ url_for('scoring.view_score', score_id=jd.score.score_id) }}"
-                     class="btn btn-warning btn-sm w-100">
-                    Bogen ansehen / Entsperren
-                  </a>
-                {% else %}
-                  <form method="POST"
-                        action="{{ url_for('scoring.update_score', score_id=jd.score.score_id) }}"
-                        id="form_col{{ ci }}"
-                        class="combined-save-form"
-                        data-col="{{ ci }}">
-                    <input type="hidden" name="score_id" value="{{ jd.score.score_id }}">
-                    {% for figure in quality_figures %}
-                      <input type="hidden" name="score_{{ figure.code }}" id="h{{ ci }}_{{ figure.code }}" value="">
-                    {% endfor %}
-                    {% if ci == 0 %}
-                      {% for figure in mess_figures %}
-                        <input type="hidden" name="score_{{ figure.code }}" id="h0_{{ figure.code }}" value="">
-                      {% endfor %}
-                    {% endif %}
-                    <input type="hidden" name="notes" id="h{{ ci }}_notes" value="{{ jd.score.notes or '' }}">
-                    <button type="submit" class="btn btn-primary btn-sm w-100">
-                      Speichern Richter {{ ci+1 }}
-                    </button>
-                  </form>
-                {% endif %}
-              </div>
-            </div>
-          {% else %}
-            <div class="col-md-{{ 12 // judges|length }}">
-              <div class="card card-body py-2 border-secondary">
-                <span class="text-muted small">Richter {{ ci+1 }} - kein Bogen vorhanden</span>
-              </div>
-            </div>
-          {% endif %}
-        {% endfor %}
-      </div><!-- row -->
+      <!-- Hidden save forms (hidden inputs only, buttons are in the table row above) -->
+      {% for ci in range(judges|length) %}
+        {% set jd = judge_data[ci] %}
+        {% if jd.score and not jd.score.locked %}
+          <form method="POST"
+                action="{{ url_for('scoring.update_score', score_id=jd.score.score_id) }}"
+                id="form_col{{ ci }}"
+                class="combined-save-form"
+                data-col="{{ ci }}">
+            <input type="hidden" name="score_id" value="{{ jd.score.score_id }}">
+            {% for figure in quality_figures %}
+              <input type="hidden" name="score_{{ figure.code }}" id="h{{ ci }}_{{ figure.code }}" value="">
+            {% endfor %}
+            {% if ci == 0 %}
+              {% for figure in mess_figures %}
+                <input type="hidden" name="score_{{ figure.code }}" id="h0_{{ figure.code }}" value="">
+              {% endfor %}
+            {% endif %}
+            <input type="hidden" name="notes" id="h{{ ci }}_notes" value="{{ jd.score.notes or '' }}">
+          </form>
+        {% endif %}
+      {% endfor %}
 
     </div><!-- card-body -->
   </div><!-- card -->

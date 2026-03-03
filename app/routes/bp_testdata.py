@@ -29,26 +29,25 @@ def generate_landing_score():
     """Generate score for landing zones (0, 5, 10, 20, 30)"""
     return random.choice([0, 5, 10, 20, 30])
 
+STEIGFLUG_CODES = {'PLTZR', 'PLTZR-M'}
+UEBERFLUG_CODES = {'PLTZU', 'PLTZU-OV'}
+
 def handle_mutually_exclusive_figures(task_types):
     """Handle figures that are mutually exclusive (only one gets a value, others are 0)
        Returns dictionary with chosen variants that should be consistent across judges"""
-    
+
     chosen_variants = {}
-    
-    # Group 1: Platzrunde variants
-    platzrunde_variants = [task for task in task_types if 
-                          task.name_de and 'Platzrunde' in task.name_de]
-    if platzrunde_variants:
-        # Choose one random variant to score
-        chosen_variants['platzrunde'] = random.choice(platzrunde_variants).type_id
-    
-    # Group 2: Platzüberflug variants
-    platzu_variants = [task for task in task_types if 
-                       task.name_de and 'Platz' in task.name_de and 'berflug' in task.name_de]
-    if platzu_variants:
-        # Choose one random variant to score
-        chosen_variants['platzu'] = random.choice(platzu_variants).type_id
-    
+
+    # Group 1: Steigflug variants (PLTZR / PLTZR-M)
+    steigflug_variants = [task for task in task_types if task.code in STEIGFLUG_CODES]
+    if steigflug_variants:
+        chosen_variants['platzrunde'] = random.choice(steigflug_variants).type_id
+
+    # Group 2: Ueberflug variants (PLTZU / PLTZU-OV)
+    ueberflug_variants = [task for task in task_types if task.code in UEBERFLUG_CODES]
+    if ueberflug_variants:
+        chosen_variants['platzu'] = random.choice(ueberflug_variants).type_id
+
     return chosen_variants
 
 @testdata_bp.route('/clear', methods=['POST'])
@@ -269,11 +268,11 @@ def generate():
                                     score_values[task_type.code] = segzeit_value
                                 else:
                                     score_values[task_type.code] = landing_values[task_type.code]
-                        elif task_type.name_de and 'Platzrunde' in task_type.name_de:
+                        elif task_type.code in STEIGFLUG_CODES:
                             # Only score the chosen variant — leave others absent (like a real judge)
                             if 'platzrunde' in chosen_variants and task_type.type_id == chosen_variants['platzrunde']:
                                 score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)
-                        elif task_type.name_de and 'berflug' in task_type.name_de:
+                        elif task_type.code in UEBERFLUG_CODES:
                             # Only score the chosen variant — leave others absent (like a real judge)
                             if 'platzu' in chosen_variants and task_type.type_id == chosen_variants['platzu']:
                                 score_values[task_type.code] = generate_gaussian_score(std_dev=std_dev)

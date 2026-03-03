@@ -267,7 +267,7 @@
                                         {% if team_round_key in team_rounds %}
                                             {% set team_round = team_rounds[team_round_key] %}
                                             {% if team_round.normalized_score is not none %}
-                                                <span class="badge bg-primary fs-6">{{ "%.1f"|format(team_round.normalized_score) }} Pkt</span>
+                                                <span class="badge bg-primary fs-6">{{ "%.1f"|format(team_round.normalized_score) }}</span>
                                             {% else %}
                                                 -
                                             {% endif %}
@@ -278,7 +278,7 @@
                                         {% set team_found = false %}
                                         {% for standing in standings %}
                                             {% if standing.team.team_id == team.team_id %}
-                                                <span class="badge bg-primary fs-6">{{ "%.1f"|format(standing.score) }} Pkt</span>
+                                                <span class="badge bg-primary fs-6">{{ "%.1f"|format(standing.score) }}</span>
                                                 {% set team_found = true %}
                                             {% endif %}
                                         {% endfor %}
@@ -323,16 +323,16 @@
                                         {% if i < standing.round_scores|length %}
                                             {% set score = standing.round_scores[i] %}
                                             {% if i in standing.dropped_indices %}
-                                                <span class="text-muted text-decoration-line-through">{{ "%.1f"|format(score) }} Pkt</span>
+                                                <span class="text-muted text-decoration-line-through">{{ "%.1f"|format(score) }}</span>
                                             {% else %}
-                                                {{ "%.1f"|format(score) }} Pkt
+                                                {{ "%.1f"|format(score) }}
                                             {% endif %}
                                         {% else %}
                                             -
                                         {% endif %}
                                     </td>
                                 {% endfor %}
-                                <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }} Pkt</td>
+                                <td class="text-center fw-bold">{{ "%.1f"|format(standing.score) }}</td>
                             </tr>
                         {% endfor %}
                     </table>

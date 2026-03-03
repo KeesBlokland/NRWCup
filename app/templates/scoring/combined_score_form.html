@@ -1,7 +1,7 @@
 {# File: app/templates/scoring/combined_score_form.html | Last Updated: 2026-02-27 #}
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - 3 Richter{% endblock %}
+{% block title %}NRW Cup {{ current_year }} - {{ judges|length }} Richter{% endblock %}
 
 {% block content %}
 <div class="container-fluid scoresheet-container">
@@ -9,7 +9,7 @@
     <div class="card-header py-1">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-          {% if event %}{{ event.name }} - {% endif %}3 Richter Ansicht
+          {% if event %}{{ event.name }} - {% endif %}{{ judges|length }} Richter Ansicht
         </h5>
         <img src="{{ url_for('static', filename='Club.png') }}" alt="Club Logo" class="club-logo">
       </div>
@@ -57,9 +57,9 @@
           <thead class="table-light">
             <tr>
               <th style="width:28%">Figur</th>
-              {% for ci in range(3) %}
+              {% for ci in range(judges|length) %}
                 {% set jd = judge_data[ci] %}
-                <th class="text-center" style="width:24%">
+                <th class="text-center" style="width:{{ (72 // judges|length) }}%">
                   {% if jd.score %}
                     {{ jd.score.judge.name if jd.score.judge else 'Richter ' ~ (ci+1) }}
                     {% if jd.score.locked %}&#128274;{% endif %}
@@ -82,7 +82,7 @@
                   <input type="hidden" class="figure-max" id="max_{{ figure.code }}" value="{{ figure.max_value if figure.max_value is not none else 10 }}">
                 </td>
 
-                {% for ci in range(3) %}
+                {% for ci in range(judges|length) %}
                   {% set jd = judge_data[ci] %}
                   {% set val = jd.value_map.get(figure.code) %}
                   {% set locked = jd.score and jd.score.locked and not session.get('is_admin') %}
@@ -128,9 +128,9 @@
 
             <!-- Messwerte: single shared entry row (owned by Richter 1) -->
             <tr class="table-secondary">
-              <td colspan="4" class="py-1">
+              <td colspan="{{ 1 + judges|length }}" class="py-1">
                 <small class="fw-bold text-muted">MESSWERTE</small>
-                <small class="text-muted ms-2">(einmalig -- gilt fuer alle 3 Richter)</small>
+                <small class="text-muted ms-2">(einmalig -- gilt fuer alle {{ judges|length }} Richter)</small>
               </td>
             </tr>
 
@@ -141,7 +141,7 @@
               {% set val = owner.value_map.get(figure.code) %}
               <tr>
                 <td>{{ figure.name_de }}</td>
-                <td colspan="3">
+                <td colspan="{{ judges|length }}">
                   {% if owner.score %}
                     {% if figure.code in ['LANDGM','LANS','SEILZ'] %}
                       <select class="form-select form-select-sm mess-input"
@@ -176,10 +176,10 @@
               </tr>
             {% endfor %}
 
-            <!-- Totals: col 0 = quality + Messwerte, cols 1/2 = quality only -->
+            <!-- Totals: col 0 = quality + Messwerte, other cols = quality only -->
             <tr class="table-light fw-bold">
               <td>Gesamt</td>
-              {% for ci in range(3) %}
+              {% for ci in range(judges|length) %}
                 <td class="text-center">
                   <input type="text" class="form-control form-control-sm text-end fw-bold"
                          id="c{{ ci }}_total" readonly>
@@ -194,10 +194,10 @@
 
       <!-- Per-judge save forms (hidden inputs carry the values) -->
       <div class="row g-3">
-        {% for ci in range(3) %}
+        {% for ci in range(judges|length) %}
           {% set jd = judge_data[ci] %}
           {% if jd.score %}
-            <div class="col-md-4">
+            <div class="col-md-{{ 12 // judges|length }}">
               <div class="card card-body py-2{% if jd.score.locked %} border-warning{% endif %}">
                 <div class="mb-2">
                   <strong>{{ jd.score.judge.name if jd.score.judge else 'Richter ' ~ (ci+1) }}</strong>
@@ -232,7 +232,7 @@
               </div>
             </div>
           {% else %}
-            <div class="col-md-4">
+            <div class="col-md-{{ 12 // judges|length }}">
               <div class="card card-body py-2 border-secondary">
                 <span class="text-muted small">Richter {{ ci+1 }} - kein Bogen vorhanden</span>
               </div>
@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (el) el.addEventListener('change', function() { colTotal(0); });
     });
 
-    for (var ci = 0; ci < 3; ci++) {
+    for (var ci = 0; ci < {{ judges|length }}; ci++) {
         // Init quality points displays
         document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
             if (inp.value !== '') {

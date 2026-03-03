@@ -833,7 +833,7 @@ def view_score(score_id):
 
 @scoring_bp.route('/combined/<int:round_id>/<int:team_id>')
 def combined_view(round_id, team_id):
-    """Show all 3 judge score columns for one team/round on a single page."""
+    """Show all judge score columns for one team/round on a single page."""
     try:
         round_obj = Round.query.get_or_404(round_id)
         team = Team.query.get_or_404(team_id)
@@ -887,8 +887,8 @@ def combined_view(round_id, team_id):
                 'is_owner': (idx == 0),
             })
 
-        # Pad to 3 slots (empty dict for judges without a score record yet)
-        while len(judge_data) < 3:
+        # Pad to num_judges slots (empty dict for judges without a score record yet)
+        while len(judge_data) < len(judges):
             judge_data.append({'score': None, 'value_map': {}, 'is_owner': False})
 
         quality_figures = [f for f in active_figures if f.code not in MESSWERT_CODES]

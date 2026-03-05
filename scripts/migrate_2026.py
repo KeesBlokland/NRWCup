@@ -103,6 +103,19 @@ def run(dry_run=False):
             )
         changes += 1
 
+    # --- Fix SEGZEIT max_value: must be 300 (entry range 200+-100), not 200 ---
+    cur.execute("SELECT max_value FROM task_types WHERE code = 'SEGZEIT'")
+    row = cur.fetchone()
+    if row is None:
+        print("SKIP (not found): SEGZEIT")
+    elif row[0] == 300:
+        print("OK (already correct): SEGZEIT max_value = 300")
+    else:
+        print("FIX: SEGZEIT max_value " + str(row[0]) + " -> 300")
+        if not dry_run:
+            cur.execute("UPDATE task_types SET max_value = 300 WHERE code = 'SEGZEIT'")
+        changes += 1
+
     # --- Add num_judges column to events if missing ---
     cur.execute("PRAGMA table_info(events)")
     col_names = [row[1] for row in cur.fetchall()]

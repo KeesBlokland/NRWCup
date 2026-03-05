@@ -50,6 +50,14 @@ def process_event_data(form):
             event_data['estimated_rounds'] = estimated_rounds
     except (ValueError, TypeError):
         pass
+
+    # Handle num_judges
+    try:
+        num_judges = form.get('num_judges', type=int)
+        if num_judges and 1 <= num_judges <= 5:
+            event_data['num_judges'] = num_judges
+    except (ValueError, TypeError):
+        pass
     
     return event_data
 
@@ -107,7 +115,8 @@ def get_event(event_id):
             'lat': location.lat if location else '',
             'lon': location.lon if location else '',
             'notes': location.notes if location else '',
-            'estimated_rounds': event.estimated_rounds
+            'estimated_rounds': event.estimated_rounds,
+            'num_judges': event.num_judges if event.num_judges is not None else 3,
         }
         return jsonify(data)
     except SQLAlchemyError as e:

@@ -97,6 +97,7 @@ class Event(db.Model):
     is_hidden = db.Column(db.Boolean, default=False)
     verein = db.Column(db.String(50), nullable=False)
     estimated_rounds = db.Column(db.Integer, default=4)
+    num_judges = db.Column(db.Integer, default=3)
     
     # Relationships
     rounds = db.relationship("Round", backref="event", cascade="all, delete-orphan")

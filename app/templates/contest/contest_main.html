@@ -57,7 +57,12 @@
                             </div>
                             <div class="col-md-2">
                                 <input type="hidden" name="estimated_rounds" value="3">
-                                <small class="text-muted">Durchgänge werden automatisch erstellt</small>
+                                <label class="form-label">Anzahl Punktrichter</label>
+                                <select class="form-select" name="num_judges">
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Status</label>
@@ -264,6 +269,7 @@ function editEvent(eventId) {
             document.getElementsByName('status')[0].value = data.status;
             document.getElementsByName('notes')[0].value = data.notes;
             document.getElementsByName('estimated_rounds')[0].value = data.estimated_rounds;
+            document.getElementsByName('num_judges')[0].value = data.num_judges || 3;
 
             // Show delete and lock buttons in edit mode
             document.getElementById('deleteBtn').classList.remove('d-none');

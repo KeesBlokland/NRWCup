@@ -30,14 +30,17 @@ class ScoringService(BaseService):
         """
         return TaskType.query.filter_by(is_active=True).order_by(TaskType.sort_order).all()
     
-    def get_judges(self):
+    def get_judges(self, limit=None):
         """
-        Get all judges.
-        
+        Get judges, optionally limited to first N (for event-specific num_judges).
+
         Returns:
             List of Teilnehmer instances who are judges
         """
-        return Teilnehmer.query.filter_by(is_punktwerter=True).order_by(Teilnehmer.name).all()
+        all_judges = Teilnehmer.query.filter_by(is_punktwerter=True).order_by(Teilnehmer.name).all()
+        if limit and limit < len(all_judges):
+            return all_judges[:limit]
+        return all_judges
     
     def get_active_round(self):
         """

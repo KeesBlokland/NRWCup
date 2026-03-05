@@ -156,8 +156,10 @@ def scoresheet():
     logger.info("Accessing scoresheet form")
     try:
         active_figures = scoring_service.get_active_figures()
-        judges = scoring_service.get_judges()
-        
+        active_event = Event.query.filter_by(status='Active').first()
+        num_judges = active_event.num_judges if active_event and active_event.num_judges else 3
+        judges = scoring_service.get_judges(limit=num_judges)
+
         # Get parameters from request
         team_round_id = request.args.get('team_round_id')
         round_id = request.args.get('round_id', type=int)
@@ -315,9 +317,10 @@ def score_list():
         if not round_id and rounds:
             round_id = rounds[-1].round_id
             
-        # Get all judges
-        judges = scoring_service.get_judges()
-        
+        # Get judges limited to event's num_judges setting
+        num_judges = event.num_judges if event and event.num_judges else 3
+        judges = scoring_service.get_judges(limit=num_judges)
+
         # Get all teams
         # teams = Team.query.filter_by(status='active').order_by(Team.team_nummer).all()
         if round_id:
@@ -854,7 +857,8 @@ def combined_view(round_id, team_id):
         ).first()
 
         active_figures = scoring_service.get_active_figures()
-        judges = scoring_service.get_judges()
+        num_judges = event.num_judges if event and event.num_judges else 3
+        judges = scoring_service.get_judges(limit=num_judges)
 
         MESSWERT_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
         KUER_GROUPS = {

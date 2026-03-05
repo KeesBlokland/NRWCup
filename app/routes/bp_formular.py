@@ -79,8 +79,9 @@ def generate_scoresheets_for_round(round_id, team_order=None):
         # Now delete team rounds
         TeamRound.query.filter_by(round_id=round_id).delete()
         
-        # Get all judges
-        judges = Teilnehmer.query.filter_by(is_punktwerter=True).all()
+        # Get judges limited to event's num_judges setting
+        num_judges = event.num_judges if event.num_judges else 3
+        judges = Teilnehmer.query.filter_by(is_punktwerter=True).order_by(Teilnehmer.name).limit(num_judges).all()
 
         # Create new team rounds with specified order, plus Score records for each judge
         for index, team in enumerate(teams, start=1):

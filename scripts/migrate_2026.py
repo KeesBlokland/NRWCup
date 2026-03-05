@@ -103,6 +103,17 @@ def run(dry_run=False):
             )
         changes += 1
 
+    # --- Add num_judges column to events if missing ---
+    cur.execute("PRAGMA table_info(events)")
+    col_names = [row[1] for row in cur.fetchall()]
+    if 'num_judges' in col_names:
+        print("OK (already exists): events.num_judges")
+    else:
+        print("ADD COLUMN: events.num_judges INTEGER DEFAULT 3")
+        if not dry_run:
+            cur.execute("ALTER TABLE events ADD COLUMN num_judges INTEGER DEFAULT 3")
+        changes += 1
+
     if changes == 0:
         print()
         print("Nothing to do -- database already up to date.")

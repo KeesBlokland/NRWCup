@@ -455,7 +455,7 @@ Mueller / Schmidt
 <hr />
 <h2 id="s9">9. Startliste Verwaltung</h2>
 <p><strong>Pfad:</strong> <code>/start_order/</code></p>
-<p>Verwaltet die Startreihenfolge für alle Durchgänge ab Runde 2.</p>
+<p>Verwaltet die Startreihenfolge. Laut 2026-Regeln: Durchgang 1 und 2 in zufälliger Reihenfolge (Randomisieren); ab Durchgang 3 basiert die Reihenfolge auf der Gesamtwertung (letztplatziertes Team startet zuerst).</p>
 <h3>Reihenfolge für weitere Runden</h3>
 <table>
 <thead>
@@ -513,12 +513,12 @@ Mueller / Schmidt
 <h3>Navigation zwischen Punktrichtern</h3>
 <p>Auf dem Bewertungsbogen können Sie mit den Buttons <strong>Voriger</strong> und <strong>Nächster</strong> direkt zum Bewertungsbogen des vorherigen oder nächsten Punktrichters für dasselbe Team wechseln, ohne zur Übersichtsliste zurückkehren zu müssen.</p>
 <h3>Kürfiguren wählen</h3>
-<p>Bei den Kürfiguren muss für jede Exklusivgruppe <strong>genau eine</strong> Variante ausgewählt werden. Die Auswahl erfolgt auf dem Wertungsbogen von Richter 1 und wird automatisch auf die Bögen von Richter 2 und 3 übernommen.</p>
+<p>Bei den Kürfiguren muss für jede Exklusivgruppe <strong>genau eine</strong> Variante ausgewählt werden. Die Auswahl erfolgt auf dem Wertungsbogen von Richter 1 und wird automatisch auf alle weiteren Bögen übernommen.</p>
 <ul>
 <li><strong>Steigflug-Gruppe</strong>: Steigflug (PLTZR) <strong>oder</strong> Steigflug mit Figur-M (PLTZR-M)</li>
 <li><strong>Ueberflug-Gruppe</strong>: Ueberflug (PLTZU) <strong>oder</strong> Ueberflug mit 2 Halbkreisen (PLTZU-OV)</li>
 </ul>
-<p>Nicht gewählte Varianten erhalten automatisch 0 Punkte. Auf den Bögen von Richter 2/3 erscheinen nicht gewählte Varianten blau/schreibgeschützt.</p>
+<p>Nicht gewählte Varianten erhalten automatisch 0 Punkte. Auf den Bögen der weiteren Richter erscheinen nicht gewählte Varianten blau/schreibgeschützt.</p>
 <h3>Messwerte eingeben</h3>
 <p>Messwerte (SEGZEIT, SEILZ, LANDGM, LANS) werden <strong>einmalig</strong> für das gesamte Team eingegeben und gelten für alle Punktrichter identisch.</p>
 <ul>
@@ -549,11 +549,11 @@ Mueller / Schmidt
 <p><strong>Kurzfassung:</strong></p>
 <ol>
 <li><strong>Qualitätswertung</strong> pro Punktrichter = Summe aller (Figurenpunkte × K-Faktor)</li>
-<li>Bei 4+ Punktrichtern: Höchste und niedrigste Wertung streichen</li>
-<li><strong>Durchschnitt</strong> der verbleibenden Qualitätswertungen</li>
+<li>4 Punktrichter: hoechste Wertung streichen; 5 Punktrichter: hoechste und niedrigste streichen; 3 Punktrichter: keine Streichung</li>
+<li><strong>Durchschnitt</strong> der verbleibenden Qualitaetswertungen (auf 3 Dezimalstellen gerundet)</li>
 <li><strong>Messwertung</strong> = Flugzeit + Landegenauigkeit + Seilabwurf (einmalig, nicht gemittelt)</li>
-<li><strong>Rohwert</strong> = Qualitätswertung (Durchschnitt) + Messwertung</li>
-<li><strong>Prozent</strong> = Rohwert / höchster Rohwert des Durchgangs × 100</li>
+<li><strong>Rohwert</strong> = Qualitaetswertung (Durchschnitt) + Messwertung</li>
+<li><strong>Promille-Punkte</strong> = Rohwert / hoechster Rohwert des Durchgangs x 1000 (bestes Team = 1000)</li>
 <li><strong>Gesamt</strong> = Summe aller Durchgänge (bei 3+ Runden: Streichwertung)</li>
 </ol>
 <h3>Wertung sperren (Admin)</h3>
@@ -881,12 +881,8 @@ MAIL_ENABLED=true
 <p>Wenn ein Team keine Email-Adressen eingetragen hat, wird die Email automatisch an die Admin-Adresse (<code>ADMIN_EMAIL</code> in der <code>.env</code>-Datei, Standard: <code>MAIL_USERNAME</code>) weitergeleitet. Die Erfolgsmeldung zeigt dann: <em>&quot;Keine Team-Adressen — gesendet an Admin: ...&quot;</em> — so ist klar, dass es ein Fallback war und keine echte Zustellung an die Piloten.</p>
 <hr />
 <h2 id="s18">18. Messwertung &amp; Qualitätswertung</h2>
-<p>Die DMFV-Ausschreibung (Fassung 2025-Rev0, Abschnitt III) unterscheidet zwei Bewertungsarten:</p>
-<h3>Qualitätswertung (subjektiv)</h3>
-<blockquote>
-<p><em>„Die Qualitätswertung der einzelnen Figuren des Flugprogramms erfolgt durch mindestens 3 und maximal 5 vom DMFV zugelassenen Punktrichtern. [...] Jeweils die höchste und niedrigste Wertung einer Figur wird gestrichen.&quot;</em>
-— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
-</blockquote>
+<p>Die BeMod F-Schlepp Regeln 2026 (Abschnitt J/K) unterscheiden zwei Bewertungsarten:</p>
+<h3>Qualitaetswertung (subjektiv)</h3>
 <p>Jeder Punktrichter bewertet diese Figuren unabhängig mit 0-10 Punkten. Der K-Faktor multipliziert die Punkte:</p>
 <table>
 <thead>
@@ -959,31 +955,34 @@ MAIL_ENABLED=true
 <td>100</td>
 </tr>
 <tr>
-<td>Landequalität Segler</td>
+<td>Landeanflug Segelflugmodell</td>
 <td>0-10</td>
 <td>10</td>
 <td>100</td>
 </tr>
 <tr>
-<td>Landung Segler</td>
+<td>Landung Segelflugmodell</td>
 <td>0-10</td>
 <td>10</td>
 <td>100</td>
 </tr>
 <tr>
-<td>Naturgetreues Erscheinungsbild</td>
+<td>Gesamterscheinungsbild Schleppgespann</td>
 <td>0-10</td>
 <td>15</td>
 <td>150</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Berechnung:</strong> Bei 5 Punktrichtern werden die höchste und niedrigste Wertung pro Figur gestrichen. Die verbleibenden 3 Wertungen werden gemittelt.</p>
+<p><strong>Berechnung (Regeln 2026):</strong></p>
+<ul>
+<li><strong>3 Punktrichter:</strong> Alle 3 Wertungen werden gemittelt, keine Streichung.</li>
+<li><strong>4 Punktrichter:</strong> Die hoechste Wertung wird gestrichen, die verbleibenden 3 werden gemittelt.</li>
+<li><strong>5 Punktrichter:</strong> Hoechste und niedrigste Wertung werden gestrichen, die verbleibenden 3 werden gemittelt.</li>
+</ul>
+<p>Der Durchschnittswert wird auf 3 Nachkommastellen kaufmaennisch gerundet, dann mit dem K-Faktor multipliziert und auf ganze Bewertungspunkte gerundet.</p>
 <h3>Messwertung (objektiv)</h3>
-<blockquote>
-<p><em>„Die Bewertung aller messbaren Größen (Genauigkeit der Landung, Seilabwurf, Flugzeit) übernimmt ein Messteam (wird vom ausrichtenden Verein gestellt). Die Zeitwertung des Seglers wird mit 2 Stoppuhren von zwei Personen gemessen.&quot;</em>
-— Ausschreibung DM-Seglerschlepp, Abschnitt III</p>
-</blockquote>
+<p>Objektive Messgroessen werden einmalig durch ein Messteam erfasst und gelten fuer alle Punktrichter identisch.</p>
 <p>Diese Werte werden <strong>einmalig gemessen</strong> und sind für alle Punktrichter identisch:</p>
 <table>
 <thead>
@@ -1028,7 +1027,7 @@ MAIL_ENABLED=true
 <p>Die Wertung jedes Durchgangs setzt sich zusammen aus der Punktzahl der Messwerte und der Punktzahl der Qualitaetswertung. Diese werden in Promille-Punkte umgerechnet: das beste Team des Durchgangs erhaelt 1000 Punkte, alle anderen proportional dazu.</p>
 </blockquote>
 <p><strong>Rohwert</strong> = Durchschnitt Qualitätswertung + Messwertung</p>
-<p>Maximal erreichbar: 1.740 bis 1.800 Punkte (abhängig von gewähltem Pflicht-/Kürprogramm).</p>
+<p>Maximal erreichbar: 1640 Punkte (Standard-Programm) / 1690 Punkte (Varianten-Programm) — gemaess Regeln 2026.</p>
 <h3>Automatische Messwert-Übernahme im System</h3>
 <p>Da die Messwerte objektive Fakten sind, die nicht pro Punktrichter variieren, überträgt das System sie automatisch:</p>
 <p><strong>Ablauf:</strong></p>

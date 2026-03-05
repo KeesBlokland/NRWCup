@@ -200,9 +200,17 @@
                         Bogen ansehen / Entsperren
                       </a>
                     {% else %}
-                      <button type="submit" form="form_col{{ ci }}" class="btn btn-primary btn-sm w-100">
+                      <button type="submit" form="form_col{{ ci }}" class="btn btn-primary btn-sm w-100 mb-1">
                         Speichern Richter {{ ci+1 }}
                       </button>
+                      <form method="POST"
+                            action="{{ url_for('scoring.lock_score', score_id=jd.score.score_id) }}">
+                        <input type="hidden" name="next"
+                               value="{{ url_for('scoring.combined_view', round_id=round_obj.round_id, team_id=team.team_id) }}">
+                        <button type="submit" class="btn btn-warning btn-sm w-100">
+                          Sperren Richter {{ ci+1 }}
+                        </button>
+                      </form>
                     {% endif %}
                   {% endif %}
                 </td>
@@ -222,6 +230,8 @@
                 class="combined-save-form"
                 data-col="{{ ci }}">
             <input type="hidden" name="score_id" value="{{ jd.score.score_id }}">
+            <input type="hidden" name="next"
+                   value="{{ url_for('scoring.combined_view', round_id=round_obj.round_id, team_id=team.team_id) }}">
             {% for figure in quality_figures %}
               <input type="hidden" name="score_{{ figure.code }}" id="h{{ ci }}_{{ figure.code }}" value="">
             {% endfor %}

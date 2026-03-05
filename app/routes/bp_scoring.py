@@ -93,12 +93,15 @@ def lock_score(score_id):
 
         logger.info(f"Score {score_id} locked successfully by {judge_name}")
         flash('Bewertung gesperrt', 'success')
-        
+
         # Check if the request comes from AJAX
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({"status": "success", "message": "Bewertung gesperrt"})
-        
-        # For form submissions, redirect to view score page
+
+        # For form submissions, redirect to caller-specified URL or view score page
+        next_url = request.form.get('next') or request.args.get('next')
+        if next_url:
+            return redirect(next_url)
         return redirect(url_for('scoring.view_score', score_id=score_id))
         
     except Exception as e:
@@ -706,13 +709,18 @@ def update_score(score_id):
         db.session.commit()
         flash('Bewertung erfolgreich aktualisiert', 'success')
         logger.info(f"Score {score_id} updated successfully")
-        
+
+        next_url = request.form.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect(url_for('scoring.score_list'))
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error updating score: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
         flash(f'Fehler beim Aktualisieren der Bewertung: {str(e)}', 'error')
-    
+
     return redirect(url_for('scoring.score_list'))
 
 

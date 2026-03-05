@@ -187,8 +187,8 @@
                                                oninput="calculateSeglerzeit(this.value); updateTotalPoints()"
                                                {% if is_messwertung_blue %}readonly{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
-                                    {% elif 'Platzrunde' in figure.name_de %}
-                                        <!-- Platzrunde variants (mutually exclusive) -->
+                                    {% elif figure.code in ['PLTZR', 'PLTZR-M'] %}
+                                        <!-- Steigflug variants (mutually exclusive) -->
                                         <input type="number" class="form-control form-control-sm decimal-dot figure-score{% if is_kuer_disabled %} score-input-readonly{% endif %}"
                                                name="score_{{ figure.code }}" value="{{ value }}"
                                                min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
@@ -198,8 +198,8 @@
                                                oninput="handleMutualExclusion(this, 'platzrunde'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
                                                {% if is_kuer_disabled %}readonly{% endif %}
                                                {% if score and score.locked and not session.get('is_admin') %}readonly{% endif %}>
-                                    {% elif 'berflug' in figure.name_de %}
-                                        <!-- Platzüberflug variants (mutually exclusive) -->
+                                    {% elif figure.code in ['PLTZU', 'PLTZU-OV'] %}
+                                        <!-- Ueberflug variants (mutually exclusive) -->
                                         <input type="number" class="form-control form-control-sm decimal-dot figure-score{% if is_kuer_disabled %} score-input-readonly{% endif %}"
                                                name="score_{{ figure.code }}" value="{{ value }}"
                                                min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"

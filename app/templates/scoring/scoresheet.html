@@ -71,16 +71,16 @@
                         min="0" 
                         max="{{ figure.max_value if figure.max_value is not none else 10 }}"
                         data-figure-code="{{ figure.code }}"
-                        {% if 'Platzrunde' in figure.name_de %}
+                        {% if figure.code in ['PLTZR', 'PLTZR-M'] %}
                             data-group="platzrunde"
-                        {% elif 'berflug' in figure.name_de %}
+                        {% elif figure.code in ['PLTZU', 'PLTZU-OV'] %}
                             data-group="platzueberflug"
                         {% endif %}
-                        {% if figure.name_de == "Segler Flugzeit" %}
+                        {% if figure.code == 'SEGZEIT' %}
                             oninput="calculateSeglerzeit(this.value); updateTotalPoints()"
-                        {% elif 'Platzrunde' in figure.name_de %}
+                        {% elif figure.code in ['PLTZR', 'PLTZR-M'] %}
                             oninput="handleMutualExclusion(this, 'platzrunde'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
-                        {% elif 'berflug' in figure.name_de %}
+                        {% elif figure.code in ['PLTZU', 'PLTZU-OV'] %}
                             oninput="handleMutualExclusion(this, 'platzueberflug'); updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"
                         {% else %}
                             oninput="updatePoints(this, {{ figure.k_factor }}, '{{ figure.code }}_points'); updateTotalPoints()"

@@ -23,6 +23,7 @@ class Config:
 
     # Application settings
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-change-this'
+    WTF_CSRF_ENABLED = False  # CSRF disabled -- causes more problems than it solves on local LAN
     DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
 
     # Scoring settings (can be overridden via SystemConfig in the database)

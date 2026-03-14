@@ -58,14 +58,14 @@ def clear_scores():
         result = clear_all_scores()
         
         # Provide feedback to the user
-        flash(f'Cleared all {result["scores_deleted"]} scores and removed {result["team_rounds_deleted"]} team round entries from the database', 'success')
-        
+        flash(f'{result["scores_deleted"]} Bewertungen und {result["team_rounds_deleted"]} Durchgangseintraege geloescht', 'success')
+
         return redirect(url_for('testdata.index'))
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error clearing scores: {str(e)}")
-        flash(f'Error clearing scores: {str(e)}', 'error')
+        flash(f'Fehler beim Loeschen: {str(e)}', 'error')
         return redirect(url_for('testdata.index'))
     
 
@@ -100,7 +100,7 @@ def index():
                               
     except SQLAlchemyError as e:
         logger.error(f"Database error in testdata.index: {str(e)}")
-        flash('Error loading test data page', 'error')
+        flash('Fehler beim Laden der Testdaten-Seite', 'error')
         return render_template('testdata/testdata_main.html')
 
 @testdata_bp.route('/generate', methods=['POST'])
@@ -132,21 +132,21 @@ def generate():
 
         # Validation
         if not team_ids:
-            flash('Please select at least one team', 'error')
+            flash('Bitte mindestens ein Team auswaehlen', 'error')
             return redirect(url_for('testdata.index'))
 
         if not judge_ids:
-            flash('Please select at least one judge', 'error')
+            flash('Bitte mindestens einen Wertungsrichter auswaehlen', 'error')
             return redirect(url_for('testdata.index'))
 
         if not event_id:
-            flash('Please select an event', 'error')
+            flash('Bitte einen Wettbewerb auswaehlen', 'error')
             return redirect(url_for('testdata.index'))
 
         event_id = int(event_id)
         event = Event.query.get(event_id)
         if not event:
-            flash('Selected event not found', 'error')
+            flash('Wettbewerb nicht gefunden', 'error')
             return redirect(url_for('testdata.index'))
 
         if event.status != 'Pending':
@@ -161,10 +161,10 @@ def generate():
             try:
                 # Clear the event data but keep the rounds
                 result = clear_event_data(event_id, clear_scores_only=True)
-                flash(f"Cleared existing scores for event {event.name}: {result['scores_deleted']} scores removed, {result['team_rounds_deleted']} team rounds deleted", 'success')
+                flash(f"Bestehende Bewertungen geloescht ({event.name}): {result['scores_deleted']} Bewertungen, {result['team_rounds_deleted']} Durchgaenge", 'success')
             except Exception as e:
                 logger.error(f"Error clearing scores: {str(e)}")
-                flash(f"Error clearing scores: {str(e)}", 'error')
+                flash(f"Fehler beim Loeschen der Bewertungen: {str(e)}", 'error')
                 return redirect(url_for('testdata.index'))
 
         # Determine rounds to process
@@ -341,10 +341,10 @@ def generate():
 
         if specific_round > 0:
             logger.info(f"Generated scores for round {specific_round}: {scores_generated} scores via create_score()")
-            flash(f'Successfully generated {scores_generated} scores for round {specific_round}', 'success')
+            flash(f'{scores_generated} Bewertungen fuer Durchgang {specific_round} generiert', 'success')
         else:
             logger.info(f"Generated {scores_generated} scores across {rounds_created} rounds via create_score()")
-            flash(f'Successfully created {rounds_created} rounds and generated {scores_generated} scores', 'success')
+            flash(f'{rounds_created} Durchgaenge und {scores_generated} Bewertungen generiert', 'success')
 
         try:
             return redirect(url_for('reports.standings', event_id=event_id))
@@ -355,7 +355,7 @@ def generate():
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error generating test data: {str(e)}")
-        flash(f'Error generating test data: {str(e)}', 'error')
+        flash(f'Fehler beim Generieren der Testdaten: {str(e)}', 'error')
         return redirect(url_for('testdata.index'))
 
 

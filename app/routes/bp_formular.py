@@ -416,13 +416,7 @@ def api_next_round_order():
             # Check if this round has any scores
             team_rounds = TeamRound.query.filter_by(round_id=round_obj.round_id).all()
             
-            has_scores = False
-            for team_round in team_rounds:
-                if team_round.raw_score is not None:
-                    has_scores = True
-                    break
-            
-            if has_scores:
+            if any(tr.raw_score is not None for tr in team_rounds):
                 # Keep updating to find the latest round with scores
                 latest_scored_round = round_obj
         
@@ -661,8 +655,6 @@ def print_scoresheets():
 def export_labels():
     """Export team labels for Niimbot D11 in Excel format"""
     try:
-        import pandas as pd
-        
         # Get parameters
         event_id = request.args.get('event_id', type=int)
         max_rounds = request.args.get('max_rounds', 2, type=int)

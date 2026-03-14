@@ -20,7 +20,6 @@ from datetime import datetime
 
 import logging
 import traceback
-import sys
 
 round_service = RoundService()
 
@@ -33,13 +32,6 @@ from app.utils.auth import admin_required
 
 # Configure logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-if not logger.handlers:
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    logger.addHandler(handler)
-
-logger.info("Score model columns: " + str([c.name for c in Score.__table__.columns]))
 
 
 scoring_bp = Blueprint('scoring', __name__)

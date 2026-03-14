@@ -8,7 +8,6 @@ Description: Refactored blueprint for managing scoring figures using service lay
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from app.models import db, TaskType
 from app.services.services_figures import FiguresService
-from app.utils.utils_base_controller import BaseController
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
@@ -18,14 +17,8 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 figures_bp = Blueprint('figures', __name__)
 
-# Initialize service and controller
+# Initialize service
 figures_service = FiguresService()
-figures_controller = BaseController(
-    model_class=TaskType,
-    template_prefix='figures',
-    route_prefix='figures',
-    display_name='Figur'
-)
 
 def process_form_data(form):
     """Process form data for TaskType model"""

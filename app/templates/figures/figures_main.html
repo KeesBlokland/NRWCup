@@ -36,7 +36,7 @@ Created: 2025-01-20
             <tbody>
                 {% for task in task_types %}
                 <tr>
-                    <td class="py-1">{{ task.sort_order if task.sort_order != None else '-' }}</td>
+                    <td class="py-1">{{ loop.index }}</td>
                     <td class="py-1">{{ task.name_de }}</td>
                     <td class="py-1">
                         {{ task.max_value if task.max_value is not none else '-' }}

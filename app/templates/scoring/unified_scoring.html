@@ -191,7 +191,7 @@
                                                 {% if key in completed_scores %}
                                                     {% set score = completed_scores[key] %}
                                                     <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}"
-                                                        class="btn {% if score.locked %}btn-warning{% elif key in fully_complete_scores %}btn-success{% elif key in has_quality_scores %}btn-outline-success{% else %}btn-outline-secondary{% endif %} judge-btn"
+                                                        class="btn {% if score.locked %}btn-warning{% elif key in fully_complete_scores %}btn-success{% elif key in has_quality_scores %}btn-info{% else %}btn-outline-secondary{% endif %} judge-btn"
                                                         title="Bewertung von {{ judge.name }} {% if score.locked %}(Gesperrt am {{ score.locked_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}">
                                                             {{ judge.name[:3] }}:
                                                             <span class="raw-score">

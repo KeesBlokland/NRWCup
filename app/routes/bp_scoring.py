@@ -341,19 +341,25 @@ def score_list():
         
         # Convert to a dictionary for easier lookup
         MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+        ALWAYS_MANDATORY = {'STRT', 'AUSKL', 'VKURV', 'SEILW', 'LANM', 'LANDM', 'LANDGS', 'LANDS', 'ERSCH'}
+        EXCLUSIVE_GROUPS = [{'PLTZR', 'PLTZR-M'}, {'PLTZU', 'PLTZU-OV'}]
         completed_dict = {}
-        has_quality_set = set()  # Track which scores have quality data entered
+        has_quality_set = set()   # at least one quality figure entered
+        fully_complete_set = set()  # all mandatory figures + one per exclusive group
         for score in completed_scores:
             team_round = TeamRound.query.get(score.team_round_id)
             if team_round:
                 key = f"{team_round.round_id}_{team_round.team_id}_{score.judge_id}"
                 completed_dict[key] = score
-                has_quality = any(
-                    sv.task_type and sv.task_type.code not in MESSWERTUNG_CODES
-                    for sv in score.values
-                )
+                sv_codes = {sv.task_type.code for sv in score.values if sv.task_type}
+                sv_nonzero_codes = {sv.task_type.code for sv in score.values if sv.task_type and sv.value and sv.value > 0}
+                has_quality = bool(sv_codes - MESSWERTUNG_CODES)
                 if has_quality:
                     has_quality_set.add(key)
+                # Fully complete: all mandatory present + one from each exclusive group scored
+                if (ALWAYS_MANDATORY.issubset(sv_codes) and
+                        all(group & sv_nonzero_codes for group in EXCLUSIVE_GROUPS)):
+                    fully_complete_set.add(key)
         
         # Create mapping for team rounds
         team_rounds = {}
@@ -441,6 +447,7 @@ def score_list():
                              team_rounds=team_rounds,
                              completed_scores=completed_dict,
                              has_quality_scores=has_quality_set,
+                             fully_complete_scores=fully_complete_set,
                              selected_round=round_id,
                              selected_judge=judge_id,
                              standings=standings,

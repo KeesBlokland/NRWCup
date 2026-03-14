@@ -5,7 +5,7 @@ Created: 2025-03-02
 Description: Refactored blueprint for managing scoring figures using service layer
 """
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from app.models import db, TaskType
 from app.services.services_figures import FiguresService
 from sqlalchemy.exc import SQLAlchemyError
@@ -110,6 +110,23 @@ def add():
         logger.error(f"Database error in figures.add: {str(e)}")
         flash('Fehler beim Anlegen der Figur', 'error')
         return redirect(url_for('figures.index'))
+
+@figures_bp.route('/reorder', methods=['POST'])
+def reorder():
+    """Save new sort_order values for all figures (bulk update from list)"""
+    try:
+        data = request.get_json()
+        orders = data.get('orders', [])  # [{type_id, sort_order}, ...]
+        for item in orders:
+            fig = figures_service.get_by_id(int(item['type_id']))
+            if fig:
+                fig.sort_order = int(item['sort_order'])
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Reihenfolge gespeichert'})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error reordering figures: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
 
 @figures_bp.route('/delete/<int:id>', methods=['POST'])
 def delete(id):

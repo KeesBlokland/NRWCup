@@ -1,7 +1,6 @@
 <!--
 File: app/templates/figures/figures_main.html
-Version: 1.0.1
-Created: 2025-01-20
+Version: 1.1.0
 -->
 
 {% extends "base.html" %}
@@ -10,22 +9,21 @@ Created: 2025-01-20
 
 {% block content %}
 <div class="container">
-    <!-- Header Section - reduced margins -->
     <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0">Figuren Verwaltung</h2>
         <div>
-            <h2 class="mb-0">Figuren Verwaltung</h2>
+            <button type="button" class="btn btn-success me-2" id="saveOrderBtn" disabled>
+                Reihenfolge speichern
+            </button>
+            <a href="{{ url_for('figures.add') }}" class="btn btn-primary">Neue Figur</a>
         </div>
-        <a href="{{ url_for('figures.add') }}" class="btn btn-primary">
-            Neue Figur
-        </a>
     </div>
 
-    <!-- Table with reduced padding -->
     <div class="table-responsive">
-        <table class="table table-hover table-sm align-middle">
+        <table class="table table-hover table-sm align-middle" id="figuresTable">
             <thead>
                 <tr class="bg-primary text-white">
-                    <th>Nr</th>
+                    <th style="width:70px">Nr</th>
                     <th>Name</th>
                     <th>Max. Wert</th>
                     <th>K-Faktor</th>
@@ -35,12 +33,15 @@ Created: 2025-01-20
             </thead>
             <tbody>
                 {% for task in task_types %}
-                <tr>
-                    <td class="py-1">{{ task.sort_order if task.sort_order != None else '-' }}</td>
-                    <td class="py-1">{{ task.name_de }}</td>
+                <tr data-type-id="{{ task.type_id }}">
                     <td class="py-1">
-                        {{ task.max_value if task.max_value is not none else '-' }}
+                        <input type="number" class="form-control form-control-sm sort-order-input"
+                               value="{{ task.sort_order if task.sort_order != None else '' }}"
+                               data-original="{{ task.sort_order }}"
+                               min="1" style="width:60px">
                     </td>
+                    <td class="py-1">{{ task.name_de }}</td>
+                    <td class="py-1">{{ task.max_value if task.max_value is not none else '-' }}</td>
                     <td class="py-1">{{ task.k_factor }}</td>
                     <td class="py-1">
                         {% if task.is_active %}
@@ -50,10 +51,8 @@ Created: 2025-01-20
                         {% endif %}
                     </td>
                     <td class="py-1">
-                        <div>
-                            <a href="{{ url_for('figures.edit', id=task.type_id) }}"
-                               class="btn btn-outline-primary">Bearbeiten</a>
-                        </div>
+                        <a href="{{ url_for('figures.edit', id=task.type_id) }}"
+                           class="btn btn-outline-primary btn-sm">Bearbeiten</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -61,5 +60,59 @@ Created: 2025-01-20
         </table>
     </div>
 </div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const saveBtn = document.getElementById('saveOrderBtn');
+
+    document.querySelectorAll('.sort-order-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            const hasChanges = Array.from(document.querySelectorAll('.sort-order-input'))
+                .some(i => i.value != i.dataset.original);
+            saveBtn.disabled = !hasChanges;
+        });
+    });
+
+    saveBtn.addEventListener('click', function() {
+        const orders = [];
+        document.querySelectorAll('#figuresTable tbody tr[data-type-id]').forEach(function(row) {
+            orders.push({
+                type_id: row.dataset.typeId,
+                sort_order: row.querySelector('.sort-order-input').value
+            });
+        });
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Speichern...';
+
+        fetch('{{ url_for("figures.reorder") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json',
+                      'X-CSRFToken': '{{ csrf_token() }}'},
+            body: JSON.stringify({orders: orders})
+        })
+        .then(r => r.json())
+        .then(function(data) {
+            if (data.success) {
+                document.querySelectorAll('.sort-order-input').forEach(function(i) {
+                    i.dataset.original = i.value;
+                });
+                saveBtn.textContent = 'Reihenfolge speichern';
+            } else {
+                alert('Fehler: ' + data.message);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Reihenfolge speichern';
+            }
+        })
+        .catch(function() {
+            alert('Fehler beim Speichern');
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Reihenfolge speichern';
+        });
+    });
+});
+</script>
+{% endblock %}
 
 {% endblock %}

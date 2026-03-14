@@ -167,13 +167,16 @@
                                     <a href="{{ url_for('scoring.team_results', event_id=event.event_id if event else '', round_id=selected_round if selected_round else '', team_id=team.team_id) }}"
                                     class="text-decoration-none text-dark"
                                     title="Team {{ team.team_nummer }} Ergebnisse anzeigen">
+                                        {% if team.schlepper_pilot %}
+                                            <small>{{ team.schlepper_pilot.name }}</small>
+                                        {% endif %}
                                         {% if team.schlepper_pilot and team.segler_pilot %}
-                                            {{ team.schlepper_pilot.name }}/{{ team.segler_pilot.name }}
-                                        {% elif team.schlepper_pilot %}
-                                            {{ team.schlepper_pilot.name }}
-                                        {% elif team.segler_pilot %}
-                                            {{ team.segler_pilot.name }}
-                                        {% else %}
+                                            <br>
+                                        {% endif %}
+                                        {% if team.segler_pilot %}
+                                            <small>{{ team.segler_pilot.name }}</small>
+                                        {% endif %}
+                                        {% if not team.schlepper_pilot and not team.segler_pilot %}
                                             -
                                         {% endif %}
                                     </a>

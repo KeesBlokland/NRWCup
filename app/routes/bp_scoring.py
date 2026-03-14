@@ -1117,7 +1117,7 @@ def generate_scoresheets():
             # Check if at least 50% of team rounds have scores
             scored_count = 0
             for team_round in team_rounds:
-                if team_round.raw_score is not None:
+                if team_round.raw_score is not None and team_round.raw_score > 0:
                     scored_count += 1
             
             if scored_count < len(team_rounds) / 2:

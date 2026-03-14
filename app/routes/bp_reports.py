@@ -276,7 +276,6 @@ def email_results(event_id):
 @reports_bp.route('/export_excel/<int:event_id>')
 def export_excel(event_id):
     try:
-        import pandas as pd
         import io
         from datetime import datetime
         
@@ -351,16 +350,3 @@ def export_excel(event_id):
         return redirect(url_for('scoring.score_list'))
 
 
-@reports_bp.route('/export_excel_debug/<int:event_id>')
-def export_excel_debug(event_id):
-    try:
-        import pandas as pd
-        import io
-        from datetime import datetime
-        
-        # Get event
-        event = Event.query.get_or_404(event_id)
-        return f"Event found: {event.name}"
-        
-    except Exception as e:
-        return f"Error: {str(e)}"

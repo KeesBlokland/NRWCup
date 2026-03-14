@@ -8,7 +8,6 @@ Description: Fixed blueprint for aircraft management with working data storage
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from app.models import db, Flugzeuge, Teilnehmer
 from app.services.services_flugzeuge import FlugzeugeService
-from app.utils.utils_base_controller import BaseController
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
@@ -18,14 +17,8 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 flugzeuge_bp = Blueprint('flugzeuge', __name__)
 
-# Initialize service and controller
+# Initialize service
 flugzeuge_service = FlugzeugeService()
-flugzeuge_controller = BaseController(
-    model_class=Flugzeuge,
-    template_prefix='flugzeuge',
-    route_prefix='flugzeuge',
-    display_name='Flugzeug'
-)
 
 # In the process_form_data function
 def process_form_data(form):

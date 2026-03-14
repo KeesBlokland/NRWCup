@@ -358,15 +358,4 @@ def generate():
         flash(f'Error generating test data: {str(e)}', 'error')
         return redirect(url_for('testdata.index'))
 
-@testdata_bp.route('/clear_all')
-def clear_all():
-    """Redirect to contest clear scores page"""
-    try:
-        logger.info("Redirecting to contest page for clearing scores (from clear_all route)")
-        return redirect(url_for('contest.index'))
-    except Exception as e:
-        logger.error(f"Error redirecting to contest page: {str(e)}")
-        flash(f'Error redirecting to contest page: {str(e)}', 'error')
-        return redirect(url_for('testdata.index'))
-
 

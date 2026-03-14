@@ -7,7 +7,6 @@ Description: Fully refactored teilnehmer blueprint using BaseController and Teil
 
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from app.models import db, Teilnehmer
-from app.utils.utils_base_controller import BaseController
 from app.services.services_teilnehmer import TeilnehmerService
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -18,14 +17,8 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 teilnehmer_bp = Blueprint('teilnehmer', __name__)
 
-# Initialize service and controller
+# Initialize service
 teilnehmer_service = TeilnehmerService()
-teilnehmer_controller = BaseController(
-    model_class=Teilnehmer,
-    template_prefix='teilnehmer',
-    route_prefix='teilnehmer',
-    display_name='Teilnehmer'
-)
 
 def process_form_data(form):
     """Process form data for Teilnehmer model"""

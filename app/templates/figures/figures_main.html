@@ -1,6 +1,6 @@
 <!--
 File: app/templates/figures/figures_main.html
-Version: 1.1.0
+Version: 1.2.0
 -->
 
 {% extends "base.html" %}
@@ -18,12 +18,13 @@ Version: 1.1.0
             <a href="{{ url_for('figures.add') }}" class="btn btn-primary">Neue Figur</a>
         </div>
     </div>
+    <p class="text-muted small">Zeilen ziehen um die Reihenfolge zu andern. Dann "Reihenfolge speichern" klicken.</p>
 
     <div class="table-responsive">
         <table class="table table-hover table-sm align-middle" id="figuresTable">
             <thead>
                 <tr class="bg-primary text-white">
-                    <th style="width:70px">Nr</th>
+                    <th style="width:40px">Nr</th>
                     <th>Name</th>
                     <th>Max. Wert</th>
                     <th>K-Faktor</th>
@@ -31,15 +32,10 @@ Version: 1.1.0
                     <th>Aktionen</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="figuresTbody">
                 {% for task in task_types %}
-                <tr data-type-id="{{ task.type_id }}">
-                    <td class="py-1">
-                        <input type="number" class="form-control form-control-sm sort-order-input"
-                               value="{{ task.sort_order if task.sort_order != None else '' }}"
-                               data-original="{{ task.sort_order }}"
-                               min="1" style="width:60px">
-                    </td>
+                <tr data-type-id="{{ task.type_id }}" draggable="true" style="cursor:grab">
+                    <td class="py-1 row-nr">{{ loop.index }}</td>
                     <td class="py-1">{{ task.name_de }}</td>
                     <td class="py-1">{{ task.max_value if task.max_value is not none else '-' }}</td>
                     <td class="py-1">{{ task.k_factor }}</td>
@@ -65,21 +61,47 @@ Version: 1.1.0
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const saveBtn = document.getElementById('saveOrderBtn');
+    const tbody = document.getElementById('figuresTbody');
+    let draggedRow = null;
+    let orderChanged = false;
 
-    document.querySelectorAll('.sort-order-input').forEach(function(input) {
-        input.addEventListener('change', function() {
-            const hasChanges = Array.from(document.querySelectorAll('.sort-order-input'))
-                .some(i => i.value != i.dataset.original);
-            saveBtn.disabled = !hasChanges;
-        });
+    tbody.addEventListener('dragstart', function(e) {
+        draggedRow = e.target.closest('tr');
+        draggedRow.classList.add('dragging');
     });
+
+    tbody.addEventListener('dragend', function(e) {
+        draggedRow.classList.remove('dragging');
+        updateRowNumbers();
+        orderChanged = true;
+        saveBtn.disabled = false;
+    });
+
+    tbody.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const tr = e.target.closest('tr');
+        if (!tr || tr === draggedRow) return;
+        const box = tr.getBoundingClientRect();
+        const offset = e.clientY - box.top - box.height / 2;
+        if (offset < 0) {
+            tr.parentNode.insertBefore(draggedRow, tr);
+        } else {
+            tr.parentNode.insertBefore(draggedRow, tr.nextSibling);
+        }
+    });
+
+    function updateRowNumbers() {
+        Array.from(tbody.querySelectorAll('tr')).forEach(function(row, index) {
+            row.querySelector('.row-nr').textContent = index + 1;
+        });
+    }
 
     saveBtn.addEventListener('click', function() {
         const orders = [];
-        document.querySelectorAll('#figuresTable tbody tr[data-type-id]').forEach(function(row) {
+        Array.from(tbody.querySelectorAll('tr[data-type-id]')).forEach(function(row, index) {
             orders.push({
                 type_id: row.dataset.typeId,
-                sort_order: row.querySelector('.sort-order-input').value
+                sort_order: index + 1
             });
         });
 
@@ -88,16 +110,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch('{{ url_for("figures.reorder") }}', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json',
-                      'X-CSRFToken': '{{ csrf_token() }}'},
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({orders: orders})
         })
         .then(r => r.json())
         .then(function(data) {
             if (data.success) {
-                document.querySelectorAll('.sort-order-input').forEach(function(i) {
-                    i.dataset.original = i.value;
-                });
+                orderChanged = false;
                 saveBtn.textContent = 'Reihenfolge speichern';
             } else {
                 alert('Fehler: ' + data.message);

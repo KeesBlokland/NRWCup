@@ -98,6 +98,7 @@ Description: Base template with updated navigation and clickable logo
     <footer class="bg-dark text-white py-3 mt-4">
         <div class="container text-center">
             <p>&copy; {{ current_year }} Kees Blokland. All rights reserved. Contact: kees@blokland.net</p>
+            <p class="mb-0" style="font-size:0.7rem;opacity:0.5">{{ request.endpoint }} | {{ request.path }}</p>
         </div>
     </footer>
 

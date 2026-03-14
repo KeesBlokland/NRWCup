@@ -28,6 +28,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 # Create blueprint
 system_bp = Blueprint('system', __name__)
 
+_EMPTY_STATS = {'user_count': 0, 'log_count': 0, 'backup_count': 0, 'db_size': 0}
+
 def get_log_files_info():
     """Get information about log files in the logs directory"""
     log_files = []
@@ -81,12 +83,7 @@ def get_system_stats():
         
     except Exception as e:
         logger.error(f"Error gathering system stats: {str(e)}")
-        return {
-            'user_count': 0,
-            'log_count': 0,
-            'backup_count': 0,
-            'db_size': 0
-        }
+        return _EMPTY_STATS
 
 def create_backup():
     """Create full project backup (database + code + config)"""
@@ -151,12 +148,7 @@ def index():
                              events=events)
     except Exception as e:
         flash('Fehler beim Laden der Systemübersicht', 'error')
-        return render_template('system/system_main.html', stats={
-            'user_count': 0,
-            'log_count': 0,
-            'backup_count': 0,
-            'db_size': 0
-        })
+        return render_template('system/system_main.html', stats=_EMPTY_STATS)
 
         
 @system_bp.route('/backup', methods=['GET', 'POST'])
@@ -454,11 +446,9 @@ def check_email():
 def toggle_logging():
     """Enable or disable application logging"""
     try:
-        # Check current status
         current_status = SystemConfig.query.filter_by(config_key='logging_enabled').first()
-        
+
         if not current_status:
-            # Create config if it doesn't exist
             current_status = SystemConfig(
                 config_key='logging_enabled',
                 config_value='false',
@@ -466,15 +456,11 @@ def toggle_logging():
                 updated_at=datetime.utcnow()
             )
             db.session.add(current_status)
-        
-        # Toggle the status
+
         current_status.config_value = 'true' if current_status.config_value == 'false' else 'false'
         current_status.updated_at = datetime.utcnow()
-        
-        # Save changes
         db.session.commit()
-        
-        # Show message
+
         status_text = 'aktiviert' if current_status.config_value == 'true' else 'deaktiviert'
         flash(f'Logging {status_text}', 'success')
         

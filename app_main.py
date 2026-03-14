@@ -48,9 +48,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Ensure instance directory exists
 instance_dir = os.path.dirname(db_path)
-if not os.path.exists(instance_dir):
-    os.makedirs(instance_dir, exist_ok=True)
-    os.chmod(instance_dir, 0o775)
+os.makedirs(instance_dir, exist_ok=True)
+os.chmod(instance_dir, 0o775)
 
 # Generate a secure secret key if one doesn't exist
 secret_key_file = os.path.join(project_root, 'instance', 'secret_key')

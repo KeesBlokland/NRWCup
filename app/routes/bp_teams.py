@@ -45,7 +45,7 @@ def process_form_data(form):
                   'schlepper_flugzeug_id', 'segler_flugzeug_id']:
         if field in form_data and form_data[field]:
             try:
-                form_data[field] = int(form_data[field]) or None
+                form_data[field] = int(form_data[field])
             except (ValueError, TypeError):
                 form_data[field] = None
         else:

@@ -252,44 +252,30 @@ def clear_scores():
 def publish_event(event_id):
     """Publish event results to public view"""
     try:
-        # Update event status
         event = contest_service.change_event_status(event_id, 'Published')
         if not event:
             flash('Wettbewerb nicht gefunden', 'error')
             return redirect(url_for('contest.index'))
-        
-        # Additional publication logic would go here
-        # For example, generating static files or notifying participants
-        
-        flash('Event published successfully', 'success')
-            
+        flash(f'Wettbewerb "{event.name}" veröffentlicht', 'success')
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error publishing event: {str(e)}")
-        flash(f'Error publishing event: {str(e)}', 'error')
-        
+        flash(f'Fehler beim Veröffentlichen: {str(e)}', 'error')
     return redirect(url_for('contest.index'))
 
 @contest_bp.route('/unpublish/<int:event_id>', methods=['POST'])
 def unpublish_event(event_id):
     """Unpublish event results"""
     try:
-        # Update event status
         event = contest_service.change_event_status(event_id, 'Completed')
         if not event:
             flash('Wettbewerb nicht gefunden', 'error')
             return redirect(url_for('contest.index'))
-        
-        # Additional unpublication logic would go here
-        # For example, removing static files
-        
-        flash('Event unpublished successfully', 'success')
-            
+        flash(f'Wettbewerb "{event.name}" zurückgesetzt auf Abgeschlossen', 'success')
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error unpublishing event: {str(e)}")
-        flash(f'Error unpublishing event: {str(e)}', 'error')
-        
+        flash(f'Fehler beim Zurücksetzen: {str(e)}', 'error')
     return redirect(url_for('contest.index'))
 @contest_bp.route('/cleanup/<int:event_id>', methods=['POST'])
 def cleanup_event(event_id):

@@ -1,6 +1,6 @@
 <!--
 File: app/templates/figures/figures_main.html
-Version: 1.2.0
+Version: 1.3.0
 -->
 
 {% extends "base.html" %}
@@ -11,14 +11,9 @@ Version: 1.2.0
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="mb-0">Figuren Verwaltung</h2>
-        <div>
-            <button type="button" class="btn btn-success me-2" id="saveOrderBtn" disabled>
-                Reihenfolge speichern
-            </button>
-            <a href="{{ url_for('figures.add') }}" class="btn btn-primary">Neue Figur</a>
-        </div>
+        <a href="{{ url_for('figures.add') }}" class="btn btn-primary">Neue Figur</a>
     </div>
-    <p class="text-muted small">Zeilen ziehen um die Reihenfolge zu andern. Dann "Reihenfolge speichern" klicken.</p>
+    <p class="text-muted small">Zeilen ziehen um die Reihenfolge zu andern. Wird automatisch gespeichert.</p>
 
     <div class="table-responsive">
         <table class="table table-hover table-sm align-middle" id="figuresTable">
@@ -60,10 +55,8 @@ Version: 1.2.0
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const saveBtn = document.getElementById('saveOrderBtn');
     const tbody = document.getElementById('figuresTbody');
     let draggedRow = null;
-    let orderChanged = false;
 
     tbody.addEventListener('dragstart', function(e) {
         draggedRow = e.target.closest('tr');
@@ -73,8 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tbody.addEventListener('dragend', function(e) {
         draggedRow.classList.remove('dragging');
         updateRowNumbers();
-        orderChanged = true;
-        saveBtn.disabled = false;
+        saveOrder();
     });
 
     tbody.addEventListener('dragover', function(e) {
@@ -96,18 +88,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    saveBtn.addEventListener('click', function() {
+    function saveOrder() {
         const orders = [];
         Array.from(tbody.querySelectorAll('tr[data-type-id]')).forEach(function(row, index) {
-            orders.push({
-                type_id: row.dataset.typeId,
-                sort_order: index + 1
-            });
+            orders.push({ type_id: row.dataset.typeId, sort_order: index + 1 });
         });
-
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Speichern...';
-
         fetch('{{ url_for("figures.reorder") }}', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -115,21 +100,10 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(r => r.json())
         .then(function(data) {
-            if (data.success) {
-                orderChanged = false;
-                saveBtn.textContent = 'Reihenfolge speichern';
-            } else {
-                alert('Fehler: ' + data.message);
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Reihenfolge speichern';
-            }
+            if (!data.success) alert('Fehler beim Speichern: ' + data.message);
         })
-        .catch(function() {
-            alert('Fehler beim Speichern');
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Reihenfolge speichern';
-        });
-    });
+        .catch(function() { alert('Fehler beim Speichern'); });
+    }
 });
 </script>
 {% endblock %}

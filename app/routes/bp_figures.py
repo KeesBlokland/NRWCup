@@ -69,8 +69,9 @@ def edit(id):
             # Process form data
             form_data = process_form_data(request.form)
             
-            # Update using service
+            # Update using service, then close any gaps in sort_order
             figures_service.update(id, **form_data)
+            figures_service.renumber_figures()
             flash('Figur erfolgreich aktualisiert', 'success')
             return redirect(url_for('figures.index'))
             
@@ -96,8 +97,9 @@ def add():
             if 'name' not in form_data:
                 form_data['name'] = form_data.get('name_de', '')
             
-            # Create using service
+            # Create using service, then close any gaps in sort_order
             figures_service.create(**form_data)
+            figures_service.renumber_figures()
             flash('Figur erfolgreich angelegt', 'success')
             return redirect(url_for('figures.index'))
             

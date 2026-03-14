@@ -70,6 +70,19 @@ class FiguresService(BaseService):
         
         return not has_scores
     
+    def renumber_figures(self):
+        """
+        Renumber all figures sequentially with no gaps.
+        Active figures keep their relative order and get the lowest numbers.
+        Inactive figures are appended at the end (highest numbers).
+        """
+        all_figures = self.model_class.query\
+            .order_by(self.model_class.is_active.desc(), nullslast(self.model_class.sort_order))\
+            .all()
+        for i, fig in enumerate(all_figures, 1):
+            fig.sort_order = i
+        db.session.commit()
+
     def update_multiple(self, figures_data):
         """
         Update multiple figures at once.

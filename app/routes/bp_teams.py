@@ -366,6 +366,23 @@ def toggle_status(team_id):
         flash('Fehler beim Ändern des Team-Status', 'error')
         return redirect(url_for('teams.index'))
 
+@teams_bp.route('/reorder', methods=['POST'])
+def reorder():
+    """Bulk update team_nummer values after drag-and-drop reorder"""
+    try:
+        data = request.get_json()
+        orders = data.get('orders', [])  # [{team_id, team_nummer}, ...]
+        for item in orders:
+            team = Team.query.get(int(item['team_id']))
+            if team:
+                team.team_nummer = int(item['team_nummer'])
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error reordering teams: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
+
 @teams_bp.route('/renumber', methods=['POST'])
 def renumber():
     """Manually renumber all active teams to eliminate gaps"""

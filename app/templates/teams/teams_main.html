@@ -1,103 +1,148 @@
 <!--
     File: app/templates/teams/teams_main.html
-    Version: 2.0.0
-    Created: 2024-12-05
-    Last Updated: 2026-02-18
+    Version: 2.1.0
+    Last Updated: 2026-03-14
 -->
 {% extends "base.html" %}
 {% block title %}NRW Cup {{ current_year }} - Teams{% endblock %}
 {% block content %}
 <div class="container">
-    <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Team Verwaltung</h2>
         <div>
-            <a href="{{ url_for('teams.create') }}" class="btn btn-primary">
-                Neues Team
-            </a>
-            
+            <a href="{{ url_for('teams.create') }}" class="btn btn-primary">Neues Team</a>
             <form action="{{ url_for('teams.renumber') }}" method="POST" class="d-inline-block"
-                  onsubmit="return confirm('Möchten Sie alle Teams neu nummerieren? Dies ändert die Nummern aller aktiven Teams und entfernt Lücken in der Nummerierung.');">
-                <button type="submit" class="btn btn-warning">
-                    Teams neu nummerieren
-                </button>
+                  onsubmit="return confirm('Moechten Sie alle Teams neu nummerieren? Dies aendert die Nummern aller aktiven Teams und entfernt Luecken in der Nummerierung.');">
+                <button type="submit" class="btn btn-warning">Teams neu nummerieren</button>
             </form>
-            
-            <a href="{{ url_for('teams.print_list') }}" class="btn btn-secondary">
-                Teamliste
-            </a>
-         </div>
+            <a href="{{ url_for('teams.print_list') }}" class="btn btn-secondary">Teamliste</a>
+        </div>
     </div>
-    <!-- Teams Table -->
-<div class="table-responsive">
-<table class="table table-hover">
-    <thead>
-        <tr>
-            <th>Team Nr.</th>
-            <th>Schlepper Pilot</th>
-            <th>Segler Pilot</th>
-            <th>Schlepper</th>
-            <th>Segler</th>
-            <th>Status</th>
-            <th>Aktionen</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for team in teams %}
-        <tr class="{% if team.status == 'disabled' %}table-secondary{% endif %}">
-            <td>{{ team.team_nummer }}</td>
-            <td>
-                {% if team.schlepper_pilot %}
-                    {{ team.schlepper_pilot.name }}
+    <p class="text-muted small">Zeilen ziehen um die Teamnummer-Reihenfolge zu andern. Wird automatisch gespeichert.</p>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Team Nr.</th>
+                    <th>Schlepper Pilot</th>
+                    <th>Segler Pilot</th>
+                    <th>Schlepper</th>
+                    <th>Segler</th>
+                    <th>Status</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody id="teamsTbody">
+                {% for team in teams %}
+                <tr data-team-id="{{ team.team_id }}" draggable="true" style="cursor:grab"
+                    class="{% if team.status == 'disabled' %}table-secondary{% endif %}">
+                    <td class="row-nr">{{ team.team_nummer }}</td>
+                    <td>
+                        {% if team.schlepper_pilot %}
+                            {{ team.schlepper_pilot.name }}
+                        {% else %}
+                            <span class="text-muted">- Nicht zugewiesen -</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if team.segler_pilot %}
+                            {{ team.segler_pilot.name }}
+                        {% else %}
+                            <span class="text-muted">- Nicht zugewiesen -</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if team.schlepper_flugzeug %}
+                            {{ team.schlepper_flugzeug.name }}
+                        {% else %}
+                            <span class="text-muted">- Nicht zugewiesen -</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if team.segler_flugzeug %}
+                            {{ team.segler_flugzeug.name }}
+                        {% else %}
+                            <span class="text-muted">- Nicht zugewiesen -</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if team.status == 'active' %}
+                            <span class="badge bg-success">Aktiv</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inaktiv</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('teams.edit', team_id=team.team_id) }}"
+                           class="btn btn-outline-primary btn-sm">Bearbeiten</a>
+                    </td>
+                </tr>
                 {% else %}
-                    <span class="text-muted">- Nicht zugewiesen -</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if team.segler_pilot %}
-                    {{ team.segler_pilot.name }}
-                {% else %}
-                    <span class="text-muted">- Nicht zugewiesen -</span>
-                {% endif %}
-            </td>
-            
-            <td>
-                {% if team.schlepper_flugzeug %}
-                    {{ team.schlepper_flugzeug.name }}
-                {% else %}
-                    <span class="text-muted">- Nicht zugewiesen -</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if team.segler_flugzeug %}
-                    {{ team.segler_flugzeug.name }}
-                {% else %}
-                    <span class="text-muted">- Nicht zugewiesen -</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if team.status == 'active' %}
-                    <span class="badge bg-success">Aktiv</span>
-                {% else %}
-                    <span class="badge bg-secondary">Inaktiv</span>
-                {% endif %}
-            </td>
-            <td>
-                <div>
-                    <a href="{{ url_for('teams.edit', team_id=team.team_id) }}"
-                       class="btn btn-outline-primary">
-                        Bearbeiten
-                    </a>
-                </div>
-            </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="7" class="text-center">Keine Teams gefunden</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                <tr>
+                    <td colspan="7" class="text-center">Keine Teams gefunden</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('teamsTbody');
+    if (!tbody) return;
+    let draggedRow = null;
+
+    tbody.addEventListener('dragstart', function(e) {
+        draggedRow = e.target.closest('tr');
+        draggedRow.classList.add('dragging');
+    });
+
+    tbody.addEventListener('dragend', function(e) {
+        draggedRow.classList.remove('dragging');
+        updateRowNumbers();
+        saveOrder();
+    });
+
+    tbody.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const tr = e.target.closest('tr');
+        if (!tr || tr === draggedRow) return;
+        const box = tr.getBoundingClientRect();
+        const offset = e.clientY - box.top - box.height / 2;
+        if (offset < 0) {
+            tr.parentNode.insertBefore(draggedRow, tr);
+        } else {
+            tr.parentNode.insertBefore(draggedRow, tr.nextSibling);
+        }
+    });
+
+    function updateRowNumbers() {
+        Array.from(tbody.querySelectorAll('tr[data-team-id]')).forEach(function(row, index) {
+            row.querySelector('.row-nr').textContent = index + 1;
+        });
+    }
+
+    function saveOrder() {
+        const orders = [];
+        Array.from(tbody.querySelectorAll('tr[data-team-id]')).forEach(function(row, index) {
+            orders.push({ team_id: row.dataset.teamId, team_nummer: index + 1 });
+        });
+        fetch('{{ url_for("teams.reorder") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({orders: orders})
+        })
+        .then(r => r.json())
+        .then(function(data) {
+            if (!data.success) alert('Fehler beim Speichern: ' + data.message);
+        })
+        .catch(function() { alert('Fehler beim Speichern'); });
+    }
+});
+</script>
+{% endblock %}
+
 {% endblock %}

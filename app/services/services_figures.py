@@ -35,7 +35,7 @@ class FiguresService(BaseService):
             List of TaskType instances ordered by sort_order
         """
         return self.model_class.query\
-            .order_by(nullslast(self.model_class.sort_order), self.model_class.name_de)\
+            .order_by(self.model_class.is_active.desc(), nullslast(self.model_class.sort_order), self.model_class.name_de)\
             .all()
     
     def get_by_code(self, code):

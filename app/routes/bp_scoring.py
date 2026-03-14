@@ -1114,10 +1114,18 @@ def generate_scoresheets():
                 flash('Aktueller Durchgang hat noch keine Teams. Bitte zuerst Teams zum Durchgang hinzufügen.', 'warning')
                 return redirect(url_for('scoring.score_list'))
                 
-            # Check if at least 50% of team rounds have scores
+            # Check if at least 50% of team rounds have scores.
+            # A team counts as scored if it has ScoreValues — raw_score alone is
+            # unreliable because pre-created blank scoresheets start at 0.0.
             scored_count = 0
             for team_round in team_rounds:
-                if team_round.raw_score is not None and team_round.raw_score > 0:
+                has_values = db.session.query(
+                    ScoreValue.query
+                    .join(Score)
+                    .filter(Score.team_round_id == team_round.team_round_id)
+                    .exists()
+                ).scalar()
+                if has_values:
                     scored_count += 1
             
             if scored_count < len(team_rounds) / 2:

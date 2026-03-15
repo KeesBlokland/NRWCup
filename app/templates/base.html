@@ -125,6 +125,15 @@ Description: Base template with updated navigation and clickable logo
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="{{ url_for('static', filename='js/vendor/bootstrap.bundle.min.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.alert.alert-dismissible').forEach(function(alert) {
+            setTimeout(function() {
+                bootstrap.Alert.getOrCreateInstance(alert).close();
+            }, 3000);
+        });
+    });
+    </script>
     
     <!-- CSRF auto-injection for forms and fetch -->
     <script>

@@ -144,6 +144,8 @@ class TaskType(db.Model):
     decimal_places = db.Column(db.Integer)  
     allowed_values = db.Column(db.String(20))  # Comma-separated values for enums
     k_factor = db.Column(db.Integer, default=1)  # Multiplier for the task's score
+    is_messwertung = db.Column(db.Boolean, default=False)  # True = objective measurement, not averaged across judges
+    exclusive_group = db.Column(db.Integer, nullable=True)  # Figures in same group are mutually exclusive (one per flight)
 
 class Score(db.Model):
     __tablename__ = 'scores'

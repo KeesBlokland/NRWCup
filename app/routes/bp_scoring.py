@@ -16,7 +16,7 @@ from app.utils.utils_base_controller import BaseController
 from app.utils.audit import audit_log
 from sqlalchemy.exc import SQLAlchemyError
 from app.services.services_rounds import RoundService
-from app.utils.scoring_constants import MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS
+from app.utils.scoring_constants import get_scoring_constants
 from datetime import datetime
 
 import logging
@@ -349,6 +349,7 @@ def score_list():
         completed_scores = query.all()
         
         # Convert to a dictionary for easier lookup
+        MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
         completed_dict = {}
         has_quality_set = set()   # at least one quality figure entered
         fully_complete_set = set()  # all mandatory figures + one per exclusive group
@@ -1216,6 +1217,8 @@ def team_results():
         round_id = request.args.get('round_id', type=int)
         team_id = request.args.get('team_id', type=int)
         
+        MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
+
         # Get visible events
         events = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all()
 

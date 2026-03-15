@@ -27,7 +27,12 @@ def process_form_data(form):
 
     # Handle boolean fields
     form_data['is_active'] = form_data.get('is_active') == 'on'
-    
+    form_data['is_messwertung'] = form_data.get('is_messwertung') == 'on'
+
+    # exclusive_group: empty string -> None, else int
+    eg = form_data.get('exclusive_group', '')
+    form_data['exclusive_group'] = int(eg) if eg else None
+
     # Convert numeric fields
     for field in ['max_value', 'sort_order', 'k_factor']:
         if field in form_data and form_data[field]:

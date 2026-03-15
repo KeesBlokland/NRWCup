@@ -9,6 +9,7 @@ Description: Scoring service with Messwertung/Qualitätswertung separation
 from sqlalchemy import or_
 from app.models import db, Score, TaskType, TeamRound, Teilnehmer, Team, Round, Event, ScoreValue, SystemConfig
 from app.services.base_service import BaseService
+from app.utils.scoring_constants import get_scoring_constants
 from datetime import datetime
 import logging
 import json
@@ -83,7 +84,7 @@ class ScoringService(BaseService):
         if existing:
             score = existing
             # Delete non-Messwerte score values (preserve replicated Messwerte)
-            messwertung_codes = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+            messwertung_codes, _, _ = get_scoring_constants()
             if messwertung_codes & set(score_values.keys()):
                 # Messwerte are being submitted — replace everything
                 ScoreValue.query.filter_by(score_id=score.score_id).delete()
@@ -165,7 +166,7 @@ class ScoringService(BaseService):
         across all judges' scoresheets, since they are objective measurements
         entered by one person at the 0-line.
         """
-        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+        MESSWERTUNG_CODES, _, _ = get_scoring_constants()
 
         # Get the source score's Messwertung values
         source_values = ScoreValue.query.join(TaskType).filter(
@@ -380,7 +381,7 @@ class ScoringService(BaseService):
             if not scores:
                 return 0
 
-            MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
+            MESSWERTUNG_CODES, _, _ = get_scoring_constants()
 
             # qualitaet_raw: {task_code: {'raws': [raw 0-10 per judge], 'k': k_factor}}
             qualitaet_raw = {}

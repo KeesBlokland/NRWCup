@@ -8,7 +8,7 @@ Description: Utility functions for round status management
 """
 
 from app.models import db, Round, TeamRound, Event, Team, Score, ScoreValue, TaskType
-from app.utils.scoring_constants import MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS
+from app.utils.scoring_constants import get_scoring_constants
 import logging
 
 # Configure logger
@@ -81,6 +81,7 @@ def round_completion_status(round_id):
             return result
             
         # Build lookup maps for task types
+        MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
         all_types = {t.code: t.type_id for t in TaskType.query.filter_by(is_active=True).all()}
         messwertung_type_ids = {all_types[c] for c in MESSWERTUNG_CODES if c in all_types}
         always_mandatory_ids = {all_types[c] for c in ALWAYS_MANDATORY if c in all_types}

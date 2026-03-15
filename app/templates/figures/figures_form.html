@@ -69,6 +69,30 @@ Last Updated: 2026-02-18
                                     </button>
                                 </div>
                             </div>
+
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Bewertungstyp</label>
+                                    <div class="form-check mt-1">
+                                        <input class="form-check-input" type="checkbox" id="is_messwertung"
+                                               name="is_messwertung" value="on"
+                                               {{ 'checked' if task and task.is_messwertung else '' }}>
+                                        <label class="form-check-label" for="is_messwertung">
+                                            Messwertung <small class="text-muted">(objektiv, nicht gemittelt)</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="exclusive_group" class="form-label">Exklusiv-Gruppe</label>
+                                    <select class="form-select" id="exclusive_group" name="exclusive_group">
+                                        <option value="" {{ 'selected' if not task or task.exclusive_group is none else '' }}>Keine</option>
+                                        <option value="1" {{ 'selected' if task and task.exclusive_group == 1 else '' }}>Gruppe 1 (Steigflug-Varianten)</option>
+                                        <option value="2" {{ 'selected' if task and task.exclusive_group == 2 else '' }}>Gruppe 2 (Ueberflug-Varianten)</option>
+                                        <option value="3" {{ 'selected' if task and task.exclusive_group == 3 else '' }}>Gruppe 3</option>
+                                    </select>
+                                    <div class="form-text">Nur eine Figur pro Gruppe wird gewertet.</div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Description -->

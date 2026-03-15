@@ -254,11 +254,18 @@ def score_list():
 
         # Get active event if not specified
         if not event_id:
+            # Restore from session if user previously selected one
+            event_id = session.get('scoring_event_id')
+        if not event_id:
             active_event = Event.query.filter_by(status='Active', is_hidden=False).first()
             if active_event:
                 event_id = active_event.event_id
             elif events:
                 event_id = events[0].event_id
+
+        # Remember the selection for this browser session
+        if event_id:
+            session['scoring_event_id'] = event_id
                 
         event = Event.query.get(event_id) if event_id else None
         

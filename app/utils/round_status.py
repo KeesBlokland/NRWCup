@@ -8,6 +8,7 @@ Description: Utility functions for round status management
 """
 
 from app.models import db, Round, TeamRound, Event, Team, Score, ScoreValue, TaskType
+from app.utils.scoring_constants import MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS
 import logging
 
 # Configure logger
@@ -81,16 +82,6 @@ def round_completion_status(round_id):
             
         # Build lookup maps for task types
         all_types = {t.code: t.type_id for t in TaskType.query.filter_by(is_active=True).all()}
-        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
-        # 9 always-mandatory figures (not part of any exclusive group)
-        ALWAYS_MANDATORY = {'STRT', 'AUSKL', 'VKURV', 'SEILW', 'LANM', 'LANDM', 'LANDGS', 'LANDS', 'ERSCH'}
-        # Exclusive groups: exactly ONE from each group must be scored
-        # Steigflug: base OR mit Figur-M
-        # Ueberflug: base OR mit 2 Halbkreisen
-        EXCLUSIVE_GROUPS = [
-            {'PLTZR', 'PLTZR-M'},     # Steigflug (one of two)
-            {'PLTZU', 'PLTZU-OV'},    # Ueberflug (one of two)
-        ]
         messwertung_type_ids = {all_types[c] for c in MESSWERTUNG_CODES if c in all_types}
         always_mandatory_ids = {all_types[c] for c in ALWAYS_MANDATORY if c in all_types}
         exclusive_group_ids = [

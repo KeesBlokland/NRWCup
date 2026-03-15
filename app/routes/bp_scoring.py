@@ -16,6 +16,7 @@ from app.utils.utils_base_controller import BaseController
 from app.utils.audit import audit_log
 from sqlalchemy.exc import SQLAlchemyError
 from app.services.services_rounds import RoundService
+from app.utils.scoring_constants import MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS
 from datetime import datetime
 
 import logging
@@ -335,7 +336,8 @@ def score_list():
 
         # Get completed scoresheets with eager loading
         query = Score.query.options(
-            db.joinedload(Score.values).joinedload(ScoreValue.task_type)
+            db.joinedload(Score.values).joinedload(ScoreValue.task_type),
+            db.joinedload(Score.team_round)
         )
         
         if round_id:
@@ -347,14 +349,11 @@ def score_list():
         completed_scores = query.all()
         
         # Convert to a dictionary for easier lookup
-        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
-        ALWAYS_MANDATORY = {'STRT', 'AUSKL', 'VKURV', 'SEILW', 'LANM', 'LANDM', 'LANDGS', 'LANDS', 'ERSCH'}
-        EXCLUSIVE_GROUPS = [{'PLTZR', 'PLTZR-M'}, {'PLTZU', 'PLTZU-OV'}]
         completed_dict = {}
         has_quality_set = set()   # at least one quality figure entered
         fully_complete_set = set()  # all mandatory figures + one per exclusive group
         for score in completed_scores:
-            team_round = TeamRound.query.get(score.team_round_id)
+            team_round = score.team_round
             if team_round:
                 key = f"{team_round.round_id}_{team_round.team_id}_{score.judge_id}"
                 completed_dict[key] = score
@@ -389,7 +388,6 @@ def score_list():
         # Define the getRawScore function directly in this scope
         # Messwertung is included only for the "owner" judge (lowest score_id
         # per team_round).  Other judges show Messwertung as blue/informational.
-        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
 
         # Cache: team_round_id -> owner score_id
         _messwertung_owners = {}
@@ -1260,10 +1258,6 @@ def team_results():
                         db.joinedload(Score.judge)
                     ).filter_by(team_round_id=team_round.team_round_id).all()
 
-                    EXCLUSIVE_GROUPS = [
-                        ['PLTZR', 'PLTZR-M'],
-                        ['PLTZU', 'PLTZU-OV'],
-                    ]
                     type_id_to_code = {f.type_id: f.code for f in figures}
                     unchosen_codes = set()
                     for group in EXCLUSIVE_GROUPS:

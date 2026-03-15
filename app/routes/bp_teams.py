@@ -372,10 +372,10 @@ def reorder():
     try:
         data = request.get_json()
         orders = data.get('orders', [])  # [{team_id, team_nummer}, ...]
-        for item in orders:
-            team = Team.query.get(int(item['team_id']))
-            if team:
-                team.team_nummer = int(item['team_nummer'])
+        id_to_nummer = {int(item['team_id']): int(item['team_nummer']) for item in orders}
+        teams = Team.query.filter(Team.team_id.in_(id_to_nummer.keys())).all()
+        for team in teams:
+            team.team_nummer = id_to_nummer[team.team_id]
         db.session.commit()
         return jsonify({'success': True})
     except Exception as e:

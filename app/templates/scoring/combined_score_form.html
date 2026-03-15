@@ -189,7 +189,12 @@
 
             <!-- Save buttons row, aligned with judge columns -->
             <tr>
-              <td></td>
+              <td class="align-middle">
+                <small class="text-muted">
+                  <strong>Speichern</strong> -- Punkte gespeichert, noch aenderbar.<br>
+                  <strong>Sperren</strong> -- nach Kontrolle gesperrt.
+                </small>
+              </td>
               {% for ci in range(judges|length) %}
                 {% set jd = judge_data[ci] %}
                 <td class="text-center py-1">

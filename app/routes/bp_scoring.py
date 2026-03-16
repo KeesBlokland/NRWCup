@@ -263,9 +263,10 @@ def score_list():
             elif events:
                 event_id = events[0].event_id
 
-        # Remember the selection for this browser session
+        # Remember the selection for this browser session (shared with Startliste)
         if event_id:
             session['scoring_event_id'] = event_id
+            session['formular_event_id'] = event_id
                 
         event = Event.query.get(event_id) if event_id else None
         
@@ -1086,11 +1087,12 @@ def generate_next_round():
 
         if generate_scoresheets_for_round(new_round.round_id, team_order):
             db.session.commit()
+            session['formular_event_id'] = event_id
             if use_standings:
-                flash(f'Durchgang {next_round_number} erstellt — Startfolge nach Gesamtwertung (schlechtestes Team zuerst)', 'success')
+                flash(f'Durchgang {next_round_number} erstellt — Startfolge nach Gesamtwertung (schlechtestes Team zuerst) — bitte drucken', 'success')
             else:
-                flash(f'Durchgang {next_round_number} erstellt — bitte Startfolge unter Startliste / Zufallige Reihenfolge generieren und drucken', 'success')
-            return redirect(url_for('scoring.score_list', event_id=event_id, round_id=new_round.round_id))
+                flash(f'Durchgang {next_round_number} erstellt — bitte Startfolge unter Zufallige Reihenfolge generieren und drucken', 'success')
+            return redirect(url_for('formular.index', event_id=event_id))
         else:
             db.session.rollback()
             flash('Fehler beim Erstellen der Bewertungsbögen', 'error')
@@ -1107,10 +1109,14 @@ def generate_next_round():
 def generate_scoresheets():
     """Generate blank scoresheets for the next round only if current round has scores"""
     try:
-        # Get active event
-        active_event = Event.query.filter_by(status='Active', is_hidden=False).first()
-        if not active_event:
-            active_event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
+        # Use event_id from form; fall back to active event if not provided
+        event_id = request.form.get('event_id', type=int)
+        if event_id:
+            active_event = Event.query.get(event_id)
+        else:
+            active_event = Event.query.filter_by(status='Active', is_hidden=False).first()
+            if not active_event:
+                active_event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
 
         if not active_event:
             flash('Keine Veranstaltung gefunden', 'error')
@@ -1224,11 +1230,13 @@ def generate_scoresheets():
         from app.routes.bp_formular import generate_scoresheets_for_round
         if generate_scoresheets_for_round(next_round.round_id, team_order):
             db.session.commit()
-            flash(f'Bewertungsbögen für Durchgang {next_round_number} erfolgreich erstellt', 'success')
+            session['formular_event_id'] = active_event.event_id
+            flash(f'Durchgang {next_round_number} erstellt — bitte Startfolge generieren und drucken', 'success')
+            return redirect(url_for('formular.index', event_id=active_event.event_id))
         else:
             db.session.rollback()
             flash(f'Fehler beim Erstellen der Bewertungsbögen für Durchgang {next_round_number}', 'warning')
-            
+
         return redirect(url_for('scoring.score_list', round_id=next_round.round_id))
             
     except Exception as e:

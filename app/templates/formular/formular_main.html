@@ -280,7 +280,8 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({event_id: {{ active_event.event_id if active_event else 'null' }}})
         })
         .then(response => response.json())
         .then(data => {

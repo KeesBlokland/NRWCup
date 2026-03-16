@@ -285,10 +285,15 @@ def toggle_lock():
         if new_state == 'true':
             # Get the current order from the session
             team_order = session.get('team_order', [])
-            
+
             if team_order:
-                # Get active event
-                active_event = Event.query.filter_by(status='Active').first()
+                # Use event_id from request body
+                data = request.get_json(silent=True) or {}
+                event_id_from_request = data.get('event_id')
+                if event_id_from_request:
+                    active_event = Event.query.get(event_id_from_request)
+                else:
+                    active_event = Event.query.filter_by(status='Active').first()
                 if not active_event:
                     active_event = Event.query.order_by(Event.event_date.desc()).first()
                 

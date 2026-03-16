@@ -573,7 +573,7 @@
             const isAllZeros = parseFloat(document.getElementById('total_points').value) === 0;
             
             // If it's an all-zero submission, verify with user
-            if (isAllZeros && !confirm('Sie sind dabei, eine Bewertung mit allen Werten auf 0 zu speichern. Fortfahren?')) {
+            if (isAllZeros && !confirm('Alle Werte sind 0 -- Nullwertung speichern? (Absturz / nicht geflogen)\nDie Werte werden automatisch auf alle Richter ubertragen.')) {
                 event.preventDefault();
                 return false;
             }

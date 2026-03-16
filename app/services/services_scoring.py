@@ -148,6 +148,27 @@ class ScoringService(BaseService):
         # Replicate Messwertung values to all other judges for this team_round
         self.replicate_messwertung_values(team_round_id, score.score_id)
 
+        # If judge 1 saved all zeros, replicate all scores to other judges
+        first_score = Score.query.filter_by(team_round_id=team_round_id)\
+            .order_by(Score.score_id).first()
+        if first_score and first_score.score_id == score.score_id:
+            all_values = ScoreValue.query.filter_by(score_id=score.score_id).all()
+            if all_values and all(sv.value == 0 for sv in all_values):
+                other_scores = Score.query.filter(
+                    Score.team_round_id == team_round_id,
+                    Score.score_id != score.score_id
+                ).all()
+                for other in other_scores:
+                    ScoreValue.query.filter_by(score_id=other.score_id).delete(synchronize_session='fetch')
+                    for sv in all_values:
+                        db.session.add(ScoreValue(
+                            score_id=other.score_id,
+                            task_type_id=sv.task_type_id,
+                            value=0
+                        ))
+                db.session.commit()
+                logger.info(f"All-zero replication: copied zeros from score {score.score_id} to {len(other_scores)} other judges for team_round {team_round_id}")
+
         # Fix Kür mismatches: if judge 1 has chosen a variant, move any
         # conflicting entries on this score to the correct variant
         self.fix_kuer_mismatches(team_round_id, score.score_id)

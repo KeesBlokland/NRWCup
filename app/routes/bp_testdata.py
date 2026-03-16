@@ -88,10 +88,15 @@ def index():
         # DB stores 'Pending', UI displays 'Geplant'
         events = Event.query.filter_by(status='Pending').order_by(Event.event_date.desc()).all()
 
-        # Auto-select: if only one Pending event, use it as default
+        # Restore selected event from session, then fall back to single-event auto-select
+        event_id = request.args.get('event_id', type=int) or session.get('testdata_event_id')
         active_event = None
-        if len(events) == 1:
+        if event_id:
+            active_event = next((e for e in events if e.event_id == event_id), None)
+        if not active_event and len(events) == 1:
             active_event = events[0]
+        if active_event:
+            session['testdata_event_id'] = active_event.event_id
 
         return render_template('testdata/testdata_main.html',
                               task_types=task_types,
@@ -119,6 +124,8 @@ def generate():
         score_variability = int(request.form.get('score_variability') or 20)  # Percentage
         clear_existing = request.form.get('clear_existing') == 'on'
         event_id = request.form.get('event_id')
+        if event_id:
+            session['testdata_event_id'] = int(event_id)
         specific_round = int(request.form.get('specific_round') or 0)  # Empty string → 0
 
         # Get number of rounds

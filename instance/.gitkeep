@@ -1,0 +1,3 @@
+This directory holds the SQLite database (NRWCup2025.db) and Flask secret key.
+Contents are excluded from version control -- never commit the database or secret_key file.
+The directory and database are created automatically on first run.

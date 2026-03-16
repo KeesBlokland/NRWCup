@@ -23,8 +23,14 @@ node_modules/
 # Credentials and local config
 .env
 config.py.kees
-instance/
 .claude/
+
+# Runtime data -- keep directory placeholder only
+instance/*
+!instance/.gitkeep
+logs/*
+!logs/.gitkeep
 
 # Dev-only scripts
 restart_flask.sh
+scripts/migrate_2026.py

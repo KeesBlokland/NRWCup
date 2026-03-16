@@ -1,0 +1,3 @@
+This directory holds application logs (db_YYYY-MM-DD.log).
+Log files are excluded from version control via .gitignore (*.log).
+The directory is created automatically by Flask on first run.

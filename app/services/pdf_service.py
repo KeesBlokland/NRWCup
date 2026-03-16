@@ -160,19 +160,19 @@ class PdfService:
                 
                 # Add scores for each round, using strikethrough for dropped rounds
                 for i, score in enumerate(round_scores):
-                    score_text = f"{score / 10:.1f}%"
+                    score_text = f"{score:.1f}"
                     if i in dropped_indices:
                         # Use the strikethrough style for dropped rounds
                         row.append(Paragraph(f"<para align='center'><strike>{score_text}</strike></para>", strike_style))
                     else:
                         row.append(score_text)
-            
+
             # Add empty cells if we have fewer scores than rounds
             while len(row) < len(header) - 1:  # -1 for Endstand column
                 row.append("-")
 
-            # Endstand = sum of best round percentages
-            row.append(f"{standing['score'] / 10:.1f}%")
+            # Endstand = sum of Promille-Punkte for best rounds
+            row.append(f"{standing['score']:.1f}")
             
             data.append(row)
             

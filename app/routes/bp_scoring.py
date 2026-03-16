@@ -296,14 +296,15 @@ def score_list():
                     can_generate_next_round = True
                     next_round_number = latest_round.round_number + 1
                 elif len(rounds) >= 2:
-                    # Latest round has no scores — check if previous round is complete
+                    # Latest round has some scores but is not yet complete — in progress, no button
+                    # OR latest round has no scores at all — D(n) already created, D(n-1) was complete
                     prev_round = rounds[-2]
                     prev_status = round_completion_status(prev_round.round_id)
                     if (prev_status['total_teams'] > 0 and
-                            prev_status['scored_teams'] == prev_status['total_teams']):
-                        # Previous round complete, next round already created — button for print
-                        can_generate_next_round = True
-                        next_round_number = latest_round.round_number
+                            prev_status['scored_teams'] == prev_status['total_teams'] and
+                            round_status_info['scored_teams'] == 0):
+                        # Previous round complete, current round empty (just created) — no create button,
+                        # but show prev round status so badge is informative
                         selected_round_obj = prev_round
                         round_status_info = prev_status
         
@@ -993,6 +994,18 @@ def generate_next_round():
         if existing_next:
             # Next round already exists — idempotent, just go to it
             return redirect(url_for('scoring.score_list', event_id=event_id, round_id=existing_next.round_id))
+
+        # Guard: refuse to create next round if source round is not fully scored
+        from app.utils.round_status import round_completion_status
+        src_status = round_completion_status(source_round.round_id)
+        if src_status['scored_teams'] < src_status['total_teams']:
+            flash(
+                f'Durchgang {source_round.round_number} ist noch nicht vollständig bewertet '
+                f'({src_status["scored_teams"]}/{src_status["total_teams"]} Teams). '
+                f'Bitte alle Bewertungen abschliessen bevor der nächste Durchgang erstellt wird.',
+                'error'
+            )
+            return redirect(url_for('scoring.score_list', event_id=event_id))
 
         # Calculate raw and normalized scores for the source round
         team_rounds = TeamRound.query.filter_by(round_id=source_round.round_id).all()

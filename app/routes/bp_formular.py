@@ -134,14 +134,18 @@ def index():
     # Get saved order from session for initial round
     saved_order = session.get('team_order', [])
     
-    # Get selected or active event
+    # Get selected or active event — remember selection in session
     event_id = request.args.get('event_id', type=int)
+    if not event_id:
+        event_id = session.get('formular_event_id')
     if event_id:
         active_event = Event.query.get(event_id)
     else:
         active_event = Event.query.filter_by(status='Active').first()
     if not active_event and events:
         active_event = events[0]
+    if active_event:
+        session['formular_event_id'] = active_event.event_id
     
     # Get all rounds for this event with their start orders
     all_rounds = []

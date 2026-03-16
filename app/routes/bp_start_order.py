@@ -25,9 +25,11 @@ pdf_service = PdfService()
 def index():
     """Display start order management interface"""
     try:
-        # Get event ID from query parameters, or use the active event
+        # Get event ID from query parameters, session, or fall back to active event
         event_id = request.args.get('event_id', type=int)
-        
+
+        if not event_id:
+            event_id = session.get('start_order_event_id')
         if not event_id:
             active_event = Event.query.filter_by(status='Active').first()
             if active_event:
@@ -37,6 +39,9 @@ def index():
                 event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
                 if event:
                     event_id = event.event_id
+
+        if event_id:
+            session['start_order_event_id'] = event_id
 
         if not event_id:
             flash('No event selected', 'warning')

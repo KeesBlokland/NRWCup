@@ -131,13 +131,25 @@
 
                 <div class="mt-4 text-center">
                     <button type="submit" class="btn btn-primary" id="generateBtn">Testwertungen Generieren</button>
-                    <a href="{{ url_for('testdata.clear_all') }}" class="btn btn-outline-danger">Zur Löschseite</a>
+                    <button type="submit" form="clear-form" class="btn btn-outline-danger"
+                            onclick="return confirm('Alle Wertungen für den gewählten Wettbewerb löschen?');">
+                        Wertungen für gewählten Wettbewerb löschen
+                    </button>
                 </div>
                 <div id="generateProgress" class="mt-3 text-center d-none">
                     <div class="spinner-border spinner-border-sm text-primary me-2"></div>
                     <span class="text-muted">Generiere Testdaten, bitte warten...</span>
                 </div>
             </form>
+            <form id="clear-form" method="POST" action="{{ url_for('testdata.clear_scores') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="event_id" id="clear-event-id" value="">
+            </form>
+            <script>
+            document.querySelector('[form="clear-form"]').addEventListener('click', function() {
+                document.getElementById('clear-event-id').value = document.getElementById('event_id').value;
+            });
+            </script>
         </div>
     </div>
 

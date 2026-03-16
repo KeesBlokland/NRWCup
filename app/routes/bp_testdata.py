@@ -52,13 +52,15 @@ def handle_mutually_exclusive_figures(task_types):
 
 @testdata_bp.route('/clear', methods=['POST'])
 def clear_scores():
-    """Clear all test scores from the database"""
+    """Clear scores for a specific event (or all non-completed events as fallback)"""
     try:
-        # Call the utility function to clear all scores
-        result = clear_all_scores()
-        
-        # Provide feedback to the user
-        flash(f'{result["scores_deleted"]} Bewertungen und {result["team_rounds_deleted"]} Durchgangseintraege geloescht', 'success')
+        event_id = request.form.get('event_id', type=int)
+        if event_id:
+            result = clear_event_data(event_id, clear_scores_only=True)
+            flash(f'{result["scores_deleted"]} Bewertungen und {result["team_rounds_deleted"]} Durchgange geloescht', 'success')
+        else:
+            result = clear_all_scores()
+            flash(f'{result["scores_deleted"]} Bewertungen und {result["team_rounds_deleted"]} Durchgange geloescht', 'success')
 
         return redirect(url_for('testdata.index'))
 

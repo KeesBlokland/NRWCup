@@ -6,7 +6,7 @@ Updated: 2025-04-15
 Description: Test data generation with complete TeamRound deletion
 """
 
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
 from app.models import db, Team, Round, Teilnehmer, Event, Score, ScoreValue, TaskType, TeamRound
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.clear_data import clear_all_scores, clear_event_data

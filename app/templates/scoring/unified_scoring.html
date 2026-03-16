@@ -81,7 +81,9 @@
                                     </form>
                                 {% else %}
                                     {% if latest_round_id %}
-                                        <a href="{{ url_for('start_order.print_start_order', round_id=latest_round_id) }}" class="btn btn-outline-secondary btn-sm">
+                                        <a href="{{ url_for('start_order.print_start_order', round_id=latest_round_id) }}"
+                                           class="btn btn-outline-secondary btn-sm"
+                                           title="Startreihenfolge für D{{ rounds[-1].round_number }} — basierend auf kumulierten Promille-Punkten aller abgeschlossenen Durchgänge (schlechtestes Team startet zuerst)">
                                             Startfolge D{{ rounds[-1].round_number }} drucken
                                         </a>
                                     {% endif %}

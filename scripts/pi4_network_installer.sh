@@ -13,8 +13,8 @@ HOTSPOT_SSID="NRWCup"       # Name for your hotspot
 HOTSPOT_PASSWORD="Schlepp4FUN" # Password for your hotspot
 
 # IP and Network Settings
-HOTSPOT_IP="192.168.4.1"
-DHCP_RANGE="192.168.4.2,192.168.4.100,255.255.255.0,24h"
+HOTSPOT_IP="192.168.5.1"
+DHCP_RANGE="192.168.5.2,192.168.5.100,255.255.255.0,24h"
 
 # NRWCup Flask App Settings
 FLASK_APP_PATH="/home/NRWcup"
@@ -288,7 +288,7 @@ enable_hotspot() {
     
     # Configure interface
     ip link set wlan0 up
-    ip addr add 192.168.4.1/24 dev wlan0
+    ip addr add 192.168.5.1/24 dev wlan0
     
     # Start hotspot services
     systemctl start hostapd
@@ -453,7 +453,7 @@ def is_hotspot_active():
     try:
         addresses = netifaces.ifaddresses('wlan0')
         if (netifaces.AF_INET not in addresses or 
-            not any(addr.get('addr', '') == '192.168.4.1' 
+            not any(addr.get('addr', '') == '192.168.5.1'
                   for addr in addresses[netifaces.AF_INET])):
             return False
     except:
@@ -482,7 +482,7 @@ def activate_hotspot():
             subprocess.run(['sudo', 'ip', 'link', 'set', 'wlan0', 'down'], check=False)
             subprocess.run(['sudo', 'ip', 'addr', 'flush', 'dev', 'wlan0'], check=False)
             subprocess.run(['sudo', 'ip', 'link', 'set', 'wlan0', 'up'], check=False)
-            subprocess.run(['sudo', 'ip', 'addr', 'add', '192.168.4.1/24', 'dev', 'wlan0'], check=False)
+            subprocess.run(['sudo', 'ip', 'addr', 'add', '192.168.5.1/24', 'dev', 'wlan0'], check=False)
             
             # Start services
             subprocess.run(['sudo', 'systemctl', 'start', 'hostapd'], check=False)
@@ -720,8 +720,8 @@ def update_display():
     
     # Determine the URL to display and QR code
     if hotspot_active:
-        url_text = f"Hotspot NRWCup: http://192.168.4.1:{port}"
-        flask_url = f"http://192.168.4.1:{port}"
+        url_text = f"Hotspot NRWCup: http://192.168.5.1:{port}"
+        flask_url = f"http://192.168.5.1:{port}"
         url_label.config(text=url_text, fg="#FFFF00")
         
         # Update hotspot button to allow turning it OFF

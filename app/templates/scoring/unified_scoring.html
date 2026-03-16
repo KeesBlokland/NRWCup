@@ -362,8 +362,9 @@
                     <li>Sobald D{{ next_round_number or 2 }} erstellt ist, gibt es keine Schaltflache zum Loschen</li>
                     <li>Das Zurucksetzen erfordert einen Admin-Eingriff in die Datenbank</li>
                 </ul>
-                <p class="mb-0"><strong>Sicher weitermachen?</strong> Nur bestatigen wenn alle Bewertungen fur
+                <p><strong>Sicher weitermachen?</strong> Nur bestatigen wenn alle Bewertungen fur
                 D{{ (next_round_number or 2) - 1 }} vollstandig und korrekt eingegeben sind.</p>
+                <p class="mb-0 text-primary"><strong>Nachster Schritt:</strong> Nach dem Erstellen die Startfolge fur D{{ next_round_number or 2 }} unter <strong>Startliste</strong> prufen und bei Bedarf anpassen.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>

@@ -1038,32 +1038,11 @@ def generate_next_round():
         source_round.status = 'Completed'
         db.session.flush()
 
-        # Build start order from CUMULATIVE standings across all completed rounds
-        # (lowest cumulative score starts first — BeMod H.II)
-        completed_rounds = Round.query.filter(
-            Round.event_id == event_id,
-            Round.status == 'Completed'
-        ).all()
-        team_totals = {}
-        for r in completed_rounds:
-            for tr in TeamRound.query.filter_by(round_id=r.round_id).all():
-                if tr.normalized_score is not None:
-                    team_totals[tr.team_id] = team_totals.get(tr.team_id, 0.0) + tr.normalized_score
-
-        # Sort ascending: lowest cumulative total starts first
-        sorted_team_ids = [tid for tid, _ in sorted(team_totals.items(), key=lambda x: x[1])]
-
-        # Append any active teams not yet in standings (new entrants etc.)
-        all_active_ids = {t.team_id for t in Team.query.filter_by(status='active').all()}
-        for tid in all_active_ids:
-            if tid not in team_totals:
-                sorted_team_ids.append(tid)
-
-        team_order = []
-        for tid in sorted_team_ids:
-            team = Team.query.get(tid)
-            if team:
-                team_order.append(team.team_nummer)
+        # Start order is NOT set here — per BeMod-F-Schlepp H.II, start order is
+        # determined by random draw for all rounds except the last two planned rounds.
+        # The user must generate the start order via Startliste / Zufallige Reihenfolge.
+        # Teams are created in team_nummer order as a neutral placeholder.
+        team_order = None
 
         # Create new round
         new_round = Round(
@@ -1078,7 +1057,7 @@ def generate_next_round():
 
         if generate_scoresheets_for_round(new_round.round_id, team_order):
             db.session.commit()
-            flash(f'Durchgang {next_round_number} erstellt — Startfolge basierend auf D{source_round.round_number}', 'success')
+            flash(f'Durchgang {next_round_number} erstellt — bitte Startfolge unter Startliste / Zufallige Reihenfolge generieren und drucken', 'success')
             return redirect(url_for('scoring.score_list', event_id=event_id, round_id=new_round.round_id))
         else:
             db.session.rollback()

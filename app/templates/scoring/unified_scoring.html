@@ -81,7 +81,7 @@
                                     {% if latest_round_id %}
                                         <a href="{{ url_for('start_order.print_start_order', round_id=latest_round_id) }}"
                                            class="btn btn-primary btn-sm"
-                                           title="Startreihenfolge für D{{ rounds[-1].round_number }} — basierend auf kumulierten Promille-Punkten aller abgeschlossenen Durchgänge (schlechtestes Team startet zuerst)">
+                                           title="Startfolge D{{ rounds[-1].round_number }} drucken">
                                             Startfolge D{{ rounds[-1].round_number }} drucken
                                         </a>
                                     {% endif %}
@@ -354,7 +354,7 @@
                 <ul>
                     <li>Durchgang {{ (next_round_number or 2) - 1 }} wird <strong>abgeschlossen</strong> (Status: Abgeschlossen)</li>
                     <li>Promille-Punkte fur D{{ (next_round_number or 2) - 1 }} werden berechnet und gespeichert</li>
-                    <li>Eine neue Startfolge fur D{{ next_round_number or 2 }} wird erstellt (schlechtestes Team startet zuerst)</li>
+                    <li>Die Startfolge fur D{{ next_round_number or 2 }} muss anschliessend manuell unter <strong>Startliste &rarr; Zufallige Reihenfolge</strong> generiert und gedruckt werden (laut Regelwerk zufallig, ausser in den letzten zwei geplanten Durchgangen)</li>
                     <li>Leere Bewertungsbogen fur D{{ next_round_number or 2 }} werden angelegt</li>
                 </ul>
                 <p><strong>Warum nicht ruckgangig machbar:</strong></p>
@@ -364,7 +364,7 @@
                 </ul>
                 <p><strong>Sicher weitermachen?</strong> Nur bestatigen wenn alle Bewertungen fur
                 D{{ (next_round_number or 2) - 1 }} vollstandig und korrekt eingegeben sind.</p>
-                <p class="mb-0 text-primary"><strong>Nachster Schritt:</strong> Nach dem Erstellen die Startfolge fur D{{ next_round_number or 2 }} unter <strong>Startliste</strong> prufen und bei Bedarf anpassen.</p>
+                <p class="mb-0 text-primary"><strong>Nachster Schritt:</strong> Startliste aufrufen, <strong>Zufallige Reihenfolge</strong> fur D{{ next_round_number or 2 }} generieren und drucken.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>

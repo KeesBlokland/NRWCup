@@ -298,20 +298,20 @@ def export_excel(event_id):
                 'Segler_Pilot': standing['team'].segler_pilot.name if standing['team'].segler_pilot else '',
             }
             
-            # Add round scores as percentages
+            # Add round scores as Promille-Punkte (0-1000)
             for i, round_obj in enumerate(standings_rounds):
                 col_name = f'D{round_obj.round_number}'
                 if i < len(standing['round_scores']):
-                    score = standing['round_scores'][i] / 10
+                    score = standing['round_scores'][i]
                     if i in standing.get('dropped_indices', []):
-                        row[col_name] = f"{score:.1f}% (gestrichen)"
+                        row[col_name] = f"{score:.0f} (gestrichen)"
                     else:
-                        row[col_name] = f"{score:.1f}%"
+                        row[col_name] = int(round(score))
                 else:
                     row[col_name] = ''
 
-            # Add Endstand as percentage
-            row['Endstand'] = f"{standing['score'] / 10:.1f}%"
+            # Add Endstand as Promille-Punkte (sum of best rounds)
+            row['Endstand'] = int(round(standing['score']))
             
             data.append(row)
         

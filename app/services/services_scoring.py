@@ -586,16 +586,18 @@ class ScoringService(BaseService):
                 final_scores[team_id] = {
                     'score': final_score,
                     'round_scores': scores,
-                    'dropped_indices': dropped_indices
+                    'dropped_indices': dropped_indices,
+                    'streicher': scores[min_index]
                 }
             else:
                 # Below threshold — count all rounds
                 final_scores[team_id] = {
                     'score': sum(scores),
                     'round_scores': scores,
-                    'dropped_indices': []
+                    'dropped_indices': [],
+                    'streicher': 0
                 }
-        
+
         # Generate final standings
         standings = []
         for team_id, data in final_scores.items():
@@ -603,11 +605,12 @@ class ScoringService(BaseService):
                 'team': teams[team_id],
                 'score': data['score'],
                 'round_scores': data['round_scores'],
-                'dropped_indices': data['dropped_indices']
+                'dropped_indices': data['dropped_indices'],
+                'streicher': data['streicher']
             })
-        
-        # Sort by score (descending)
-        standings.sort(key=lambda x: x['score'], reverse=True)
+
+        # Sort by Endstand, tiebreaker = Streicher (higher wins) per BeMod-F-Schlepp 2026 section K
+        standings.sort(key=lambda x: (x['score'], x['streicher']), reverse=True)
         
         # Add rank
         for i, standing in enumerate(standings, 1):

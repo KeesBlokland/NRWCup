@@ -354,17 +354,27 @@
                 <ul>
                     <li>Durchgang {{ (next_round_number or 2) - 1 }} wird <strong>abgeschlossen</strong> (Status: Abgeschlossen)</li>
                     <li>Promille-Punkte fur D{{ (next_round_number or 2) - 1 }} werden berechnet und gespeichert</li>
-                    <li>Die Startfolge fur D{{ next_round_number or 2 }} muss anschliessend manuell unter <strong>Startliste &rarr; Zufallige Reihenfolge</strong> generiert und gedruckt werden (laut Regelwerk zufallig, ausser in den letzten zwei geplanten Durchgangen)</li>
-                    <li>Leere Bewertungsbogen fur D{{ next_round_number or 2 }} werden angelegt</li>
+                    {% set dn = next_round_number or 2 %}
+                    {% set est = estimated_rounds or 4 %}
+                    {% if dn >= est - 1 %}
+                    <li>Startfolge fur D{{ dn }} wird <strong>automatisch nach Gesamtwertung</strong> berechnet (schlechtestes Team startet zuerst &mdash; laut Regelwerk H.II)</li>
+                    {% else %}
+                    <li>Startfolge fur D{{ dn }} muss anschliessend manuell unter <strong>Startliste &rarr; Zufallige Reihenfolge</strong> generiert und gedruckt werden (laut Regelwerk H.II zufallig)</li>
+                    {% endif %}
+                    <li>Leere Bewertungsbogen fur D{{ dn }} werden angelegt</li>
                 </ul>
                 <p><strong>Warum nicht ruckgangig machbar:</strong></p>
                 <ul>
-                    <li>Sobald D{{ next_round_number or 2 }} erstellt ist, gibt es keine Schaltflache zum Loschen</li>
+                    <li>Sobald D{{ dn }} erstellt ist, gibt es keine Schaltflache zum Loschen</li>
                     <li>Das Zurucksetzen erfordert einen Admin-Eingriff in die Datenbank</li>
                 </ul>
                 <p><strong>Sicher weitermachen?</strong> Nur bestatigen wenn alle Bewertungen fur
                 D{{ (next_round_number or 2) - 1 }} vollstandig und korrekt eingegeben sind.</p>
-                <p class="mb-0 text-primary"><strong>Nachster Schritt:</strong> Startliste aufrufen, <strong>Zufallige Reihenfolge</strong> fur D{{ next_round_number or 2 }} generieren und drucken.</p>
+                {% if dn >= est - 1 %}
+                <p class="mb-0 text-primary"><strong>Nachster Schritt:</strong> Startliste prufen und drucken (Reihenfolge bereits gesetzt).</p>
+                {% else %}
+                <p class="mb-0 text-primary"><strong>Nachster Schritt:</strong> Startliste aufrufen, <strong>Zufallige Reihenfolge</strong> fur D{{ dn }} generieren und drucken.</p>
+                {% endif %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>

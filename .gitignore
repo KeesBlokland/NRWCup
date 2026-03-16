@@ -19,3 +19,9 @@ venv/
 # IDE
 .idea/
 node_modules/
+
+# Credentials and local config
+.env
+config.py.kees
+instance/
+.claude/

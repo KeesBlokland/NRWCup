@@ -1,178 +1,108 @@
-# NRW Cup 2025 – Bewertungsberechnungen
+# NRW Cup -- Wettbewerbsverwaltung
 
-Dieses Projekt dient der Verwaltung und Auswertung von Wettbewerbsdaten des NRW Cup 2025. Ziel war es, eine robuste und nachvollziehbare Alternative zu einer komplexen Excel-Lösung zu schaffen.
+Flask web application for managing the NRW Cup model aircraft competition (Schleppflug / Segelflug).
+Runs offline on a Raspberry Pi or any Linux server.
 
-## Projekthintergrund
-
-Dieses Hobbyprojekt entstand aus dem Wunsch heraus, eine Excel-Datei mit Makros durch eine schlankere Lösung zu ersetzen. Der Code wurde mit Unterstützung von Claude entwickelt. Das System läuft offline auf einem Raspberry Pi und in einer Entwicklungsumgebung auf einem Proxmox-Server.
-
----
-
-## 1. Figurenwertung mit K-Faktoren
-
-Jede Wettbewerbsfigur hat einen K-Faktor (z. B. 10, 15, 20), der die Schwierigkeit widerspiegelt. Die Bewertung erfolgt auf einer Skala von 0 bis 10 (mit halben Punkten).
-
-**Berechnung:**
-
-```
-Figurenwertung = Rohwertung × K-Faktor
-```
-
-**Beispiele:**
-
-- 7,5 × 15 = 112,5 Punkte
-- 8,0 × 10 = 80 Punkte
-- 6,5 × 20 = 130 Punkte
-
-**Sonderfall: Segler-Flugzeit (SEGZEIT)**
-
-```
-Punkte = max(0, 300 - (abs(200 - tatsächliche_Zeit) × 3))
-```
-
-- Zielzeit: 200 s, max. Punkte: 300  
-- Abweichung → Punktabzug mit Faktor 3
-
-**Landezonen**
-
-Punktwerte: 0, 5, 10, 20, 30 – je nach Landeposition.
-
----
-NOTE: Die Beschreibung stimmt nicht, muss ich noch bearbeiten!!
-
-## 2. Punktwerterwertungen
-
-Die Punktwerter geben Bewertungen ab, die für jedes Team summiert werden:
-
-- Bei 4 oder mehr Punktwertern wird die niedrigste Wertung für jedes Team gestrichen
-- Die verbleibenden Wertungen werden gemittelt, um die Rohpunktzahl des Teams zu erhalten
-
-**Beispiel mit 3 Punktwertern:**
-
-- 950 + 1025 + 890 = 2865  
-
-
-**Beispiel mit 4 Punktwertern:**
-
-- 950 + 1025 + 890 + 840
-- Niedrigste (840) wird gestrichen
-- (950 + 1025 + 890) ÷ 3 = 955 Punkte
+Built with assistance from Claude (Anthropic).
 
 ---
 
-## 3. Normalisierung
+## Features
 
-Wertungen werden zur Vergleichbarkeit auf 1000 skaliert:
+- **Teilnehmer & Teams** -- Manage pilots, tow pilots, judges, and team composition
+- **Flugzeuge** -- Register gliders and tow planes
+- **Startlisten** -- Generate and print start lists per round, drag-and-drop reorder
+- **Wertung** -- Score entry per judge, per team, per round
+  - Qualitaetswertung (0-10 x K-factor) with judge drop rule (4 judges: drop highest; 5: drop highest + lowest)
+  - Messwertung (SEGZEIT, SEILZ, LANDGM, LANS) -- entered once, replicated to all judges
+  - Varianten-Programme (Steigflug / Ueberflug exclusive groups)
+  - Alle-Null button for crash/withdrawal -- replicates zeros to all judges automatically
+- **Ergebnisse** -- Per-round Promille-Punkte normalization (winner = 1000), final standings with drop-worst-round, tiebreaker by Streicher
+- **Berichte** -- PDF scoresheets (organizer), results email to pilots (no per-judge breakdown)
+- **Benutzerhandbuch** -- Built-in help page + downloadable PDF manual
 
-```
-Normalisierte Wertung = (Rohwertung ÷ Höchste Rohwertung) × 1000
-```
-
-**Beispiel:**
-
-- 955 ÷ 1150 × 1000 = 830,43 Punkte
-
----
-
-## 4. Endwertung und Streichwertungen
-
-Abhängig von der Anzahl der durchgeführten Durchgänge:
-
-- 1-2 Durchgänge: Alle Durchgänge zählen
-- Ab 3 Durchgängen: Der schwächste Durchgang wird gestrichen
-
-Die Summe der verbleibenden Durchgänge ergibt die Gesamtwertung.
-
-**Beispiel Team A (3 Durchgänge):**
-
-- Durchgang 1: 856,52 Punkte
-- Durchgang 2: 923,08 Punkte
-- Durchgang 3: 742,31 Punkte (schwächster Durchgang, wird gestrichen)
-- Gesamtwertung: 856,52 + 923,08 = 1779,60 Punkte
-
-### Warum der schwächste (niedrigste) Durchgang gestrichen wird
-
-Die originale Excel-Vorlage streicht den **höchsten** Durchgang. Dieses System streicht
-bewusst den **niedrigsten** Durchgang. Der Grund:
-
-**Streichung des höchsten Durchgangs ist gefährlich bei fehlenden Wertungen:**
-
-| Durchgang 1 | Durchgang 2 | Durchgang 3 | Gestrichen | Ergebnis |
-|-------------|-------------|-------------|------------|----------|
-| 900 | 800 | 0 (nicht geflogen) | 900 (höchster!) | 800 |
-
-Das Team wird doppelt bestraft: Es hat einen Durchgang verpasst (0 Punkte) UND
-verliert seinen besten Durchgang. Das Ergebnis ist unfair.
-
-**Streichung des niedrigsten Durchgangs ist immer sicher:**
-
-| Durchgang 1 | Durchgang 2 | Durchgang 3 | Gestrichen | Ergebnis |
-|-------------|-------------|-------------|------------|----------|
-| 900 | 800 | 0 (nicht geflogen) | 0 (niedrigster) | 1700 |
-
-Der verpasste Durchgang fällt weg, das Team behält seine echten Wertungen.
-Ein Durchgang mit 0 Punkten verursacht nie Probleme, weil er immer der
-niedrigste ist und automatisch gestrichen wird.
-
-**Fazit:** Solange nicht garantiert ist, dass alle Teams in allen Durchgängen
-antreten (3 Wertungen > 0), darf nur der niedrigste Durchgang gestrichen werden.
-Eine Streichung des höchsten Durchgangs wäre nur dann sicher, wenn vorher
-geprüft wird, dass alle Durchgangswertungen > 0 sind.
+Scoring rules follow BeMod-F-Schlepp 2026.
 
 ---
 
-## 5. Finale Normalisierung
+## Tech Stack
 
-Die Gesamtwertungen aller Teams werden erneut auf einer 1000-Punkte-Skala normalisiert: (100%=1000 Punkte) 
+- Python 3 / Flask 2.3
+- SQLAlchemy 1.4 / SQLite
+- Bootstrap 5
+- Runs on Raspberry Pi (system Python, no venv needed on Pi)
 
-```
-Finale Wertung = (Gesamtwertung ÷ Höchste Gesamtwertung) × 1000
+---
+
+## Setup (Development)
+
+```bash
+git clone https://github.com/KeesBlokland/NRWCup.git
+cd NRWCup
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # edit with your settings
+python3 app_main.py
 ```
 
-**Beispiel:**
-- Team A: 1779,60 Punkte
-- Höchste Teamwertung (Team B): 1863,58 Punkte  
-- Normalisiert: 1779,60 ÷ 1863,58 × 1000 = 955,45 Punkte
+Open http://localhost:5000
+
+### Environment variables (.env)
+
+```
+SECRET_KEY=change-this-to-a-random-string
+ADMIN_PASSWORD=your-admin-password
+MAIL_SERVER=smtp.example.com
+MAIL_PORT=465
+MAIL_USERNAME=your@email.com
+MAIL_PASSWORD=your-mail-password
+MAIL_ENABLED=false
+```
+
+All credentials are loaded from environment variables -- nothing is hardcoded.
 
 ---
 
-## 6. Technische Umsetzung
+## Deployment (Raspberry Pi)
 
-Das System speichert sowohl Roh- als auch Normalwertungen nachvollziehbar ab. Bei Änderung von Durchgängen oder Wertungen wird alles automatisch neu berechnet.
+The app is designed to run as a systemd service on a Raspberry Pi in hotspot mode
+(no internet required at the event).
 
----
+```bash
+# Sync code to Pi
+rsync -avz --exclude='venv' --exclude='__pycache__' --exclude='instance' \
+  ./ pi@<PI_IP>:/home/NRWcup/
 
-## Startfolgen und Startlisten
+# Fix ownership
+ssh pi@<PI_IP> 'sudo chown -R pi:pi /home/NRWcup'
 
-### Erstdurchgang
+# Restart service
+ssh pi@<PI_IP> 'sudo systemctl restart nrwcup-flask.service'
+```
 
-Startfolge zufällig oder manuell festlegbar. Reihenfolge kann per Drag & Drop oder Zahleneingabe angepasst werden. Sperrfunktion verhindert versehentliche Änderungen.
-
-### Druck der Startliste
-
-Startliste als PDF erzeugbar mit Team, Schlepper, Segler, Startnummer.
-
-### Weitere Durchgänge
-
-Startreihenfolge ergibt sich aus der Wertung: Schwächere Teams starten zuerst.
-
-**Beispiel:**
-
-- Team A: 830,43 Punkte
-- Team B: 1000,00 Punkte
-- Team C: 800,00 Punkte
-→ Startreihenfolge: C, A, B
-
-### Druckoption auch für weitere Durchgänge verfügbar
-
-Jede Liste enthält Ergebnisse des vorherigen Durchgangs.
+The Pi runs a WiFi hotspot. Judges and organisers connect to it and open the app in a browser.
 
 ---
 
-### Automatisierte Startfolge für Folge-Durchgänge
+## Scoring Rules (BeMod-F-Schlepp 2026)
 
-Sortierung nach steigender Punktzahl, Teams ohne Wertung kommen ans Ende. Umgesetzt in `api_next_round_order()` im Modul `formular_bp`.
+### Qualitaetswertung
+- Each figure scored 0-10 by each judge, multiplied by K-factor
+- Judge drop: 3 judges = no drop; 4 = drop highest; 5 = drop highest + lowest
+- Average remaining, round to 3 decimal places, multiply by K-factor
 
+### Messwertung
+- SEGZEIT: MAX(0, 200 - |200 - time|) -- target 200s, max 200 pts
+- SEILZ, LANDGM, LANS: 0 / 10 / 20 / 30 pts
 
+### Normalization
+- Per round: winner = 1000 Promille-Punkte, others proportional
+- Final: drop worst round when total rounds >= threshold (default: 3)
+- Tiebreaker: higher Streicher (dropped round score) wins
 
+---
 
+## License
+
+MIT

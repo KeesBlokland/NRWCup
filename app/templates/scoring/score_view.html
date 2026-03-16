@@ -106,10 +106,20 @@
 
                 <!-- Action Buttons -->
                 <div class="text-center mt-3">
+                    {% if not score.locked %}
                     <button type="submit" class="btn btn-primary">Speichern</button>
+                    {% endif %}
                     <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück zur Liste</a>
                 </div>
             </form>
+            {% if score.locked %}
+            <div class="text-center mt-2">
+                <form method="POST" action="{{ url_for('scoring.unlock_score', score_id=score.score_id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-warning">Entsperren</button>
+                </form>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

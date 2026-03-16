@@ -110,9 +110,8 @@ def lock_score(score_id):
         return redirect(url_for('scoring.score_list'))
 
 @scoring_bp.route('/unlock/<int:score_id>', methods=['POST'])
-@admin_required
 def unlock_score(score_id):
-    """Unlock a score (admin only)"""
+    """Unlock a score"""
     try:
         logger.info(f"Unlocking score {score_id}, headers: {request.headers}")
         score = Score.query.get_or_404(score_id)
@@ -120,7 +119,7 @@ def unlock_score(score_id):
         score.locked_at = None
         score.locked_by = None
         db.session.commit()
-        
+        audit_log('scores', score_id, 'unlocked', None, 'user')
         logger.info(f"Score {score_id} unlocked successfully")
         flash('Bewertung entsperrt', 'success')
         
@@ -128,8 +127,8 @@ def unlock_score(score_id):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({"status": "success", "message": "Bewertung entsperrt"})
             
-        # For form submissions, redirect to view score page
-        return redirect(url_for('scoring.view_score', score_id=score_id))
+        # For form submissions, redirect to view score page (303 forces GET)
+        return redirect(url_for('scoring.view_score', score_id=score_id), 303)
         
     except Exception as e:
         db.session.rollback()

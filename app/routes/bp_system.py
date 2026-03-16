@@ -429,7 +429,6 @@ def delete_log_files():
     return redirect(url_for('system.logs'))
 
 @system_bp.route('/check_email', methods=['GET'])
-@admin_required
 def check_email():
     """Check if the mail server is reachable"""
     try:

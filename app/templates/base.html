@@ -194,6 +194,20 @@ Description: Base template with updated navigation and clickable logo
                     return false;
                 });
         };
+
+        // Hide all email buttons on page load if mail server unreachable
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/system/check_email')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.available) {
+                        document.querySelectorAll('.email-btn').forEach(el => el.style.display = 'none');
+                    }
+                })
+                .catch(() => {
+                    document.querySelectorAll('.email-btn').forEach(el => el.style.display = 'none');
+                });
+        });
     </script>
 
     <!-- Admin button script -->

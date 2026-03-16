@@ -106,10 +106,10 @@
                     <div>
                         {% if score %}
                             {% if prev_score_id %}
-                                <a href="{{ url_for('scoring.view_score', score_id=prev_score_id) }}" class="btn btn-outline-secondary btn-sm" title="Vorheriger Punktwerter">&laquo; Voriger</a>
+                                <a href="{{ url_for('scoring.view_score', score_id=prev_score_id) }}" class="btn btn-secondary btn-sm" title="Vorheriger Punktwerter">&laquo; Voriger</a>
                             {% endif %}
                             {% if next_score_id %}
-                                <a href="{{ url_for('scoring.view_score', score_id=next_score_id) }}" class="btn btn-outline-secondary btn-sm" title="Nächster Punktwerter">Nächster &raquo;</a>
+                                <a href="{{ url_for('scoring.view_score', score_id=next_score_id) }}" class="btn btn-secondary btn-sm" title="Nächster Punktwerter">Nächster &raquo;</a>
                             {% endif %}
                             {% if not prev_score_id and not next_score_id %}
                                 <span class="text-muted small">Einzelbewertung</span>
@@ -289,17 +289,17 @@
                     <div>
                         {% if score %}
                             {% if prev_score_id %}
-                                <a href="{{ url_for('scoring.view_score', score_id=prev_score_id) }}" class="btn btn-outline-secondary btn-sm">&laquo; Voriger</a>
+                                <a href="{{ url_for('scoring.view_score', score_id=prev_score_id) }}" class="btn btn-secondary btn-sm">&laquo; Voriger</a>
                             {% endif %}
                             {% if next_score_id %}
-                                <a href="{{ url_for('scoring.view_score', score_id=next_score_id) }}" class="btn btn-outline-secondary btn-sm">Nächster &raquo;</a>
+                                <a href="{{ url_for('scoring.view_score', score_id=next_score_id) }}" class="btn btn-secondary btn-sm">Nächster &raquo;</a>
                             {% endif %}
                         {% endif %}
                     </div>
                     <div>
                     {% if score and not score.locked %}
                         <button type="submit" class="btn btn-primary">Speichern</button>
-                        <button type="button" class="btn btn-outline-secondary ms-1" onclick="alleNull()" title="Alle Figuren auf 0 setzen (Absturz / nicht geflogen)">Alle Null</button>
+                        <button type="button" class="btn btn-secondary ms-1" onclick="alleNull()" title="Alle Figuren auf 0 setzen (Absturz / nicht geflogen)">Alle Null</button>
                         <form action="{{ url_for('scoring.lock_score', score_id=score.score_id) }}" method="POST" class="d-inline">
                             <input type="hidden" name="redirect" value="{{ url_for('scoring.view_score', score_id=score.score_id) }}">
                             <button type="button" class="btn btn-warning d-inline" onclick="lockScore({{ score.score_id }})">
@@ -316,8 +316,8 @@
                         <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary">Zurück zur Liste</a>
                     {% else %}
                         <button type="submit" class="btn btn-primary">Bewertung Speichern</button>
-                        <button type="button" class="btn btn-outline-secondary ms-1" onclick="alleNull()" title="Alle Figuren auf 0 setzen (Absturz / nicht geflogen)">Alle Null</button>
-                        <button type="reset" class="btn btn-outline-secondary ms-1" onclick="clearAllFields()">Zurücksetzen</button>
+                        <button type="button" class="btn btn-secondary ms-1" onclick="alleNull()" title="Alle Figuren auf 0 setzen (Absturz / nicht geflogen)">Alle Null</button>
+                        <button type="reset" class="btn btn-secondary ms-1" onclick="clearAllFields()">Zurücksetzen</button>
                     {% endif %}
                     </div>
                 </div>

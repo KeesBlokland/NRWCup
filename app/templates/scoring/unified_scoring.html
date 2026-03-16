@@ -68,7 +68,7 @@
                             {% else %}
                                 <!-- Show round completion progress -->
                                 {% if round_status_info and status_round %}
-                                    <span class="badge {{ 'bg-success' if can_generate_next_round else 'bg-secondary' }} me-2">
+                                    <span class="badge {{ 'bg-success' if round_status_info and round_status_info.completion_percentage == 100 else 'bg-warning text-dark' }} me-2">
                                         D{{ status_round.round_number }}: {{ round_status_info.scored_teams }}/{{ round_status_info.total_teams }} Teams bewertet
                                     </span>
                                 {% endif %}
@@ -82,7 +82,7 @@
                                 {% else %}
                                     {% if latest_round_id %}
                                         <a href="{{ url_for('start_order.print_start_order', round_id=latest_round_id) }}"
-                                           class="btn btn-outline-secondary btn-sm"
+                                           class="btn btn-primary btn-sm"
                                            title="Startreihenfolge für D{{ rounds[-1].round_number }} — basierend auf kumulierten Promille-Punkten aller abgeschlossenen Durchgänge (schlechtestes Team startet zuerst)">
                                             Startfolge D{{ rounds[-1].round_number }} drucken
                                         </a>
@@ -104,13 +104,13 @@
                     <small class="text-muted fw-bold">AKTIONEN:</small>
                 </div>
                 <div class="col">
-                    <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" class="btn btn-secondary">
+                    <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" class="btn btn-primary">
                         <i class="bi bi-printer"></i> Drucken
                     </a>
-                    <button type="button" class="btn btn-outline-info" onclick="showResultsRecipients({{ event.event_id }})">
+                    <button type="button" class="btn btn-info" onclick="showResultsRecipients({{ event.event_id }})">
                         <i class="bi bi-envelope"></i> Mailen
                     </button>
-                    <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}" class="btn btn-outline-success">
+                    <a href="{{ url_for('reports.export_excel', event_id=event.event_id) }}" class="btn btn-success">
                         <i class="bi bi-file-earmark-excel"></i> Excel
                     </a>
                 </div>
@@ -185,7 +185,7 @@
                                                 {% if key in completed_scores %}
                                                     {% set score = completed_scores[key] %}
                                                     <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}"
-                                                        class="btn {% if score.locked %}btn-warning{% elif key in fully_complete_scores %}btn-success{% elif key in has_quality_scores %}btn-info{% else %}btn-outline-secondary{% endif %} judge-btn"
+                                                        class="btn {% if score.locked %}btn-warning{% elif key in fully_complete_scores %}btn-success{% elif key in has_quality_scores %}btn-info{% else %}btn-secondary{% endif %} judge-btn"
                                                         title="Bewertung von {{ judge.name }} {% if score.locked %}(Gesperrt am {{ score.locked_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}">
                                                             {{ judge.name[:3] }}:
                                                             <span class="raw-score">
@@ -196,7 +196,7 @@
                                                     </a>
                                                 {% else %}
                                                     <a href="{{ url_for('scoring.scoresheet', round_id=round_obj.round_id, team_id=team.team_id, judge_id=judge.teilnehmer_id) }}"
-                                                    class="btn btn-outline-secondary" title="Neue Bewertung von {{ judge.name }}">
+                                                    class="btn btn-secondary" title="Neue Bewertung von {{ judge.name }}">
                                                         {{ judge.name[:3] }}
                                                     </a>
                                                 {% endif %}
@@ -204,7 +204,7 @@
                                         {% endfor %}
                                         {% if round_obj and selected_round %}
                                             <a href="{{ url_for('scoring.combined_view', round_id=round_obj.round_id, team_id=team.team_id) }}"
-                                               class="btn btn-outline-primary btn-sm"
+                                               class="btn btn-primary btn-sm"
                                                title="Alle {{ judges|length }} Richter auf einer Seite">
                                                 {{ judges|length }} Richter
                                             </a>
@@ -356,8 +356,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-                <button type="button" class="btn btn-outline-info" id="emailNextRoundBtn">Email Startliste</button>
-                <button type="button" class="btn btn-outline-secondary" id="printNextRoundBtn">Drucken</button>
+                <button type="button" class="btn btn-info" id="emailNextRoundBtn">Email Startliste</button>
+                <button type="button" class="btn btn-primary" id="printNextRoundBtn">Drucken</button>
             </div>
         </div>
     </div>
@@ -374,7 +374,7 @@
             <div class="modal-body" id="emailRecipientsBody"><p>Laden...</p></div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-outline-info" id="confirmSendEmailBtn">Senden</button>
+                <button type="button" class="btn btn-info" id="confirmSendEmailBtn">Senden</button>
             </div>
         </div>
     </div>
@@ -391,7 +391,7 @@
             <div class="modal-body" id="resultsRecipientsBody"><p>Laden...</p></div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-outline-info" id="confirmSendResultsBtn">Senden</button>
+                <button type="button" class="btn btn-info" id="confirmSendResultsBtn">Senden</button>
             </div>
         </div>
     </div>
@@ -436,8 +436,8 @@
 <script>
 function buildRecipientListHTML(recipients, containerId, idPrefix) {
     let html = `<div class="mb-3">` +
-        `<button class="btn btn-sm btn-outline-primary me-2" onclick="document.querySelectorAll('#${containerId} input').forEach(c=>c.checked=true)">Alle</button>` +
-        `<button class="btn btn-sm btn-outline-secondary" onclick="document.querySelectorAll('#${containerId} input').forEach(c=>c.checked=false)">Keine</button>` +
+        `<button class="btn btn-sm btn-primary me-2" onclick="document.querySelectorAll('#${containerId} input').forEach(c=>c.checked=true)">Alle</button>` +
+        `<button class="btn btn-sm btn-secondary" onclick="document.querySelectorAll('#${containerId} input').forEach(c=>c.checked=false)">Keine</button>` +
         `</div><div id="${containerId}">`;
     recipients.forEach(r => {
         html += `<div class="form-check">

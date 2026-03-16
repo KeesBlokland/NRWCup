@@ -94,7 +94,7 @@
                                 {% if event.status not in ['Completed', 'Published'] %}
                                     {% if round.round_number <= 2 %}
                                         <form method="POST" action="{{ url_for('start_order.randomize', round_id=round.round_id) }}" class="d-inline">
-                                            <button type="submit" class="btn btn-outline-secondary">
+                                            <button type="submit" class="btn btn-secondary">
                                                 Zufällige Reihenfolge
                                             </button>
                                         </form>
@@ -107,11 +107,11 @@
                                     {% set can_print = prev and prev.status == 'Completed' %}
                                 {% endif %}
                                 {% if can_print %}
-                                    <a href="{{ url_for('start_order.print_start_order', round_id=round.round_id) }}" class="btn btn-outline-primary">
+                                    <a href="{{ url_for('start_order.print_start_order', round_id=round.round_id) }}" class="btn btn-primary">
                                         Drucken
                                     </a>
                                 {% else %}
-                                    <button class="btn btn-outline-secondary" disabled
+                                    <button class="btn btn-secondary" disabled
                                             title="Durchgang {{ round.round_number - 1 }} muss erst abgeschlossen sein">
                                         Drucken
                                     </button>

@@ -73,12 +73,10 @@
                                     </span>
                                 {% endif %}
                                 {% if can_generate_next_round %}
-                                    <form method="POST" action="{{ url_for('scoring.generate_next_round') }}" class="d-inline">
-                                        <input type="hidden" name="event_id" value="{{ event.event_id }}">
-                                        <button type="submit" class="btn btn-warning btn-sm">
-                                            D{{ next_round_number }} erstellen
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-warning btn-sm"
+                                            data-bs-toggle="modal" data-bs-target="#confirmNextRoundModal">
+                                        D{{ next_round_number }} erstellen
+                                    </button>
                                 {% else %}
                                     {% if latest_round_id %}
                                         <a href="{{ url_for('start_order.print_start_order', round_id=latest_round_id) }}"
@@ -343,6 +341,40 @@
     </div>
 </div>
 
+<!-- Confirm Next Round Modal -->
+<div class="modal fade" id="confirmNextRoundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Durchgang {{ next_round_number or 2 }} erstellen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Was passiert jetzt:</strong></p>
+                <ul>
+                    <li>Durchgang {{ (next_round_number or 2) - 1 }} wird <strong>abgeschlossen</strong> (Status: Abgeschlossen)</li>
+                    <li>Promille-Punkte fur D{{ (next_round_number or 2) - 1 }} werden berechnet und gespeichert</li>
+                    <li>Eine neue Startfolge fur D{{ next_round_number or 2 }} wird erstellt (schlechtestes Team startet zuerst)</li>
+                    <li>Leere Bewertungsbogen fur D{{ next_round_number or 2 }} werden angelegt</li>
+                </ul>
+                <p><strong>Warum nicht ruckgangig machbar:</strong></p>
+                <ul>
+                    <li>Sobald D{{ next_round_number or 2 }} erstellt ist, gibt es keine Schaltflache zum Loschen</li>
+                    <li>Das Zurucksetzen erfordert einen Admin-Eingriff in die Datenbank</li>
+                </ul>
+                <p class="mb-0"><strong>Sicher weitermachen?</strong> Nur bestatigen wenn alle Bewertungen fur
+                D{{ (next_round_number or 2) - 1 }} vollstandig und korrekt eingegeben sind.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-warning" id="confirmNextRoundBtn">
+                    Ja &mdash; D{{ next_round_number or 2 }} erstellen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Next Round Modal -->
 <div class="modal fade" id="nextRoundModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -452,13 +484,10 @@ function buildRecipientListHTML(recipients, containerId, idPrefix) {
 
 function checkForNextRoundGeneration(selectElement) {
     if (selectElement.value === 'generate_next') {
-        if (confirm('Möchten Sie Durchgang {{ next_round_number }} erstellen und Bewertungsbögen generieren?')) {
-            const form = document.getElementById('nextRoundForm');
-            document.getElementById('nextRoundEventId').value = document.getElementById('eventSelect').value;
-            form.submit();
-        } else {
-            selectElement.value = '{{ selected_round or "" }}';
-        }
+        document.getElementById('nextRoundEventId').value = document.getElementById('eventSelect').value;
+        var modal = new bootstrap.Modal(document.getElementById('confirmNextRoundModal'));
+        modal.show();
+        selectElement.value = '{{ selected_round or "" }}';
     } else {
         selectElement.form.submit();
     }
@@ -538,6 +567,15 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => { alert('Fehler beim Senden: ' + error.message); });
     };
+
+    var confirmNextRoundBtn = document.getElementById('confirmNextRoundBtn');
+    if (confirmNextRoundBtn) {
+        confirmNextRoundBtn.onclick = function() {
+            var eventId = document.getElementById('eventSelect') ? document.getElementById('eventSelect').value : '{{ event.event_id if event else "" }}';
+            document.getElementById('nextRoundEventId').value = eventId;
+            document.getElementById('nextRoundForm').submit();
+        };
+    }
 
     document.getElementById('confirmSendResultsBtn').onclick = function() {
         const checked = document.querySelectorAll('#resultsRcptList input:checked');

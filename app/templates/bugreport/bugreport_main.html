@@ -47,20 +47,19 @@
                     </span>
                 </td>
                 <td>
-                    <form method="POST" action="{{ url_for('bugreport.toggle', report_id=r.id) }}"
-                          class="d-inline">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm"
-                                title="{{ 'Wieder oeffnen' if r.status == 'done' else 'Als erledigt markieren' }}">
-                            {{ 'Oeffnen' if r.status == 'done' else 'Erledigt' }}
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ url_for('bugreport.delete', report_id=r.id) }}"
-                          class="d-inline"
-                          onsubmit="return confirm('Notiz loeschen?')">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">X</button>
-                    </form>
+                    <div class="d-flex gap-1">
+                        <form method="POST" action="{{ url_for('bugreport.toggle', report_id=r.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                {{ 'Oeffnen' if r.status == 'done' else 'Erledigt' }}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('bugreport.delete', report_id=r.id) }}"
+                              onsubmit="return confirm('Notiz loeschen?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Loschen</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         {% endfor %}

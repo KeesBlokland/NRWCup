@@ -7,6 +7,26 @@
     <div class="col-md-4">
         <div class="card h-100 bg-light">
             <div class="card-body">
+                <h3 class="card-title text-primary">Figuren</h3>
+                <p class="card-text">Verwaltung von Flugfiguren und Wertungen</p>
+                <a href="{{ url_for('figures.index') }}" class="btn btn-primary w-100 mt-auto">Figuren verwalten</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 bg-light">
+            <div class="card-body">
+                <h3 class="card-title text-primary">Wettbewerb</h3>
+                <p class="card-text">Wettbewerbseinstellungen und Durchführung</p>
+                <a href="{{ url_for('contest.index') }}" class="btn btn-primary w-100 mt-auto">Wettbewerb</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 bg-light">
+            <div class="card-body">
                 <h3 class="card-title text-primary">Teilnehmer</h3>
                 <p class="card-text">Verwaltung von Piloten, Punktwertern und Wettkampfleitung</p>
                 <a href="{{ url_for('teilnehmer.index') }}" class="btn btn-primary w-100 mt-auto">Verwalten</a>
@@ -30,26 +50,6 @@
                 <h3 class="card-title text-primary">Teams</h3>
                 <p class="card-text">Team-Zusammenstellung und Verwaltung</p>
                 <a href="{{ url_for('teams.index') }}" class="btn btn-primary w-100 mt-auto">Teams verwalten</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="card h-100 bg-light">
-            <div class="card-body">
-                <h3 class="card-title text-primary">Figuren</h3>
-                <p class="card-text">Verwaltung von Flugfiguren und Wertungen</p>
-                <a href="{{ url_for('figures.index') }}" class="btn btn-primary w-100 mt-auto">Figuren verwalten</a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card h-100 bg-light">
-            <div class="card-body">
-                <h3 class="card-title text-primary">Wettbewerb</h3>
-                <p class="card-text">Wettbewerbseinstellungen und Durchführung</p>
-                <a href="{{ url_for('contest.index') }}" class="btn btn-primary w-100 mt-auto">Wettbewerb</a>
             </div>
         </div>
     </div>

@@ -5,18 +5,17 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Benutzerhandbuch — NRW Cup</h4>
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-sm">Zurück</a>
+    <a href="{{ url_for('home') }}" class="btn btn-secondary btn-sm">Zurück</a>
 </div>
 <div class="card">
     <div class="card-body handbuch-content">
 <h1>NRW Cup — Benutzerhandbuch</h1>
 <p><strong>Verwaltungssystem für Seglerschlepp-Wettbewerbe</strong></p>
-<p>Version 1.1 — Februar 2026</p>
+<p>Version 1.2 — März 2026</p>
 <hr />
 <div class="alert alert-warning">
-<strong>Hinweis -- Regeln 2026:</strong> Dieses System wird auf die neuen Wettbewerbsregeln 2026
-(BeMod F-Schlepp) umgestellt. Die Aktualisierung ist in Arbeit -- vereinzelte Unstimmigkeiten
-koennen noch auftreten. Die offiziellen Regeln 2026 sind hier abrufbar:
+<strong>Regeln 2026:</strong> Dieses Handbuch entspricht den BeMod-F-Schlepp Regeln 2026.
+Die offiziellen Regeln sind hier abrufbar:
 <a href="{{ url_for('static', filename='hilfe/BeMod-F-Schlepp.pdf') }}" target="_blank">
 BeMod-F-Schlepp.pdf</a> &nbsp;|&nbsp;
 <a href="{{ url_for('static', filename='hilfe/NRWCup_Handbuch_komplett.pdf') }}" target="_blank">
@@ -568,19 +567,25 @@ Mueller / Schmidt
 <li><strong>Promille-Punkte</strong> = Rohwert / hoechster Rohwert des Durchgangs x 1000 (bestes Team = 1000)</li>
 <li><strong>Gesamt</strong> = Summe aller Durchgänge (bei 3+ Runden: Streichwertung)</li>
 </ol>
-<h3>Wertung sperren (Admin)</h3>
-<p>Gesperrte Wertungen können nicht versehentlich geändert werden:</p>
+<h3>Wertung sperren</h3>
+<p>Gesperrte Wertungen können nicht versehentlich geändert werden. Kein Admin-Passwort erforderlich — jeder Benutzer kann sperren und entsperren.</p>
 <ol>
-<li>Melden Sie sich als Admin an (Passwort erforderlich)</li>
 <li>Öffnen Sie die Wertung</li>
-<li>Klicken Sie auf <strong>Sperren</strong> / <strong>Entsperren</strong></li>
+<li>Klicken Sie auf <strong>Sperren</strong> (gelber Button) — die Wertung wird sofort gesperrt und gespeichert</li>
+<li>Zum Entsperren: Öffnen Sie die gesperrte Wertung und klicken Sie auf <strong>Entsperren</strong></li>
 </ol>
+<h3>Alle Null</h3>
+<p>Auf dem Bewertungsbogen steht der Button <strong>Alle Null</strong> zur Verfügung. Er setzt alle Figuren und Messwerte auf 0 — nützlich bei Absturz oder wenn ein Team eine Figur nicht fliegt.</p>
 <h3>Nächsten Durchgang generieren</h3>
+<p>Der Button <strong>D(n) erstellen</strong> erscheint erst, wenn der aktuelle Durchgang vollständig bewertet ist (alle Teams, alle Punktrichter). Vorher ist stattdessen der Button <strong>Startfolge D(n) drucken</strong> sichtbar.</p>
 <ol>
-<li>Klicken Sie auf <strong>Nächste Runde generieren</strong></li>
-<li>Die Startreihenfolge wird automatisch aus der aktuellen Platzierung erstellt</li>
+<li>Wenn alle Bewertungen vollständig sind, erscheint <strong>D(n) erstellen</strong></li>
+<li>Die Startreihenfolge wird aus den kumulierten Promille-Punkten aller abgeschlossenen Durchgänge berechnet (schlechtestes Team startet zuerst — BeMod H.II)</li>
 <li>Leere Bewertungsbögen werden für die neue Runde angelegt</li>
 </ol>
+<blockquote>
+<p><strong>Hinweis:</strong> Ab Durchgang 3 basiert die Startreihenfolge auf der Gesamtwertung aller bisherigen Durchgänge, nicht nur des letzten.</p>
+</blockquote>
 <h3>Team-Ergebnisse</h3>
 <p>In der Wertungsübersicht können Sie auf den <strong>Punkte-Badge</strong> (blaue Zahl) eines Teams klicken, um die detaillierten Ergebnisse anzuzeigen.</p>
 <ul>
@@ -654,7 +659,7 @@ Mueller / Schmidt
 <tr>
 <td>Gesamtergebnisse</td>
 <td>Wertung</td>
-<td>Rangliste mit Formeln in Excel</td>
+<td>Rangliste mit Promille-Punkten (0-1000) pro Durchgang</td>
 </tr>
 </tbody>
 </table>
@@ -843,10 +848,10 @@ MAIL_ENABLED=true
 <hr />
 <h2 id="s17">17. Email-Funktionen</h2>
 <h3>Verfügbarkeit</h3>
-<p>Bevor ein Email-Dialog geöffnet wird, prüft das System automatisch, ob der Email-Server erreichbar ist. Falls nicht:</p>
+<p>Das System prüft beim Laden jeder Seite, ob der Email-Server erreichbar ist. Falls nicht:</p>
 <ul>
-<li>Es erscheint die Meldung <strong>&quot;Email-Server nicht erreichbar&quot;</strong></li>
-<li>Der Empfänger-Dialog öffnet sich nicht</li>
+<li>Die Email-Buttons werden automatisch <strong>ausgeblendet</strong></li>
+<li>Es erscheint keine Fehlermeldung — die Buttons sind schlicht nicht sichtbar</li>
 </ul>
 <p>Dies ist besonders relevant, wenn das System auf dem Pi ohne Internetverbindung läuft.</p>
 <h3>Empfänger-Auswahl (Team-Ergebnisse)</h3>
@@ -1145,7 +1150,7 @@ MAIL_ENABLED=true
 <h3>&quot;Wie mache ich ein Backup?&quot;</h3>
 <p>System → Backup → <strong>Neues Backup erstellen</strong>. Die ZIP-Datei enthält die komplette Datenbank und alle Anwendungsdateien.</p>
 <h3>&quot;Streichwertung — wie funktioniert das?&quot;</h3>
-<p>Ab 3 Durchgängen wird automatisch der schlechteste Durchgang gestrichen. Bei 2 Durchgängen zählen beide. Die Streichwertung ist immer der niedrigste Prozent-Wert. Siehe <a href="#s18">Messwertung &amp; Qualitätswertung</a> für Details.</p>
+<p>Ab 3 Durchgängen wird automatisch der schlechteste Durchgang gestrichen. Bei 2 Durchgängen zählen beide. Die Streichwertung ist immer der niedrigste Promille-Wert. Siehe <a href="#s18">Messwertung &amp; Qualitätswertung</a> für Details.</p>
 <h3>&quot;Warum zeigt mein Bewertungsbogen hellblaue Felder?&quot;</h3>
 <p>Hellblau hinterlegte Felder sind <strong>Messwerte</strong> (Flugzeit, Landegenauigkeit, Seilabwurf), die automatisch vom ersten Bewertungsbogen übernommen wurden. Sie dienen als Referenz und werden nicht erneut zum Total addiert. Siehe <a href="#s18">Messwertung &amp; Qualitätswertung</a>.</p>
 <h3>&quot;Warum unterscheiden sich die Totale der Punktrichter?&quot;</h3>
@@ -1161,14 +1166,16 @@ MAIL_ENABLED=true
 <tr><td>Seite lädt nicht</td><td>Pi an? Mit Hotspot verbunden? Browser neu laden. URL: http://192.168.5.1:5000</td></tr>
 <tr><td>Messwerte bei Richter 2/3 eingeben?</td><td>Nicht möglich — nur auf Richter-1-Bogen oder über die 3-Richter-Ansicht</td></tr>
 <tr><td>Kürfigur falsch gewählt</td><td>Richter-1-Bogen öffnen, korrigieren, speichern</td></tr>
-<tr><td>Wertung ist gesperrt</td><td>Admin-Login &rarr; Entsperren</td></tr>
+<tr><td>Wertung ist gesperrt</td><td>Wertung öffnen &rarr; Entsperren (kein Admin erforderlich)</td></tr>
 <tr><td>Runde versehentlich geschlossen</td><td>Nächste Runde kann nicht rückgängig gemacht werden — Kontakt Organisationsleiter</td></tr>
 <tr><td>Drucker nicht verbunden</td><td>PDF speichern, auf anderem Weg drucken</td></tr>
 </tbody>
 </table>
 <hr />
-<p><em>Dieses Handbuch bezieht sich auf die Ausschreibung DM-Seglerschlepp des DMFV, Fassung 2025-Rev0.</em>
-<em>Quelle: https://dmfv.aero/wp-content/uploads/2022/01/Ausschreibung-2025-Rev-0.pdf</em></p>
+<hr />
+<p class="text-muted small"><em>Dieses Handbuch bezieht sich auf die BeMod-F-Schlepp Ausschreibung 2026.</em><br>
+<em>Version 1.2 — Zuletzt aktualisiert: März 2026</em><br>
+<em>Änderungen v1.2: Promille-Punkte (statt %), Figuren 2026, Sperren ohne Admin, E-Mail-Sichtbarkeit, Alle-Null-Button, kumulative Startfolge.</em></p>
     </div>
 </div>
 

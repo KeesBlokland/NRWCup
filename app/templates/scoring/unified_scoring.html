@@ -79,11 +79,12 @@
                                             D{{ next_round_number }} erstellen
                                         </button>
                                     </form>
-                                {% endif %}
-                                {% if selected_round %}
-                                    <a href="{{ url_for('start_order.print_start_order', round_id=selected_round) }}" class="btn btn-outline-secondary btn-sm">
-                                        Startfolge drucken
-                                    </a>
+                                {% else %}
+                                    {% if latest_round_id %}
+                                        <a href="{{ url_for('start_order.print_start_order', round_id=latest_round_id) }}" class="btn btn-outline-secondary btn-sm">
+                                            Startfolge D{{ rounds[-1].round_number }} drucken
+                                        </a>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         {% endif %}
@@ -101,15 +102,6 @@
                     <small class="text-muted fw-bold">AKTIONEN:</small>
                 </div>
                 <div class="col">
-                    {% if session.get('is_admin') %}
-                        <a href="{{ url_for('scoring.admin_logout') }}" class="btn btn-danger">
-                            <i class="bi bi-unlock"></i> Admin Logout
-                        </a>
-                    {% else %}
-                        <a href="{{ url_for('scoring.admin_login') }}" class="btn btn-warning">
-                            <i class="bi bi-lock"></i> Admin Login
-                        </a>
-                    {% endif %}
                     <a href="{{ url_for('reports.print_results', event_id=event.event_id) }}" class="btn btn-secondary">
                         <i class="bi bi-printer"></i> Drucken
                     </a>
@@ -499,13 +491,6 @@ document.addEventListener('DOMContentLoaded', function() {
     tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
 
     // Add tooltips to specific buttons
-    const adminButton = document.querySelector('a[href*="admin_login"], a[href*="admin_logout"]');
-    if (adminButton) {
-        adminButton.setAttribute('data-bs-toggle', 'tooltip');
-        adminButton.setAttribute('data-bs-placement', 'bottom');
-        adminButton.setAttribute('title', 'Administratorzugang für das Entsperren von gesperrten Bewertungen.');
-    }
-
     const scoreSheetsButton = document.querySelector('button[type="submit"].btn-warning');
     if (scoreSheetsButton) {
         scoreSheetsButton.setAttribute('data-bs-toggle', 'tooltip');

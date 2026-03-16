@@ -114,22 +114,21 @@ def round_completion_status(round_id):
             for score in scores:
                 all_svs = ScoreValue.query.filter_by(score_id=score.score_id).all()
                 sv_type_ids = {sv.task_type_id for sv in all_svs}
-                # For exclusive groups, only count non-zero values (zero = unchosen leftover)
-                sv_nonzero_type_ids = {sv.task_type_id for sv in all_svs if sv.value and sv.value > 0}
 
                 # All always-mandatory figures present?
                 if not always_mandatory_ids.issubset(sv_type_ids):
                     all_judges_complete = False
                     break
 
-                # Exactly one from each exclusive group with a non-zero value?
+                # At least one from each exclusive group present (zero is valid — team may crash)
+                sv_nonzero_type_ids = {sv.task_type_id for sv in all_svs if sv.value}
                 choices = {}
                 for group, group_ids in zip(EXCLUSIVE_GROUPS, exclusive_group_ids):
-                    scored_in_group = group_ids & sv_nonzero_type_ids
-                    if not scored_in_group:
+                    if not (group_ids & sv_type_ids):
                         all_judges_complete = False
                         break
-                    choices[frozenset(group)] = scored_in_group
+                    # Use non-zero choice for consistency check; empty set means all-zero (crashed)
+                    choices[frozenset(group)] = group_ids & sv_nonzero_type_ids
                 if not all_judges_complete:
                     break
                 judge_exclusive_choices.append(choices)
@@ -138,10 +137,15 @@ def round_completion_status(round_id):
                 continue
 
             # Check 3: Exclusive group choices consistent across all judges
+            # Skip if all judges scored zero for this group (crashed team — no variant chosen)
             choices_consistent = True
             for group in EXCLUSIVE_GROUPS:
                 key = frozenset(group)
                 all_choices = [jc[key] for jc in judge_exclusive_choices]
+                # If every judge has only zero-value entries, skip consistency — no variant was flown
+                all_zero = all(not c for c in all_choices)
+                if all_zero:
+                    continue
                 if len(set(map(frozenset, all_choices))) > 1:
                     choices_consistent = False
                     break

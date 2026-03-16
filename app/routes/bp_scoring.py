@@ -359,13 +359,17 @@ def score_list():
                 key = f"{team_round.round_id}_{team_round.team_id}_{score.judge_id}"
                 completed_dict[key] = score
                 sv_codes = {sv.task_type.code for sv in score.values if sv.task_type}
-                sv_nonzero_codes = {sv.task_type.code for sv in score.values if sv.task_type and sv.value and sv.value > 0}
-                has_quality = bool(sv_codes - MESSWERTUNG_CODES)
+                sv_nonzero_quality = {sv.task_type.code for sv in score.values
+                                      if sv.task_type and sv.task_type.code not in MESSWERTUNG_CODES
+                                      and sv.value is not None}
+                has_quality = bool(sv_nonzero_quality)
                 if has_quality:
                     has_quality_set.add(key)
-                # Fully complete: all mandatory present + one from each exclusive group scored
-                if (ALWAYS_MANDATORY.issubset(sv_codes) and
-                        all(group & sv_nonzero_codes for group in EXCLUSIVE_GROUPS)):
+                # Fully complete: all mandatory figures present (zero is valid) +
+                # one from each exclusive group present (zero is valid — team may have crashed)
+                quality_codes = sv_codes - MESSWERTUNG_CODES
+                if (ALWAYS_MANDATORY.issubset(quality_codes) and
+                        all(group & quality_codes for group in EXCLUSIVE_GROUPS)):
                     fully_complete_set.add(key)
         
         # Create mapping for team rounds
@@ -463,7 +467,8 @@ def score_list():
                              any_round_has_scores=any_round_has_scores,
                              round_status_info=round_status_info,
                              status_round=selected_round_obj,
-                             next_round_number=next_round_number)
+                             next_round_number=next_round_number,
+                             latest_round_id=rounds[-1].round_id if rounds else None)
     except SQLAlchemyError as e:
         logger.error(f"Database error in list: {str(e)}")
         flash('Fehler beim Laden der Wertungsdaten', 'error')
@@ -1029,24 +1034,36 @@ def generate_next_round():
 
         db.session.commit()
 
-        # Get team rounds sorted by score (lowest score starts first)
-        scored_team_rounds = TeamRound.query.filter_by(round_id=source_round.round_id)\
-            .filter(TeamRound.raw_score != None)\
-            .order_by(TeamRound.raw_score.asc())\
-            .all()
-
-        if not scored_team_rounds:
-            flash('Keine Bewertungen im letzten Durchgang gefunden', 'error')
-            return redirect(url_for('scoring.score_list'))
-
-        # Teams without scores — start last
-        scored_team_ids = {tr.team_id for tr in scored_team_rounds}
-        unscored_team_rounds = TeamRound.query.filter_by(round_id=source_round.round_id)\
-            .filter(TeamRound.team_id.notin_(scored_team_ids))\
-            .all()
-
         # Mark source round as Completed
         source_round.status = 'Completed'
+        db.session.flush()
+
+        # Build start order from CUMULATIVE standings across all completed rounds
+        # (lowest cumulative score starts first — BeMod H.II)
+        completed_rounds = Round.query.filter(
+            Round.event_id == event_id,
+            Round.status == 'Completed'
+        ).all()
+        team_totals = {}
+        for r in completed_rounds:
+            for tr in TeamRound.query.filter_by(round_id=r.round_id).all():
+                if tr.normalized_score is not None:
+                    team_totals[tr.team_id] = team_totals.get(tr.team_id, 0.0) + tr.normalized_score
+
+        # Sort ascending: lowest cumulative total starts first
+        sorted_team_ids = [tid for tid, _ in sorted(team_totals.items(), key=lambda x: x[1])]
+
+        # Append any active teams not yet in standings (new entrants etc.)
+        all_active_ids = {t.team_id for t in Team.query.filter_by(status='active').all()}
+        for tid in all_active_ids:
+            if tid not in team_totals:
+                sorted_team_ids.append(tid)
+
+        team_order = []
+        for tid in sorted_team_ids:
+            team = Team.query.get(tid)
+            if team:
+                team_order.append(team.team_nummer)
 
         # Create new round
         new_round = Round(
@@ -1056,17 +1073,6 @@ def generate_next_round():
         )
         db.session.add(new_round)
         db.session.flush()
-
-        # Team order: scored teams (lowest first), then unscored teams
-        team_order = []
-        for team_round in scored_team_rounds:
-            team = Team.query.get(team_round.team_id)
-            if team:
-                team_order.append(team.team_nummer)
-        for team_round in unscored_team_rounds:
-            team = Team.query.get(team_round.team_id)
-            if team:
-                team_order.append(team.team_nummer)
 
         from app.routes.bp_formular import generate_scoresheets_for_round
 

@@ -27,18 +27,18 @@
         </div>
         <div class="card-body">
             <form method="POST" action="{{ url_for('testdata.generate') }}">
-                <!-- Select Veranstaltung (Event) - REQUIRED -->
+                <!-- Select Wettbewerb (Event) - REQUIRED -->
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <div class="alert alert-warning">
-                            <strong>Veranstaltung:</strong> Die Testwertungen werden für den ausgewählten Wettbewerb generiert.
+                            <strong>Wettbewerb:</strong> Die Testwertungen werden für den ausgewählten Wettbewerb generiert.
                         </div>
                     </div>
                 </div>
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="event_id" class="form-label">Veranstaltung auswählen *</label>
+                        <label for="event_id" class="form-label">Wettbewerb auswählen *</label>
                         <select class="form-select" id="event_id" name="event_id" required>
                             <option value="">- Wettbewerb auswählen -</option>
                             {% for event in events %}
@@ -123,7 +123,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="clear_existing" name="clear_existing">
                             <label class="form-check-label" for="clear_existing">
-                                Vorhandene Wertungen für diese Veranstaltung löschen
+                                Vorhandene Wertungen für diese Wettbewerb löschen
                             </label>
                         </div>
                     </div>

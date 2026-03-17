@@ -15,7 +15,7 @@
             <form method="GET" class="mb-3" id="filterForm">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label for="eventSelect" class="form-label">Veranstaltung</label>
+                        <label for="eventSelect" class="form-label">Wettbewerb</label>
                         <select class="form-select" id="eventSelect" name="event_id" onchange="this.form.submit()">
                             {% for evt in events %}
                                 <option value="{{ evt.event_id }}" {% if event and evt.event_id == event.event_id %}selected{% endif %}>
@@ -51,7 +51,7 @@
             <!-- Title and Action Buttons -->
             <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
                 <div>
-                    <h4 class="mb-0">{{ event.name if event else "Wählen Sie eine Veranstaltung" }}</h4>
+                    <h4 class="mb-0">{{ event.name if event else "Wählen Sie eine Wettbewerb" }}</h4>
                     {% if event and event.event_date %}
                         <p class="text-muted mb-0">{{ event.event_date.strftime('%d.%m.%Y') }}</p>
                     {% endif %}
@@ -324,7 +324,7 @@
                 </div>
             {% else %}
                 <div class="alert alert-info">
-                    Noch keine Ergebnisse für diese Veranstaltung verfügbar.
+                    Noch keine Ergebnisse für diese Wettbewerb verfügbar.
                 </div>
             {% endif %}
         </div>

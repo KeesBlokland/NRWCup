@@ -25,9 +25,9 @@
         <div class="card-body">
             <form method="GET" action="{{ url_for('start_order.index') }}" class="row g-3">
                 <div class="col-md-6">
-                    <label for="eventSelect" class="form-label">Veranstaltung</label>
+                    <label for="eventSelect" class="form-label">Wettbewerb</label>
                     <select class="form-select" id="eventSelect" name="event_id" onchange="this.form.submit()">
-                        <option value="">-- Veranstaltung auswählen --</option>
+                        <option value="">-- Wettbewerb auswählen --</option>
                         {% for evt in events %}
                             <option value="{{ evt.event_id }}" {% if event and evt.event_id == event.event_id %}selected{% endif %}>
                                 {{ evt.name }} {% if evt.event_date %}({{ evt.event_date.strftime('%d.%m.%Y') }}){% endif %}
@@ -166,7 +166,7 @@
         </div>
     {% else %}
         <div class="alert alert-info">
-            Bitte wählen Sie eine Veranstaltung aus, um die Startfolgen zu verwalten.
+            Bitte wählen Sie eine Wettbewerb aus, um die Startfolgen zu verwalten.
         </div>
     {% endif %}
 </div>

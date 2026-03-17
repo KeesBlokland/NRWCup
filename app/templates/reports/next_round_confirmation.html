@@ -34,7 +34,7 @@ Description: Confirmation template for generating next round start order
                         </div>
                         
                         <p>
-                            <strong>Veranstaltung:</strong> {{ event.name }}
+                            <strong>Wettbewerb:</strong> {{ event.name }}
                             {% if event.event_date %}
                                 ({{ event.event_date.strftime('%d.%m.%Y') }})
                             {% endif %}
@@ -59,7 +59,7 @@ Description: Confirmation template for generating next round start order
                         </form>
                     {% else %}
                         <div class="alert alert-warning">
-                            <p>Es sind noch keine Durchgänge für diese Veranstaltung vorhanden.</p>
+                            <p>Es sind noch keine Durchgänge für diese Wettbewerb vorhanden.</p>
                             <p>Bitte erstellen Sie zuerst Durchgang 1.</p>
                         </div>
                         

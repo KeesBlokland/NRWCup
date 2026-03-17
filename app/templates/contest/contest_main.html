@@ -65,7 +65,12 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Status</label>
+                                <label class="form-label">
+                                    Status
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1"
+                                            data-bs-toggle="modal" data-bs-target="#statusHelpModal"
+                                            title="Was bedeuten die Status-Werte?">?</button>
+                                </label>
                                 <select class="form-select" name="status">
                                     <option value="Pending">Geplant</option>
                                     <option value="Active">Aktiv</option>
@@ -233,6 +238,62 @@
                         <button type="submit" class="btn btn-outline-danger">Alle Daten l&ouml;schen</button>
                     </form>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Help Modal -->
+<div class="modal fade" id="statusHelpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Wettbewerb-Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr><th>Status</th><th>Bedeutung</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge bg-warning text-dark">Geplant</span></td>
+                            <td>
+                                Vorbereitung. Testdaten erlaubt, Bewertungen
+                                koennen geloescht werden. Kein echter Wettbewerb
+                                laeuft.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-success">Aktiv</span></td>
+                            <td>
+                                <strong>Wettbewerb laeuft.</strong> Testdaten
+                                gesperrt. Nur echte Bewertungen erlaubt. Auf
+                                diesen Status setzen wenn der erste Durchgang
+                                beginnt.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge bg-secondary">Abgeschlossen</span></td>
+                            <td>
+                                <strong class="text-danger">Dauerhaft gesperrt.</strong>
+                                Keine Aenderungen mehr moeglich -- keine Scores,
+                                keine Startliste, keine Daten. Nur setzen wenn
+                                der Wettbewerb vollstaendig abgeschlossen und
+                                geprueft ist.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="mt-3 mb-0 text-muted small">
+                    Tipp: Geplant -&gt; Aktiv am Wettkampftag vor dem ersten Durchgang.
+                    Abgeschlossen erst nach Pruefung aller Ergebnisse setzen --
+                    danach gibt es kein Zurueck.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schliessen</button>
             </div>
         </div>
     </div>

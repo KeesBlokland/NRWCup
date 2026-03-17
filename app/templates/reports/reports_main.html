@@ -30,7 +30,7 @@ Description: Main reports dashboard template with removal of start order functio
                     </p>
                     {% if active_event %}
                         <p class="text-muted mb-3">
-                            Aktuell aktive Veranstaltung: <strong>{{ active_event.name }}</strong>
+                            Aktuell aktive Wettbewerb: <strong>{{ active_event.name }}</strong>
                             {% if active_event.event_date %}
                                 ({{ active_event.event_date.strftime('%d.%m.%Y') }})
                             {% endif %}
@@ -51,9 +51,9 @@ Description: Main reports dashboard template with removal of start order functio
                         Ergebnisse und Bewertungsbögen in verschiedenen Formaten exportieren.
                     </p>
                     <div class="mb-3">
-                        <label for="exportEvent" class="form-label">Veranstaltung auswählen</label>
+                        <label for="exportEvent" class="form-label">Wettbewerb auswählen</label>
                         <select class="form-select" id="exportEvent">
-                            <option value="">-- Veranstaltung auswählen --</option>
+                            <option value="">-- Wettbewerb auswählen --</option>
                             {% for event in events %}
                                 <option value="{{ event.event_id }}">
                                     {{ event.name }} {% if event.event_date %}({{ event.event_date.strftime('%d.%m.%Y') }}){% endif %}
@@ -73,14 +73,14 @@ Description: Main reports dashboard template with removal of start order functio
     {% if events %}
     <div class="card mt-4">
         <div class="card-header">
-            <h4 class="card-title">Aktuelle Veranstaltungen</h4>
+            <h4 class="card-title">Aktuelle Wettbewerben</h4>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Veranstaltung</th>
+                            <th>Wettbewerb</th>
                             <th>Datum</th>
                             <th>Status</th>
                             <th>Aktionen</th>

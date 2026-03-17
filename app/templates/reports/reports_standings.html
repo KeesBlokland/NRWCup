@@ -50,7 +50,7 @@ Description: Corrected raw score display and dropped rounds logic
         <div class="card-body">
             <form method="GET" action="{{ url_for('reports.standings') }}" class="row g-3">
                 <div class="col-md-6">
-                    <label for="eventSelect" class="form-label">Veranstaltung</label>
+                    <label for="eventSelect" class="form-label">Wettbewerb</label>
                     <select class="form-select" id="eventSelect" name="event_id" onchange="this.form.submit()">
                         {% for evt in events %}
                             <option value="{{ evt.event_id }}" {% if evt.event_id == event.event_id %}selected{% endif %}>
@@ -149,7 +149,7 @@ Description: Corrected raw score display and dropped rounds logic
                 </div>
             {% else %}
                 <div class="alert alert-info">
-                    Noch keine Ergebnisse für diese Veranstaltung verfügbar.
+                    Noch keine Ergebnisse für diese Wettbewerb verfügbar.
                 </div>
             {% endif %}
         </div>

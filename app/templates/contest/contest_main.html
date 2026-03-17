@@ -44,7 +44,7 @@
                         </div>
                       
                         <div class="row g-3 mt-3">
-                            <div class="col-md-4">
+                            <div class="col-md-5">
                                 <label class="form-label">GPS Koordinaten</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" name="lat" placeholder="Breite (51.1234)">
@@ -55,8 +55,22 @@
                                 <label class="form-label">Datum</label>
                                 <input type="date" class="form-control" name="event_date">
                             </div>
-                            <div class="col-md-2">
-                                <input type="hidden" name="estimated_rounds" value="3">
+                        </div>
+
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Geplante Durchgange
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1"
+                                            data-bs-toggle="modal" data-bs-target="#roundsHelpModal"
+                                            title="Wie wirkt sich die Anzahl auf die Startreihenfolge aus?">?</button>
+                                </label>
+                                <select class="form-select" name="estimated_rounds">
+                                    {% for n in range(1, 7) %}
+                                        <option value="{{ n }}" {% if n == 3 %}selected{% endif %}>{{ n }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
                                 <label class="form-label">Anzahl Punktrichter</label>
                                 <select class="form-select" name="num_judges">
                                     <option value="3">3</option>
@@ -64,7 +78,7 @@
                                     <option value="5">5</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">
                                     Status
                                     <button type="button" class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1"
@@ -299,6 +313,42 @@
     </div>
 </div>
 
+<!-- Rounds Help Modal -->
+<div class="modal fade" id="roundsHelpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Geplante Durchgange und Startreihenfolge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Laut Regelwerk (BeMod-F-Schlepp H.II) gilt:</p>
+                <ul>
+                    <li>Alle Durchgange ausser den <strong>letzten zwei</strong> verwenden eine <strong>zufallige</strong> Startreihenfolge.</li>
+                    <li>Die letzten zwei geplanten Durchgange verwenden die <strong>aktuelle Gesamtwertung</strong> (schlechtestes Team startet zuerst).</li>
+                </ul>
+                <table class="table table-sm table-bordered mb-3">
+                    <thead class="table-light"><tr><th>Geplante Durchgange</th><th>Zufallig</th><th>Nach Wertung</th></tr></thead>
+                    <tbody>
+                        <tr><td>2</td><td>D1</td><td>D2</td></tr>
+                        <tr><td>3</td><td>D1</td><td>D2, D3</td></tr>
+                        <tr><td>4</td><td>D1, D2</td><td>D3, D4</td></tr>
+                        <tr><td>5</td><td>D1, D2, D3</td><td>D4, D5</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-muted small mb-0">
+                    Tipp: Diese Zahl kann jederzeit geandert werden -- auch wahrend des Wettbewerbs.
+                    In der Praxis wird die Startreihenfolge immer manuell unter
+                    <strong>Startliste</strong> generiert und gedruckt.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schliessen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleForm(show, title = 'Neuer Wettbewerb') {
     const card = document.getElementById('eventForm');
@@ -329,7 +379,7 @@ function editEvent(eventId) {
             document.getElementsByName('lon')[0].value = data.lon;
             document.getElementsByName('status')[0].value = data.status;
             document.getElementsByName('notes')[0].value = data.notes;
-            document.getElementsByName('estimated_rounds')[0].value = data.estimated_rounds;
+            document.getElementsByName('estimated_rounds')[0].value = data.estimated_rounds || 3;
             document.getElementsByName('num_judges')[0].value = data.num_judges || 3;
 
             // Show delete and lock buttons in edit mode

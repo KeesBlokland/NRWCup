@@ -452,7 +452,7 @@ Mueller / Schmidt
 <hr />
 <h2 id="s9">9. Startliste Verwaltung</h2>
 <p><strong>Pfad:</strong> <code>/start_order/</code></p>
-<p>Verwaltet die Startreihenfolge. Laut 2026-Regeln: Durchgang 1 und 2 in zufälliger Reihenfolge (Randomisieren); ab Durchgang 3 basiert die Reihenfolge auf der Gesamtwertung (letztplatziertes Team startet zuerst).</p>
+<p>Verwaltet die Startreihenfolge pro Durchgang. Alle Durchgange ausser den letzten zwei geplanten: <strong>Zufallige Reihenfolge</strong> verwenden. Die letzten zwei geplanten Durchgange: <strong>Aus Ergebnissen generieren</strong> (schlechtestes Team startet zuerst — BeMod H.II).</p>
 <h3>Reihenfolge für weitere Runden</h3>
 <table>
 <thead>
@@ -576,11 +576,11 @@ Mueller / Schmidt
 <p>Der Button <strong>D(n) erstellen</strong> erscheint erst, wenn der aktuelle Durchgang vollständig bewertet ist (alle Teams, alle Punktrichter). Vorher ist stattdessen der Button <strong>Startfolge D(n) drucken</strong> sichtbar.</p>
 <ol>
 <li>Wenn alle Bewertungen vollständig sind, erscheint <strong>D(n) erstellen</strong></li>
-<li>Die Startreihenfolge wird aus den kumulierten Promille-Punkten aller abgeschlossenen Durchgänge berechnet (schlechtestes Team startet zuerst — BeMod H.II)</li>
 <li>Leere Bewertungsbögen werden für die neue Runde angelegt</li>
+<li>Du wirst automatisch zur <strong>Startliste</strong> weitergeleitet — dort die Startreihenfolge generieren und drucken</li>
 </ol>
 <blockquote>
-<p><strong>Hinweis:</strong> Ab Durchgang 3 basiert die Startreihenfolge auf der Gesamtwertung aller bisherigen Durchgänge, nicht nur des letzten.</p>
+<p><strong>Hinweis Startreihenfolge (BeMod H.II):</strong> Alle Durchgange ausser den letzten zwei geplanten verwenden eine <strong>zufallige</strong> Reihenfolge (Zufallige Reihenfolge). Die letzten zwei geplanten Durchgange verwenden die Gesamtwertung (schlechtestes Team startet zuerst). Die Anzahl geplanter Durchgange wird im Wettbewerb-Formular festgelegt und kann jederzeit geandert werden.</p>
 </blockquote>
 <h3>Team-Ergebnisse</h3>
 <p>In der Wertungsübersicht kannst du auf den <strong>Punkte-Badge</strong> (blaue Zahl) eines Teams klicken, um die detaillierten Ergebnisse anzuzeigen.</p>
@@ -787,7 +787,7 @@ MAIL_ENABLED=true
 <h4>Nach dem Durchgang</h4>
 <ol>
 <li><strong>Ergebnisse prüfen</strong> (Rangliste kontrollieren)</li>
-<li><strong>Nächste Runde generieren</strong> (automatische Startreihenfolge)</li>
+<li><strong>Nächste Runde generieren</strong> — danach Startliste aufrufen und Reihenfolge generieren und drucken</li>
 <li>Neue Startliste <strong>drucken</strong></li>
 <li>Optional: Zwischenergebnisse per <strong>Email versenden</strong></li>
 </ol>

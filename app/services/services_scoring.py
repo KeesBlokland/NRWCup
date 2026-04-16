@@ -1,8 +1,8 @@
 """
 File: app/services/services_scoring.py
-Version: 2.3.0
+Version: 2.3.1
 Created: 2025-03-26
-Updated: 2025-04-19
+Updated: 2026-04-16
 Description: Scoring service with Messwertung/Qualitätswertung separation
 """
 
@@ -13,6 +13,7 @@ from app.utils.scoring_constants import get_scoring_constants
 from datetime import datetime
 import logging
 import json
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -390,7 +391,7 @@ class ScoringService(BaseService):
           - Multiply by K-factor, round to whole integer Bewertungspunkte
 
         Messwertung (objective, entered once, replicated to all judges):
-          - SEGZEIT: formula MAX(0, 200 - |200 - t|), K=1
+          - SEGZEIT: formula MAX(0, 300 - 3 * CEIL(|t - 200|)), K=1
           - SEILZ / LANDGM / LANS: value IS the Bewertungspunkte, K=1
           - Take the single non-zero value (zero IS a valid score)
         """
@@ -417,7 +418,7 @@ class ScoringService(BaseService):
 
                     if code in MESSWERTUNG_CODES:
                         if code == 'SEGZEIT':
-                            pts = max(0, 200 - abs(200 - sv.value))
+                            pts = max(0, 300 - 3 * math.ceil(abs(sv.value - 200)))
                         else:
                             pts = sv.value  # K=1, value already equals Bewertungspunkte
                         messwertung_pts.setdefault(code, []).append(pts)
@@ -644,18 +645,18 @@ class ScoringService(BaseService):
     def calculate_seglerzeit(self, actual_time):
         """
         Calculate points for glider time (2026 rules):
-        MAX(0, 200 - ABS(200 - actual_time))
-        Target is 200 seconds = 200 points, -1 point per second deviation.
+        MAX(0, 300 - 3 * CEIL(ABS(actual_time - 200)))
+        Target is 200 seconds = 300 points, -3 points per started second of deviation.
 
         Args:
             actual_time: Actual time in seconds
 
         Returns:
-            Calculated points (integer 0-200)
+            Calculated points (integer 0-300)
         """
         if actual_time is None:
             return 0
-        return max(0, 200 - abs(200 - actual_time))
+        return max(0, 300 - 3 * math.ceil(abs(actual_time - 200)))
     
     def update_team_round_scores(self, team_round_id):
         """Update the raw and normalized scores for a team round"""

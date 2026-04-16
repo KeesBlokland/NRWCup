@@ -84,7 +84,33 @@ Use systemctl restart instead.
 
 ## Open questions / pending work
 
-- Jinja ceil for combined_score_form.html line 165 — verify if a ceil filter is registered in app
-- Update max_value display/validation where 200 appears as the max (should be 300) — search templates
-- Dev Pi (.30): formula fix not deployed there yet (left as backup)
-- README.md line 96: stale formula description
+- Dev Pi (.30): formula fix not deployed there — left as backup/staging, intentional
+- Demo server (194.164.90.238): credentials and path unknown to Claude — user handles uploads manually
+
+## Completed this session (16 Apr 2026)
+
+- SEGZEIT formula fixed everywhere (services, routes, templates, JS, hilfe, README) — issues #202, #203, #204
+- Max Bewertungspunkte corrected to 1740/1790 in unified_scoring.html and hilfe.html (was stale 1640/1690)
+- PDF manual regenerated as v1.4 April 2026 — old version kept as NRWCup_Handbuch_komplett_v1.3_Mar2026.pdf
+- All K-factors verified against BeMod-F-Schlepp.pdf dated 15 Apr 2026 — all correct
+- Jinja ceil resolved: input is step=1 (integer seconds), so `(val - 200)|abs` without ceil is equivalent
+- PDF generation procedure documented in issue #203 and deployment procedure below
+
+## PDF regeneration procedure (run after any hilfe.html change)
+
+```bash
+# 1. Generate
+google-chrome --headless --disable-gpu --no-sandbox \
+  --print-to-pdf=/tmp/NRWCup_Handbuch_new.pdf \
+  --print-to-pdf-no-header \
+  http://192.168.2.87:5000/system/hilfe
+
+# 2. Verify
+pdftotext /tmp/NRWCup_Handbuch_new.pdf - | grep -i "version\|formel\|punkte"
+
+# 3. Copy to repo and deploy
+cp /tmp/NRWCup_Handbuch_new.pdf app/static/hilfe/NRWCup_Handbuch_komplett.pdf
+# scp to Pi + demo server
+```
+
+Always rename the existing PDF with version+date before overwriting.

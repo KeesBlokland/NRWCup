@@ -452,7 +452,7 @@
                 Summe der verbleibenden Durchgangspunkte = Endstand.</p>
                 <hr>
                 <p class="text-muted small mb-0"><strong>Max. Bewertungspunkte pro Durchgang:</strong> 1640 (Standard) / 1690 (Variante)<br>
-                <strong>Flugzeit:</strong> MAX(0, 200 - |200 - Zeit|)</p>
+                <strong>Flugzeit:</strong> MAX(0, 300 - 3 * CEIL(|Zeit - 200|))</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schlie&szlig;en</button>

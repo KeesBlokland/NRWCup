@@ -162,11 +162,11 @@
                                  oninput="onSegzeitInput(this.value)">
                           <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
                             {%- if val is not none and val != '' -%}
-                              {{ '%.1f' % [0, 200 - (val - 200)|abs]|max }}
+                              {{ '%d' % [0, 300 - 3 * (val - 200)|abs]|max }}
                             {%- endif -%}
                           </span>
                         </div>
-                        <span class="text-muted score-label-sm">MAX(0, 200 - ABS(200 - Zeit))</span>
+                        <span class="text-muted score-label-sm">MAX(0, 300 - 3 * CEIL(ABS(Zeit - 200)))</span>
                       </div>
                     {% endif %}
                   {% else %}
@@ -272,7 +272,7 @@ function onSegzeitInput(rawVal) {
         el.textContent = '';
     } else {
         var t = parseFloat(rawVal);
-        el.textContent = isNaN(t) ? '' : Math.max(0, 200 - Math.abs(200 - t)).toFixed(1);
+        el.textContent = isNaN(t) ? '' : Math.max(0, 300 - 3 * Math.ceil(Math.abs(t - 200))).toFixed(0);
     }
     colTotal(0);
 }

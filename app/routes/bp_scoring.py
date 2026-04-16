@@ -18,6 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.services.services_rounds import RoundService
 from app.utils.scoring_constants import get_scoring_constants
 from datetime import datetime
+import math
 
 import logging
 import traceback
@@ -438,9 +439,9 @@ def score_list():
                 if code in MESSWERTUNG_CODES:
                     if not is_owner:
                         continue
-                    # SEGZEIT uses special formula: MAX(0, 200 - |200 - t|)
+                    # SEGZEIT: 300pts max, -3pts per started second deviation
                     if code == 'SEGZEIT':
-                        points = max(0, 200 - abs(200 - value))
+                        points = max(0, 300 - 3 * math.ceil(abs(value - 200)))
                         raw_score += points
                         continue
 

@@ -246,7 +246,7 @@
                     </tbody>
                 </table>
 
-                <div class="text-muted score-label-sm">* Flugzeit: MAX(0, 200 - ABS(200 - Zeit))</div>
+                <div class="text-muted score-label-sm">* Flugzeit: MAX(0, 300 - 3 * CEIL(ABS(Zeit - 200)))</div>
                 <div class="text-muted score-label-sm"><span class="score-input-readonly px-1">&#9632;</span> Messwerte werden automatisch &uuml;bertragen und k&ouml;nnen nur auf dem Originalbogen ge&auml;ndert werden</div>
 
                 <!-- Total Points Row -->
@@ -381,7 +381,7 @@
     }
     
     function calculateSeglerzeit(actualTime) {
-        // 2026 rules: MAX(0, 200 - |200 - t|)
+        // 2026 rules: MAX(0, 300 - 3 * CEIL(|t - 200|))
         if (!actualTime && actualTime !== 0) {
             // If the input is empty, clear the points display
             document.getElementById('SEGZEIT_points').value = '';
@@ -389,7 +389,7 @@
             return;
         }
 
-        const points = Math.max(0, 200 - Math.abs(200 - parseFloat(actualTime)));
+        const points = Math.max(0, 300 - 3 * Math.ceil(Math.abs(parseFloat(actualTime) - 200)));
         document.getElementById('SEGZEIT_points').value = points.toFixed(1);
         
         // Always update total points after calculation

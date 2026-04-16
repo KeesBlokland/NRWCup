@@ -37,17 +37,17 @@ those will show the wrong live preview until fixed.
 
 | File | Line | What | Status |
 |------|------|------|--------|
-| app/templates/scoring/score_form.html | 249 | Display text | OPEN |
-| app/templates/scoring/score_form.html | 384 | JS comment | OPEN |
-| app/templates/scoring/score_form.html | 392 | JS live calc: `Math.max(0, 200 - Math.abs(200 - parseFloat(actualTime)))` | OPEN — wrong live preview |
-| app/templates/scoring/combined_score_form.html | 165 | Jinja server-side display: `{{ '%.1f' % [0, 200 - (val - 200)|abs]|max }}` | OPEN — shows wrong points |
-| app/templates/scoring/combined_score_form.html | 169 | Display text | OPEN |
-| app/templates/scoring/combined_score_form.html | 275 | JS live calc: `Math.max(0, 200 - Math.abs(200 - t))` | OPEN — wrong live preview |
-| app/templates/scoring/unified_scoring.html | 455 | Display text in info modal | OPEN |
-| app/routes/bp_scoring.py | 441 | Comment only | OPEN |
-| app/templates/system/hilfe.html | 1013 | Help page table | OPEN |
-| app/templates/system/hilfe.html | 1036 | Help page text | OPEN |
-| README.md | 96 | Documentation | OPEN |
+| app/templates/scoring/score_form.html | 249 | Display text | DONE |
+| app/templates/scoring/score_form.html | 384 | JS comment | DONE |
+| app/templates/scoring/score_form.html | 392 | JS live calc: `Math.max(0, 200 - Math.abs(200 - parseFloat(actualTime)))` | DONE — wrong live preview |
+| app/templates/scoring/combined_score_form.html | 165 | Jinja server-side display: `{{ '%.1f' % [0, 200 - (val - 200)|abs]|max }}` | DONE — shows wrong points |
+| app/templates/scoring/combined_score_form.html | 169 | Display text | DONE |
+| app/templates/scoring/combined_score_form.html | 275 | JS live calc: `Math.max(0, 200 - Math.abs(200 - t))` | DONE — wrong live preview |
+| app/templates/scoring/unified_scoring.html | 455 | Display text in info modal | DONE |
+| app/routes/bp_scoring.py | 441 | Comment only | DONE |
+| app/templates/system/hilfe.html | 1013 | Help page table | DONE |
+| app/templates/system/hilfe.html | 1036 | Help page text | DONE |
+| README.md | 96 | Documentation | DONE |
 
 ### Correct JS replacement
 ```javascript

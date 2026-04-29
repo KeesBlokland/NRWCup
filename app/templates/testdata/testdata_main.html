@@ -39,21 +39,26 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="event_id" class="form-label">Wettbewerb auswählen *</label>
-                        <select class="form-select" id="event_id" name="event_id" required>
+                        <select class="form-select" id="event_id" name="event_id" required onchange="checkJudgeMismatch()">
                             <option value="">- Wettbewerb auswählen -</option>
                             {% for event in events %}
-                                <option value="{{ event.event_id }}" {% if active_event and event.event_id == active_event.event_id %}selected{% endif %}>
-                                    {{ event.name }} 
-                                    {% if event.event_date %}
-                                        ({{ event.event_date.strftime('%d.%m.%Y') }})
-                                    {% endif %}
-                                    {% if event.status == 'Active' %}
-                                        [Aktiv]
-                                    {% endif %}
+                                <option value="{{ event.event_id }}"
+                                        data-num-judges="{{ event.num_judges or 3 }}"
+                                        {% if active_event and event.event_id == active_event.event_id %}selected{% endif %}>
+                                    {{ event.name }}
+                                    {% if event.event_date %}({{ event.event_date.strftime('%d.%m.%Y') }}){% endif %}
+                                    [{{ event.num_judges or 3 }} Richter]
+                                    {% if event.status == 'Active' %}[Aktiv]{% endif %}
                                 </option>
                             {% endfor %}
                         </select>
                         <div class="form-text">Wählen Sie den Wettbewerb, für den die Testwertungen generiert werden sollen.</div>
+                        <div id="judge-mismatch-warning" class="alert alert-danger mt-2 d-none">
+                            <strong>Achtung:</strong> Anzahl ausgewählter Punktrichter stimmt nicht mit dem Wettbewerb überein.
+                            Wettbewerb erwartet <strong id="event-judge-count">?</strong> Richter,
+                            aber <strong id="selected-judge-count">?</strong> sind ausgewählt.
+                            Bitte angleichen, sonst werden Wertungen generiert die nicht angezeigt werden.
+                        </div>
                     </div>
                 </div>
 
@@ -197,13 +202,39 @@
             document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
                 checkbox.checked = true;
             });
+            checkJudgeMismatch();
         });
-        
+
         document.querySelector('.deselect-all-judges').addEventListener('click', function() {
             document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
                 checkbox.checked = false;
             });
+            checkJudgeMismatch();
         });
+
+        // Wire each judge checkbox to mismatch check
+        document.querySelectorAll('input[name="judge_ids"]').forEach(function(cb) {
+            cb.addEventListener('change', checkJudgeMismatch);
+        });
+
+        // Initial check on page load
+        checkJudgeMismatch();
     });
+
+    function checkJudgeMismatch() {
+        var sel = document.getElementById('event_id');
+        var opt = sel.options[sel.selectedIndex];
+        var warning = document.getElementById('judge-mismatch-warning');
+        if (!opt || !opt.value) { warning.classList.add('d-none'); return; }
+        var eventJudges = parseInt(opt.getAttribute('data-num-judges')) || 3;
+        var selectedJudges = document.querySelectorAll('input[name="judge_ids"]:checked').length;
+        document.getElementById('event-judge-count').textContent = eventJudges;
+        document.getElementById('selected-judge-count').textContent = selectedJudges;
+        if (selectedJudges !== eventJudges) {
+            warning.classList.remove('d-none');
+        } else {
+            warning.classList.add('d-none');
+        }
+    }
 </script>
 {% endblock %}

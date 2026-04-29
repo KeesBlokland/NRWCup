@@ -214,17 +214,6 @@
               </td>
             </tr>
 
-            <!-- Totals: col 0 = quality + Messwerte, other cols = quality only -->
-            <tr class="table-light fw-bold">
-              <td>Gesamt</td>
-              {% for ci in range(judges|length) %}
-                <td class="text-center">
-                  <input type="text" class="form-control form-control-sm text-end fw-bold"
-                         id="c{{ ci }}_total" readonly>
-                </td>
-              {% endfor %}
-            </tr>
-
             <!-- Save buttons row, aligned with judge columns -->
             <tr>
               <td class="align-middle">
@@ -311,17 +300,6 @@ function onSegzeitInput(rawVal) {
     }
 }
 
-function colTotal(ci) {
-    var total = 0;
-    document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
-        var kf = parseFloat(inp.dataset.kfactor) || 1;
-        var v  = parseFloat(inp.value);
-        if (!isNaN(v)) total += v * kf;
-    });
-    var totEl = document.getElementById('c' + ci + '_total');
-    if (totEl) totEl.value = total > 0 ? total.toFixed(1) : '';
-}
-
 function colOnInput(ci, inp) {
     var kf = parseFloat(inp.dataset.kfactor) || 1;
     colPoints(ci, inp.dataset.figureCode, kf, inp.value);
@@ -334,7 +312,6 @@ function colOnInput(ci, inp) {
             }
         });
     }
-    colTotal(ci);
 }
 
 // Copy visible quality inputs into a column's hidden form fields
@@ -425,7 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (this.value.includes(',')) this.value = this.value.replace(',', '.');
             });
         });
-        colTotal(ci);
     }
 
     // Init Segzeit display if pre-filled

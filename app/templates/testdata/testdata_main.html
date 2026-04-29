@@ -53,12 +53,6 @@
                             {% endfor %}
                         </select>
                         <div class="form-text">Wählen Sie den Wettbewerb, für den die Testwertungen generiert werden sollen.</div>
-                        <div id="judge-mismatch-warning" class="alert alert-danger mt-2 d-none">
-                            <strong>Achtung:</strong> Anzahl ausgewählter Punktrichter stimmt nicht mit dem Wettbewerb überein.
-                            Wettbewerb erwartet <strong id="event-judge-count">?</strong> Richter,
-                            aber <strong id="selected-judge-count">?</strong> sind ausgewählt.
-                            Bitte angleichen, sonst werden Wertungen generiert die nicht angezeigt werden.
-                        </div>
                     </div>
                 </div>
 
@@ -176,7 +170,24 @@
         document.getElementById('variabilityValue').textContent = value;
     }
 
-    document.querySelector('form').addEventListener('submit', function() {
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Check judge count vs event setting before generating
+        var sel = document.getElementById('event_id');
+        var opt = sel.options[sel.selectedIndex];
+        if (opt && opt.value) {
+            var eventJudges = parseInt(opt.getAttribute('data-num-judges')) || 3;
+            var selectedJudges = document.querySelectorAll('input[name="judge_ids"]:checked').length;
+            if (selectedJudges !== eventJudges) {
+                var ok = confirm(
+                    'Wettbewerb "' + opt.text.trim() + '" hat ' + eventJudges + ' Punktrichter.\n' +
+                    'Du hast ' + selectedJudges + ' ausgewählt.\n\n' +
+                    'Die kombinierten Ansicht zeigt nur ' + eventJudges + ' Spalten — ' +
+                    'Wertungen für zusätzliche Richter werden generiert aber nicht angezeigt.\n\n' +
+                    'Trotzdem fortfahren?'
+                );
+                if (!ok) { e.preventDefault(); return; }
+            }
+        }
         var btn = document.getElementById('generateBtn');
         btn.disabled = true;
         btn.textContent = 'Generiere...';
@@ -202,39 +213,13 @@
             document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
                 checkbox.checked = true;
             });
-            checkJudgeMismatch();
         });
 
         document.querySelector('.deselect-all-judges').addEventListener('click', function() {
             document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
                 checkbox.checked = false;
             });
-            checkJudgeMismatch();
         });
-
-        // Wire each judge checkbox to mismatch check
-        document.querySelectorAll('input[name="judge_ids"]').forEach(function(cb) {
-            cb.addEventListener('change', checkJudgeMismatch);
-        });
-
-        // Initial check on page load
-        checkJudgeMismatch();
     });
-
-    function checkJudgeMismatch() {
-        var sel = document.getElementById('event_id');
-        var opt = sel.options[sel.selectedIndex];
-        var warning = document.getElementById('judge-mismatch-warning');
-        if (!opt || !opt.value) { warning.classList.add('d-none'); return; }
-        var eventJudges = parseInt(opt.getAttribute('data-num-judges')) || 3;
-        var selectedJudges = document.querySelectorAll('input[name="judge_ids"]:checked').length;
-        document.getElementById('event-judge-count').textContent = eventJudges;
-        document.getElementById('selected-judge-count').textContent = selectedJudges;
-        if (selectedJudges !== eventJudges) {
-            warning.classList.remove('d-none');
-        } else {
-            warning.classList.add('d-none');
-        }
-    }
 </script>
 {% endblock %}

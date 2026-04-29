@@ -59,7 +59,7 @@
 
                         <div class="row g-3 mt-3">
                             <div class="col-md-3">
-                                <label class="form-label">Geplante Durchgange
+                                <label class="form-label">Vorbereitunge Durchgange
                                     <button type="button" class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1"
                                             data-bs-toggle="modal" data-bs-target="#roundsHelpModal"
                                             title="Wie wirkt sich die Anzahl auf die Startreihenfolge aus?">?</button>
@@ -86,7 +86,7 @@
                                             title="Was bedeuten die Status-Werte?">?</button>
                                 </label>
                                 <select class="form-select" name="status">
-                                    <option value="Pending">Geplant</option>
+                                    <option value="Pending">Vorbereitung</option>
                                     <option value="Active">Aktiv</option>
                                     <option value="Completed">Abgeschlossen</option>
                                 </select>
@@ -159,7 +159,7 @@
                                 <td>{{ event.event_date.strftime('%d.%m.%Y') if event.event_date }}</td>
                                 <td>
                                     {% if event.status == 'Pending' %}
-                                        <span class="badge bg-warning">Geplant</span>
+                                        <span class="badge bg-warning">Vorbereitung</span>
                                     {% elif event.status == 'Active' %}
                                         <span class="badge bg-success">Aktiv</span>
                                     {% elif event.status == 'Published' %}
@@ -226,7 +226,7 @@
                 {% set pending_events = events|selectattr('status', 'equalto', 'Pending')|list %}
                 {% if pending_events %}
                     <p>L&ouml;scht alle Bewertungen, Durchg&auml;nge und Zuordnungen f&uuml;r den gew&auml;hlten Wettbewerb.</p>
-                    <p class="text-muted small">Nur Wettbewerbe mit Status &laquo;Geplant&raquo; k&ouml;nnen gel&ouml;scht werden.</p>
+                    <p class="text-muted small">Nur Wettbewerbe mit Status &laquo;Vorbereitung&raquo; k&ouml;nnen gel&ouml;scht werden.</p>
 
                     {% if pending_events|length == 1 %}
                         <p><strong>{{ pending_events[0].name }}</strong></p>
@@ -241,7 +241,7 @@
                         </div>
                     {% endif %}
                 {% else %}
-                    <p class="text-muted">Keine Wettbewerbe mit Status &laquo;Geplant&raquo; vorhanden.</p>
+                    <p class="text-muted">Keine Wettbewerbe mit Status &laquo;Vorbereitung&raquo; vorhanden.</p>
                 {% endif %}
             </div>
             <div class="modal-footer">
@@ -272,7 +272,7 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><span class="badge bg-warning text-dark">Geplant</span></td>
+                            <td><span class="badge bg-warning text-dark">Vorbereitung</span></td>
                             <td>
                                 Vorbereitung. Testdaten erlaubt, Bewertungen
                                 koennen geloescht werden. Kein echter Wettbewerb
@@ -301,7 +301,7 @@
                     </tbody>
                 </table>
                 <p class="mt-3 mb-0 text-muted small">
-                    Tipp: Geplant -&gt; Aktiv am Wettkampftag vor dem ersten Durchgang.
+                    Tipp: Vorbereitung -&gt; Aktiv am Wettkampftag vor dem ersten Durchgang.
                     Abgeschlossen erst nach Pruefung aller Ergebnisse setzen --
                     danach gibt es kein Zurueck.
                 </p>
@@ -318,7 +318,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Geplante Durchgange und Startreihenfolge</h5>
+                <h5 class="modal-title">Vorbereitunge Durchgange und Startreihenfolge</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -328,7 +328,7 @@
                     <li>Die letzten zwei geplanten Durchgange verwenden die <strong>aktuelle Gesamtwertung</strong> (schlechtestes Team startet zuerst).</li>
                 </ul>
                 <table class="table table-sm table-bordered mb-3">
-                    <thead class="table-light"><tr><th>Geplante Durchgange</th><th>Zufallig</th><th>Nach Wertung</th></tr></thead>
+                    <thead class="table-light"><tr><th>Vorbereitunge Durchgange</th><th>Zufallig</th><th>Nach Wertung</th></tr></thead>
                     <tbody>
                         <tr><td>2</td><td>D1</td><td>D2</td></tr>
                         <tr><td>3</td><td>D1</td><td>D2, D3</td></tr>
@@ -380,7 +380,15 @@ function editEvent(eventId) {
             document.getElementsByName('status')[0].value = data.status;
             document.getElementsByName('notes')[0].value = data.notes;
             document.getElementsByName('estimated_rounds')[0].value = data.estimated_rounds || 3;
-            document.getElementsByName('num_judges')[0].value = data.num_judges || 3;
+            var numJudgesSelect = document.getElementsByName('num_judges')[0];
+            numJudgesSelect.value = data.num_judges || 3;
+            if (data.status === 'Active') {
+                numJudgesSelect.disabled = true;
+                numJudgesSelect.title = 'Anzahl Punktrichter kann nicht geändert werden wenn der Wettbewerb aktiv ist';
+            } else {
+                numJudgesSelect.disabled = false;
+                numJudgesSelect.title = '';
+            }
 
             // Show delete and lock buttons in edit mode
             document.getElementById('deleteBtn').classList.remove('d-none');

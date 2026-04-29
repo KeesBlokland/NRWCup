@@ -46,6 +46,8 @@
           </div>
         </div>
         <div class="col-auto">
+          <button type="button" id="btn-save-all" class="btn btn-primary btn-sm me-1"
+                  onclick="saveAllJudges()">Alle Richter speichern</button>
           <a href="{{ url_for('scoring.score_list') }}" class="btn btn-secondary btn-sm">Zuruck</a>
         </div>
       </div>
@@ -205,7 +207,9 @@
                         Bogen ansehen / Entsperren
                       </a>
                     {% else %}
-                      <button type="submit" form="form_col{{ ci }}" class="btn btn-primary btn-sm w-100 mb-1">
+                      <button type="submit" form="form_col{{ ci }}"
+                              class="btn btn-primary btn-sm w-100 mb-1"
+                              onclick="return confirmSingleSave({{ ci }}, {{ judges|length }})">
                         Speichern Richter {{ ci+1 }}
                       </button>
                       <form method="POST"
@@ -317,25 +321,68 @@ function colOnInput(ci, inp) {
     colTotal(ci);
 }
 
-// On submit: copy visible inputs into the form's hidden fields
+// Copy visible inputs into a column's hidden form fields; return FormData for that form
+function prepareColData(ci) {
+    var form = document.getElementById('form_col' + ci);
+    if (!form) return null;
+    document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
+        var hid = document.getElementById('h' + ci + '_' + inp.dataset.figureCode);
+        if (hid) hid.value = inp.value;
+    });
+    if (ci === 0) {
+        ['SEGZEIT','LANDGM','LANS','SEILZ'].forEach(function(code) {
+            var src = document.getElementById('mess_score_' + code);
+            var hid = document.getElementById('h0_' + code);
+            if (src && hid) hid.value = src.value;
+        });
+    }
+    return new FormData(form);
+}
+
+// On submit: use prepareColData to populate hidden fields
 document.querySelectorAll('.combined-save-form').forEach(function(form) {
     form.addEventListener('submit', function(e) {
-        var ci = parseInt(form.dataset.col);
-        // Quality figures
-        document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
-            var hid = document.getElementById('h' + ci + '_' + inp.dataset.figureCode);
-            if (hid) hid.value = inp.value;
-        });
-        // Messwerte: only col 0 (Richter 1) submits them
-        if (ci === 0) {
-            ['SEGZEIT','LANDGM','LANS','SEILZ'].forEach(function(code) {
-                var src = document.getElementById('mess_score_' + code);
-                var hid = document.getElementById('h0_' + code);
-                if (src && hid) hid.value = src.value;
-            });
-        }
+        prepareColData(parseInt(form.dataset.col));
     });
 });
+
+// Save all columns via fetch, then reload
+function saveAllJudges() {
+    var btn = document.getElementById('btn-save-all');
+    if (btn) { btn.disabled = true; btn.textContent = 'Speichert...'; }
+    var forms = document.querySelectorAll('.combined-save-form');
+    var promises = [];
+    forms.forEach(function(form) {
+        var data = prepareColData(parseInt(form.dataset.col));
+        if (!data) return;
+        promises.push(fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin' }));
+    });
+    Promise.all(promises).then(function() {
+        window.location.reload();
+    }).catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = 'Alle Richter speichern'; }
+        alert('Fehler beim Speichern. Bitte erneut versuchen.');
+    });
+}
+
+// Warn when saving a single judge if other columns have entered values
+function confirmSingleSave(ci, totalCols) {
+    for (var c = 0; c < totalCols; c++) {
+        if (c === ci) continue;
+        var inputs = document.querySelectorAll('.c' + c + '-quality:not([readonly])');
+        for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i].value !== '') {
+                return confirm(
+                    'Achtung: Nur Richter ' + (ci + 1) + ' wird gespeichert.\n' +
+                    'Eingaben in anderen Spalten gehen verloren.\n\n' +
+                    'Tipp: "Alle Richter speichern" verwenden.\n\n' +
+                    'Trotzdem nur Richter ' + (ci + 1) + ' speichern?'
+                );
+            }
+        }
+    }
+    return true;
+}
 
 // Messwert selects (SEILZ, LANDGM, LANS) -> refresh all totals on change
 document.addEventListener('DOMContentLoaded', function() {

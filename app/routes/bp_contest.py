@@ -142,7 +142,13 @@ def save_event():
             if existing_event and existing_event.status in ('Completed', 'Published'):
                 flash('Abgeschlossene Wettbewerbe können nicht bearbeitet werden', 'error')
                 return redirect(url_for('contest.index'))
-            
+
+            # Lock structural settings when Active: num_judges cannot change
+            if existing_event and existing_event.status == 'Active':
+                if 'num_judges' in event_data and event_data['num_judges'] != existing_event.num_judges:
+                    flash('Anzahl Punktrichter kann nicht geändert werden wenn der Wettbewerb aktiv ist', 'error')
+                    return redirect(url_for('contest.index'))
+
             # Update the event and location
             contest_service.update_event_with_location(
                 event_id,

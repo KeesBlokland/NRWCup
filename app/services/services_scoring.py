@@ -464,8 +464,8 @@ class ScoringService(BaseService):
                     filtered = raws                  # 3 or fewer: no drop
                     drop_label = 'no drop'
                 avg = sum(filtered) / len(filtered)
-                avg_r = round(avg, 3)
-                figure_pts = round(avg_r * k)
+                avg_r = math.floor(avg * 1000 + 0.5) / 1000  # commercial rounding to 3 decimals
+                figure_pts = math.floor(avg_r * k + 0.5)     # commercial rounding to integer
                 total_score += figure_pts
                 logger.debug(
                     "Qualitaetswertung %s: raw=%s %s -> avg=%.3f *%d -> %d pts",

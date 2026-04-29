@@ -226,17 +226,19 @@
                                             <span class="input-group-text score-label-sm">-</span>
                                             <input type="text" class="form-control form-control-sm text-end score-input-readonly"
                                                    id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
-                                                   data-exclude-total="true"
+                                                   data-exclude-total="true" tabindex="-1"
                                                    value="" readonly>
                                         {% elif figure.code == 'SEGZEIT' %}
                                             <span class="input-group-text score-label-sm">*</span>
                                             <input type="text" class="form-control form-control-sm text-end points-display"
                                                    id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
+                                                   tabindex="-1"
                                                    value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
                                         {% else %}
                                             <span class="input-group-text score-label-sm">&times;{{ figure.k_factor or 1 }}=</span>
                                             <input type="text" class="form-control form-control-sm text-end points-display"
                                                    id="{{ figure.code }}_points" data-kfactor="{{ figure.k_factor or 1 }}"
+                                                   tabindex="-1"
                                                    value="{{ '%.1f' % (value * (figure.k_factor or 1)) if value else '' }}" readonly>
                                         {% endif %}
                                     </div>

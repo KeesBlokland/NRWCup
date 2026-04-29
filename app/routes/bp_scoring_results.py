@@ -27,7 +27,7 @@ def team_results():
         round_id = request.args.get('round_id', type=int)
         team_id = request.args.get('team_id', type=int)
 
-        MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
+        ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
 
         events = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).all()
 

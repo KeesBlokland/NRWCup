@@ -351,7 +351,7 @@ def score_list():
         completed_scores = query.all()
         
         # Convert to a dictionary for easier lookup
-        MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
+        ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
         completed_dict = {}
         has_quality_set = set()   # at least one quality figure entered
         fully_complete_set = set()  # all mandatory figures + one per exclusive group
@@ -360,18 +360,17 @@ def score_list():
             if team_round:
                 key = f"{team_round.round_id}_{team_round.team_id}_{score.judge_id}"
                 completed_dict[key] = score
-                sv_codes = {sv.task_type.code for sv in score.values if sv.task_type}
-                sv_nonzero_quality = {sv.task_type.code for sv in score.values
-                                      if sv.task_type and sv.task_type.code not in MESSWERTUNG_CODES
-                                      and sv.value is not None}
-                has_quality = bool(sv_nonzero_quality)
+                sv_codes = {sv.task_type.code for sv in score.values if sv.task_type
+                            and not sv.task_type.is_messwertung}
+                has_quality = bool({sv.task_type.code for sv in score.values
+                                    if sv.task_type and not sv.task_type.is_messwertung
+                                    and sv.value is not None})
                 if has_quality:
                     has_quality_set.add(key)
                 # Fully complete: all mandatory figures present (zero is valid) +
                 # one from each exclusive group present (zero is valid — team may have crashed)
-                quality_codes = sv_codes - MESSWERTUNG_CODES
-                if (ALWAYS_MANDATORY.issubset(quality_codes) and
-                        all(group & quality_codes for group in EXCLUSIVE_GROUPS)):
+                if (ALWAYS_MANDATORY.issubset(sv_codes) and
+                        all(group & sv_codes for group in EXCLUSIVE_GROUPS)):
                     fully_complete_set.add(key)
         
         # Create mapping for team rounds
@@ -392,62 +391,24 @@ def score_list():
         if event_id:
             standings, standings_rounds = scoring_service.calculate_final_standings(event_id)
             
-        # Define the getRawScore function directly in this scope
-        # Messwertung is included only for the "owner" judge (lowest score_id
-        # per team_round).  Other judges show Messwertung as blue/informational.
-
-        # Cache: team_round_id -> owner score_id
-        _messwertung_owners = {}
-
-        def _is_messwertung_owner(score):
-            tr_id = score.team_round_id
-            if tr_id not in _messwertung_owners:
-                first = Score.query.filter_by(team_round_id=tr_id)\
-                    .order_by(Score.score_id).first()
-                _messwertung_owners[tr_id] = first.score_id if first else None
-            return _messwertung_owners[tr_id] == score.score_id
-
+        # Quality-only per-judge raw score for display purposes
         def get_raw_score(score):
-            """Calculate raw score matching the scoresheet Gesamtpunktzahl.
-            Messwertung is included only for the owner judge."""
+            """Sum quality (non-Messwertung) score values for a single judge."""
             if not score:
                 return None
-
-            raw_score = 0
-            is_owner = _is_messwertung_owner(score)
-
-            # Check if we have eagerly loaded the values
             if not hasattr(score, 'values') or not score.values:
                 score = Score.query.options(
                     db.joinedload(Score.values).joinedload(ScoreValue.task_type)
                 ).get(score.score_id)
-
                 if not score or not score.values:
                     return None
-
-            for score_value in score.values:
-                if not score_value.task_type:
+            raw_score = 0
+            for sv in score.values:
+                if not sv.task_type or sv.value is None:
                     continue
-
-                value = score_value.value
-                if value is None:
+                if sv.task_type.is_messwertung:
                     continue
-
-                code = score_value.task_type.code
-
-                # Messwertung only counted for the owner judge
-                if code in MESSWERTUNG_CODES:
-                    if not is_owner:
-                        continue
-                    # SEGZEIT: 300pts max, -3pts per started second deviation
-                    if code == 'SEGZEIT':
-                        points = max(0, 300 - 3 * math.ceil(abs(value - 200)))
-                        raw_score += points
-                        continue
-
-                k_factor = score_value.task_type.k_factor or 1
-                raw_score += value * k_factor
-
+                raw_score += sv.value * (sv.task_type.k_factor or 1)
             return raw_score
             
         return render_template('scoring/unified_scoring.html',
@@ -767,22 +728,15 @@ def view_score(score_id):
             active_event = Event.query.filter_by(status='Active').first()
             event = active_event
         
-        # Get active figures
-        active_figures = scoring_service.get_active_figures()
-        
+        # Get active figures — exclude Messwerte (those are on TeamRound, not per-judge)
+        active_figures = [f for f in scoring_service.get_active_figures() if not f.is_messwertung]
+
         # Create a mapping of original values by task_type code
         value_map = {}
         for value in score.values:
-            if value.task_type:
+            if value.task_type and not value.task_type.is_messwertung:
                 value_map[value.task_type.code] = value.value
                 logger.debug(f"Mapped {value.task_type.code} -> {value.value}")
-        
-        # Determine if this score is the Messwertung owner (visual only)
-        # Owner shows Messwertung values normally; others show them in blue
-        # All sheets remain editable — blue is just informational
-        first_score = Score.query.filter_by(team_round_id=team_round.team_round_id)\
-            .order_by(Score.score_id).first()
-        is_messwertung_owner = (first_score and first_score.score_id == score.score_id)
 
         # Determine Kür choices for visual guidance
         # First score (by score_id) with a non-zero Kür value sets the variant
@@ -839,7 +793,6 @@ def view_score(score_id):
                               team_round_round=round_obj,
                               team_round_team=team,
                               value_map=value_map,
-                              is_messwertung_owner=is_messwertung_owner,
                               kuer_choices=kuer_choices,
                               referer_params=referer_params,
                               judges=scoring_service.get_judges(),
@@ -869,17 +822,17 @@ def combined_view(round_id, team_id):
             round_id=round_id, team_id=team_id
         ).first()
 
-        active_figures = scoring_service.get_active_figures()
+        all_figures = scoring_service.get_active_figures()
+        active_figures = [f for f in all_figures if not f.is_messwertung]
         num_judges = event.num_judges if event and event.num_judges else 3
         judges = scoring_service.get_judges(limit=num_judges)
 
-        MESSWERT_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
         KUER_GROUPS = {
             'platzrunde': ['PLTZR', 'PLTZR-M'],
             'platzueberflug': ['PLTZU', 'PLTZU-OV'],
         }
 
-        # Build per-judge data: value_map, is_messwertung_owner, locked, score_id
+        # Build per-judge data: value_map (quality figures only), locked, score_id
         all_scores = []
         if team_round:
             all_scores = Score.query.options(
@@ -923,20 +876,16 @@ def combined_view(round_id, team_id):
         for idx, score in enumerate(all_scores):
             value_map = {}
             for sv in score.values:
-                if sv.task_type:
+                if sv.task_type and not sv.task_type.is_messwertung:
                     value_map[sv.task_type.code] = sv.value
             judge_data.append({
                 'score': score,
                 'value_map': value_map,
-                'is_owner': (idx == 0),
             })
 
         # Pad to num_judges slots (empty dict for judges without a score record yet)
         while len(judge_data) < len(judges):
-            judge_data.append({'score': None, 'value_map': {}, 'is_owner': False})
-
-        quality_figures = [f for f in active_figures if f.code not in MESSWERT_CODES]
-        mess_figures    = [f for f in active_figures if f.code in MESSWERT_CODES]
+            judge_data.append({'score': None, 'value_map': {}})
 
         return render_template(
             'scoring/combined_score_form.html',
@@ -944,8 +893,6 @@ def combined_view(round_id, team_id):
             team=team,
             event=event,
             figures=active_figures,
-            quality_figures=quality_figures,
-            mess_figures=mess_figures,
             judges=judges,
             judge_data=judge_data,
             team_round=team_round,
@@ -956,6 +903,31 @@ def combined_view(round_id, team_id):
         logger.error(f"Traceback: {traceback.format_exc()}")
         flash('Fehler beim Laden der kombinierten Ansicht', 'error')
         return redirect(url_for('scoring.score_list'))
+
+
+@scoring_bp.route('/messwerte/<int:team_round_id>', methods=['POST'])
+def save_messwerte(team_round_id):
+    """Save Messwerte (objective measurements) directly on TeamRound."""
+    team_round = TeamRound.query.get_or_404(team_round_id)
+    try:
+        segzeit_raw = request.form.get('mess_segzeit', '').strip()
+        if segzeit_raw != '':
+            team_round.mess_segzeit = float(segzeit_raw)
+
+        for col in ['mess_seilz', 'mess_landgm', 'mess_lans']:
+            val = request.form.get(col, '').strip()
+            if val != '':
+                setattr(team_round, col, int(val))
+
+        db.session.commit()
+        scoring_service.update_team_round_scores(team_round_id)
+    except (ValueError, TypeError) as e:
+        db.session.rollback()
+        logger.error(f"Error saving Messwerte for team_round {team_round_id}: {e}")
+        flash('Fehler beim Speichern der Messwerte', 'error')
+
+    next_url = request.form.get('next')
+    return redirect(next_url or url_for('scoring.score_list'))
 
 
 @scoring_bp.route('/generate_next_round', methods=['POST'])

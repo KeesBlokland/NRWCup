@@ -9,7 +9,6 @@ Description: Scoring service with Messwertung/Qualitätswertung separation
 from sqlalchemy import or_
 from app.models import db, Score, TaskType, TeamRound, Teilnehmer, Team, Round, Event, ScoreValue, SystemConfig
 from app.services.base_service import BaseService
-from app.utils.scoring_constants import get_scoring_constants
 from datetime import datetime
 import logging
 import json
@@ -81,27 +80,20 @@ class ScoringService(BaseService):
             team_round_id=team_round_id,
             judge_id=judge_id
         ).first()
-        
+
         if existing:
             score = existing
-            # Delete non-Messwerte score values (preserve replicated Messwerte)
-            messwertung_codes, _, _ = get_scoring_constants()
-            if messwertung_codes & set(score_values.keys()):
-                # Messwerte are being submitted — replace everything
-                ScoreValue.query.filter_by(score_id=score.score_id).delete()
-            else:
-                # Only quality scores — only delete ScoreValues for codes being
-                # submitted now. Previously saved scores for fields left empty
-                # (not submitted) are preserved intact.
-                submitted_codes = [c for c, v in score_values.items()
-                                   if v is not None and v != '']
-                if submitted_codes:
-                    submitted_type_ids = [t.type_id for t in TaskType.query.filter(
-                        TaskType.code.in_(submitted_codes)).all()]
-                    ScoreValue.query.filter(
-                        ScoreValue.score_id == score.score_id,
-                        ScoreValue.task_type_id.in_(submitted_type_ids)
-                    ).delete(synchronize_session='fetch')
+            # Only delete ScoreValues for codes being submitted now.
+            # Previously saved scores for fields left empty are preserved.
+            submitted_codes = [c for c, v in score_values.items()
+                               if v is not None and v != '']
+            if submitted_codes:
+                submitted_type_ids = [t.type_id for t in TaskType.query.filter(
+                    TaskType.code.in_(submitted_codes)).all()]
+                ScoreValue.query.filter(
+                    ScoreValue.score_id == score.score_id,
+                    ScoreValue.task_type_id.in_(submitted_type_ids)
+                ).delete(synchronize_session='fetch')
         else:
             # Create new score
             score = self.model_class(
@@ -110,28 +102,28 @@ class ScoringService(BaseService):
             )
             db.session.add(score)
             db.session.flush()  # Get ID without committing yet
-        
+
         # Update metadata
         score.entered_at = datetime.utcnow()
         score.notes = notes
-        
+
         # Create score values
         for code, value in score_values.items():
             if value is None or value == '':
                 continue
-                
+
             # Find TaskType for this code
             task_type = TaskType.query.filter_by(code=code).first()
             if not task_type:
                 continue
-                
+
             try:
                 # Convert value to appropriate type
                 if task_type.score_type == 'float':
                     converted_value = float(value)
                 else:
                     converted_value = int(value)
-                
+
                 # Create score value
                 score_value = ScoreValue(
                     score_id=score.score_id,
@@ -139,15 +131,12 @@ class ScoringService(BaseService):
                     value=converted_value
                 )
                 db.session.add(score_value)
-                
+
             except (ValueError, TypeError) as e:
                 logger.error(f"Error converting value for {code}: {str(e)}")
-        
+
         # Commit changes
         db.session.commit()
-
-        # Replicate Messwertung values to all other judges for this team_round
-        self.replicate_messwertung_values(team_round_id, score.score_id)
 
         # If judge 1 saved all zeros, replicate all scores to other judges
         first_score = Score.query.filter_by(team_round_id=team_round_id)\
@@ -178,60 +167,6 @@ class ScoringService(BaseService):
         self.update_team_round_scores(team_round_id)
 
         return score
-
-    def replicate_messwertung_values(self, team_round_id, source_score_id):
-        """
-        Replicate Messwertung (objective measurement) values from the source score
-        to all other scores for the same team_round.
-
-        This ensures that values like SEGZEIT, LANDGM, LANS, SEILZ are consistent
-        across all judges' scoresheets, since they are objective measurements
-        entered by one person at the 0-line.
-        """
-        MESSWERTUNG_CODES, _, _ = get_scoring_constants()
-
-        # Get the source score's Messwertung values
-        source_values = ScoreValue.query.join(TaskType).filter(
-            ScoreValue.score_id == source_score_id,
-            TaskType.code.in_(MESSWERTUNG_CODES)
-        ).all()
-
-        if not source_values:
-            return
-
-        # Build a map of task_type_id -> value for the source
-        source_map = {sv.task_type_id: sv.value for sv in source_values}
-
-        # Find all OTHER scores for the same team_round
-        other_scores = Score.query.filter(
-            Score.team_round_id == team_round_id,
-            Score.score_id != source_score_id
-        ).all()
-
-        if not other_scores:
-            return
-
-        # Get task_type_ids for Messwertung codes
-        messwertung_type_ids = [sv.task_type_id for sv in source_values]
-
-        for other_score in other_scores:
-            # Delete existing Messwertung values on this score
-            ScoreValue.query.filter(
-                ScoreValue.score_id == other_score.score_id,
-                ScoreValue.task_type_id.in_(messwertung_type_ids)
-            ).delete(synchronize_session='fetch')
-
-            # Create new Messwertung values with same values as source
-            for task_type_id, value in source_map.items():
-                new_sv = ScoreValue(
-                    score_id=other_score.score_id,
-                    task_type_id=task_type_id,
-                    value=value
-                )
-                db.session.add(new_sv)
-
-        db.session.commit()
-        logger.info(f"Replicated Messwertung values from score {source_score_id} to {len(other_scores)} other scores for team_round {team_round_id}")
 
     def fix_kuer_mismatches(self, team_round_id, saved_score_id):
         """
@@ -387,13 +322,12 @@ class ScoringService(BaseService):
               3 judges -> no drop, average all
               4 judges -> drop the highest
               5 judges -> drop highest and lowest
-          - Round average to 3 decimal places
-          - Multiply by K-factor, round to whole integer Bewertungspunkte
+          - Round average to 3 decimal places (commercial rounding)
+          - Multiply by K-factor, round to whole integer Bewertungspunkte (commercial rounding)
 
-        Messwertung (objective, entered once, replicated to all judges):
-          - SEGZEIT: formula MAX(0, 300 - 3 * CEIL(|t - 200|)), K=1
-          - SEILZ / LANDGM / LANS: value IS the Bewertungspunkte, K=1
-          - Take the single non-zero value (zero IS a valid score)
+        Messwertung (objective, stored directly on TeamRound):
+          - SEGZEIT: MAX(0, 300 - 3 * CEIL(|t - 200|))
+          - SEILZ / LANDGM / LANS: value IS the Bewertungspunkte
         """
         try:
             scores = Score.query.options(
@@ -403,49 +337,36 @@ class ScoringService(BaseService):
             if not scores:
                 return 0
 
-            MESSWERTUNG_CODES, _, _ = get_scoring_constants()
-
             # qualitaet_raw: {task_code: {'raws': [raw 0-10 per judge], 'k': k_factor}}
             qualitaet_raw = {}
-            # messwertung_pts: {task_code: [computed Bewertungspunkte from all judges]}
-            messwertung_pts = {}
 
             for score in scores:
                 for sv in score.values:
                     if not sv.task_type or sv.value is None:
                         continue
+                    if sv.task_type.is_messwertung:
+                        continue  # Messwerte are now on TeamRound, not ScoreValues
                     code = sv.task_type.code
-
-                    if code in MESSWERTUNG_CODES:
-                        if code == 'SEGZEIT':
-                            pts = max(0, 300 - 3 * math.ceil(abs(sv.value - 200)))
-                        else:
-                            pts = sv.value  # K=1, value already equals Bewertungspunkte
-                        messwertung_pts.setdefault(code, []).append(pts)
-                    else:
-                        k = sv.task_type.k_factor or 1
-                        if code not in qualitaet_raw:
-                            qualitaet_raw[code] = {'raws': [], 'k': k}
-                        qualitaet_raw[code]['raws'].append(sv.value)
+                    k = sv.task_type.k_factor or 1
+                    if code not in qualitaet_raw:
+                        qualitaet_raw[code] = {'raws': [], 'k': k}
+                    qualitaet_raw[code]['raws'].append(sv.value)
 
             total_score = 0
 
-            # --- Messwertung ---
-            # Only one judge owns the entry; others hold a copy.
-            # Use the non-zero value. If all are zero, the score is genuinely 0.
-            for code, values in messwertung_pts.items():
-                non_zero = [v for v in values if v != 0]
-                if non_zero:
-                    chosen = non_zero[0]
-                    if len(non_zero) > 1:
-                        logger.warning(
-                            "Messwertung %s: multiple non-zero values %s, using first",
-                            code, non_zero
-                        )
-                else:
-                    chosen = 0
-                total_score += chosen
-                logger.debug("Messwertung %s: candidates=%s -> used %s", code, values, chosen)
+            # --- Messwertung (from TeamRound columns) ---
+            team_round = TeamRound.query.get(team_round_id)
+            if team_round:
+                if team_round.mess_segzeit is not None:
+                    pts = max(0, 300 - 3 * math.ceil(abs(team_round.mess_segzeit - 200)))
+                    total_score += pts
+                    logger.debug("Messwertung SEGZEIT: %.1fs -> %d pts", team_round.mess_segzeit, pts)
+                if team_round.mess_seilz is not None:
+                    total_score += team_round.mess_seilz
+                if team_round.mess_landgm is not None:
+                    total_score += team_round.mess_landgm
+                if team_round.mess_lans is not None:
+                    total_score += team_round.mess_lans
 
             # --- Qualitaetswertung ---
             for code, data in qualitaet_raw.items():

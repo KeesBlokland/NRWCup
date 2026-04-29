@@ -53,7 +53,7 @@
       </div>
 
       <!-- 3-column score table -->
-      {# quality_figures and mess_figures are passed in from the route #}
+      {# figures = quality figures only; Messwerte section uses team_round.mess_* directly #}
       <div class="table-responsive">
         <table class="table table-sm table-bordered align-middle w-100" style="font-size:{% if judges|length > 3 %}0.75rem{% else %}0.82rem{% endif %}">
           <thead class="table-light">
@@ -75,7 +75,7 @@
 
           <tbody>
             <!-- Quality figures -->
-            {% for figure in quality_figures %}
+            {% for figure in figures %}
               {% set is_platzrunde   = figure.code in ['PLTZR','PLTZR-M'] %}
               {% set is_platzueber   = figure.code in ['PLTZU','PLTZU-OV'] %}
               <tr>
@@ -125,7 +125,7 @@
               </tr>
             {% endfor %}
 
-            <!-- Messwerte: single shared entry row (owned by Richter 1) -->
+            <!-- Messwerte: shared section, stored on TeamRound -->
             <tr class="table-secondary">
               <td colspan="{{ 1 + judges|length }}" class="py-1">
                 <small class="fw-bold text-muted">MESSWERTE</small>
@@ -133,50 +133,86 @@
               </td>
             </tr>
 
-            {% set owner = judge_data[0] %}
-            {% set owner_locked = owner.score and owner.score.locked and not session.get('is_admin') %}
+            <!-- SEGZEIT row -->
+            <tr>
+              <td>Segelflugzeit (s)</td>
+              <td colspan="{{ judges|length }}">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="input-group input-group-sm" style="max-width:12rem">
+                    <input type="number"
+                           class="form-control form-control-sm"
+                           id="mess_score_SEGZEIT"
+                           value="{{ team_round.mess_segzeit if team_round and team_round.mess_segzeit is not none else '' }}"
+                           min="0" max="600" step="1"
+                           oninput="onSegzeitInput(this.value)">
+                    <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
+                      {%- if team_round and team_round.mess_segzeit is not none -%}
+                        {{ [0, 300 - (3 * ((team_round.mess_segzeit - 200)|abs|int))]|max }}
+                      {%- endif -%}
+                    </span>
+                  </div>
+                  <span class="text-muted score-label-sm">MAX(0, 300 - 3*CEIL(ABS(Zeit-200)))</span>
+                </div>
+              </td>
+            </tr>
 
-            {% for figure in mess_figures %}
-              {% set val = owner.value_map.get(figure.code) %}
-              <tr>
-                <td>{{ figure.name_de }}</td>
-                <td colspan="{{ judges|length }}">
-                  {% if owner.score %}
-                    {% if figure.code in ['LANDGM','LANS','SEILZ'] %}
-                      <select class="form-select form-select-sm mess-input"
-                              id="mess_score_{{ figure.code }}"
-                              style="max-width:8rem"
-                              {% if owner_locked %}disabled{% endif %}>
-                        <option value="">-</option>
-                        {% for v in [0,10,20,30] %}
-                          <option value="{{ v }}" {% if val is not none and val|int == v %}selected{% endif %}>{{ v }}</option>
-                        {% endfor %}
-                      </select>
-                    {% elif figure.code == 'SEGZEIT' %}
-                      <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm" style="max-width:12rem">
-                          <input type="number"
-                                 class="form-control form-control-sm mess-input"
-                                 id="mess_score_SEGZEIT"
-                                 value="{{ val if val is not none else '' }}"
-                                 min="0" max="300" step="1"
-                                 {% if owner_locked %}readonly{% endif %}
-                                 oninput="onSegzeitInput(this.value)">
-                          <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
-                            {%- if val is not none and val != '' -%}
-                              {{ '%d' % [0, 300 - 3 * (val - 200)|abs]|max }}
-                            {%- endif -%}
-                          </span>
-                        </div>
-                        <span class="text-muted score-label-sm">MAX(0, 300 - 3 * CEIL(ABS(Zeit - 200)))</span>
-                      </div>
-                    {% endif %}
-                  {% else %}
-                    <span class="text-muted small">Kein Bogen fuer Richter 1</span>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
+            <!-- SEILZ row -->
+            <tr>
+              <td>Seilzielabwurf</td>
+              <td colspan="{{ judges|length }}">
+                <select class="form-select form-select-sm" id="mess_score_SEILZ" style="max-width:8rem">
+                  <option value="">-</option>
+                  {% for v in [0,10,20,30] %}
+                    <option value="{{ v }}" {% if team_round and team_round.mess_seilz is not none and team_round.mess_seilz|int == v %}selected{% endif %}>{{ v }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+            </tr>
+            <!-- LANDGM row -->
+            <tr>
+              <td>Ziellandung Schlepper</td>
+              <td colspan="{{ judges|length }}">
+                <select class="form-select form-select-sm" id="mess_score_LANDGM" style="max-width:8rem">
+                  <option value="">-</option>
+                  {% for v in [0,10,20,30] %}
+                    <option value="{{ v }}" {% if team_round and team_round.mess_landgm is not none and team_round.mess_landgm|int == v %}selected{% endif %}>{{ v }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+            </tr>
+            <!-- LANS row -->
+            <tr>
+              <td>Ziellandung Segler</td>
+              <td colspan="{{ judges|length }}">
+                <select class="form-select form-select-sm" id="mess_score_LANS" style="max-width:8rem">
+                  <option value="">-</option>
+                  {% for v in [0,10,20,30] %}
+                    <option value="{{ v }}" {% if team_round and team_round.mess_lans is not none and team_round.mess_lans|int == v %}selected{% endif %}>{{ v }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+            </tr>
+
+            <!-- Messwerte save button row -->
+            <tr>
+              <td></td>
+              <td colspan="{{ judges|length }}">
+                {% if team_round %}
+                <form method="POST"
+                      action="{{ url_for('scoring.save_messwerte', team_round_id=team_round.team_round_id) }}"
+                      id="form_messwerte">
+                  <input type="hidden" name="next"
+                         value="{{ url_for('scoring.combined_view', round_id=round_obj.round_id, team_id=team.team_id) }}">
+                  <input type="hidden" name="mess_segzeit" id="h_mess_segzeit" value="">
+                  <input type="hidden" name="mess_seilz"   id="h_mess_seilz"   value="">
+                  <input type="hidden" name="mess_landgm"  id="h_mess_landgm"  value="">
+                  <input type="hidden" name="mess_lans"    id="h_mess_lans"    value="">
+                  <button type="submit" class="btn btn-info btn-sm"
+                          onclick="prepareMesswerte()">Messwerte speichern</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
 
             <!-- Totals: col 0 = quality + Messwerte, other cols = quality only -->
             <tr class="table-light fw-bold">
@@ -241,14 +277,9 @@
             <input type="hidden" name="score_id" value="{{ jd.score.score_id }}">
             <input type="hidden" name="next"
                    value="{{ url_for('scoring.combined_view', round_id=round_obj.round_id, team_id=team.team_id) }}">
-            {% for figure in quality_figures %}
+            {% for figure in figures %}
               <input type="hidden" name="score_{{ figure.code }}" id="h{{ ci }}_{{ figure.code }}" value="">
             {% endfor %}
-            {% if ci == 0 %}
-              {% for figure in mess_figures %}
-                <input type="hidden" name="score_{{ figure.code }}" id="h0_{{ figure.code }}" value="">
-              {% endfor %}
-            {% endif %}
             <input type="hidden" name="notes" id="h{{ ci }}_notes" value="{{ jd.score.notes or '' }}">
           </form>
         {% endif %}
@@ -268,7 +299,7 @@ function colPoints(ci, figureCode, kfactor, rawVal) {
     if (el) el.textContent = pts;
 }
 
-// Shared Segzeit input -> update display, then refresh only col 0 total (owner)
+// Segzeit input -> update display only
 function onSegzeitInput(rawVal) {
     var el = document.getElementById('mess_pts_SEGZEIT');
     if (!el) return;
@@ -278,19 +309,6 @@ function onSegzeitInput(rawVal) {
         var t = parseFloat(rawVal);
         el.textContent = isNaN(t) ? '' : Math.max(0, 300 - 3 * Math.ceil(Math.abs(t - 200))).toFixed(0);
     }
-    colTotal(0);
-}
-
-function getMesswertPoints() {
-    // SEGZEIT formula result + direct values for SEILZ/LANDGM/LANS
-    var total = 0;
-    var segEl = document.getElementById('mess_pts_SEGZEIT');
-    if (segEl && segEl.textContent !== '') total += parseFloat(segEl.textContent) || 0;
-    ['mess_score_SEILZ','mess_score_LANDGM','mess_score_LANS'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el && el.value !== '') total += parseFloat(el.value) || 0;
-    });
-    return total;
 }
 
 function colTotal(ci) {
@@ -300,8 +318,6 @@ function colTotal(ci) {
         var v  = parseFloat(inp.value);
         if (!isNaN(v)) total += v * kf;
     });
-    // Only col 0 (Richter 1) includes Messwerte -- same as single-judge form
-    if (ci === 0) total += getMesswertPoints();
     var totEl = document.getElementById('c' + ci + '_total');
     if (totEl) totEl.value = total > 0 ? total.toFixed(1) : '';
 }
@@ -321,7 +337,7 @@ function colOnInput(ci, inp) {
     colTotal(ci);
 }
 
-// Copy visible inputs into a column's hidden form fields; return FormData for that form
+// Copy visible quality inputs into a column's hidden form fields
 function prepareColData(ci) {
     var form = document.getElementById('form_col' + ci);
     if (!form) return null;
@@ -329,14 +345,16 @@ function prepareColData(ci) {
         var hid = document.getElementById('h' + ci + '_' + inp.dataset.figureCode);
         if (hid) hid.value = inp.value;
     });
-    if (ci === 0) {
-        ['SEGZEIT','LANDGM','LANS','SEILZ'].forEach(function(code) {
-            var src = document.getElementById('mess_score_' + code);
-            var hid = document.getElementById('h0_' + code);
-            if (src && hid) hid.value = src.value;
-        });
-    }
     return new FormData(form);
+}
+
+// Copy Messwerte visible inputs into the Messwerte form hidden fields
+function prepareMesswerte() {
+    ['SEGZEIT','SEILZ','LANDGM','LANS'].forEach(function(code) {
+        var src = document.getElementById('mess_score_' + code);
+        var hid = document.getElementById('h_mess_' + code.toLowerCase());
+        if (src && hid) hid.value = src.value;
+    });
 }
 
 // On submit: use prepareColData to populate hidden fields
@@ -346,17 +364,26 @@ document.querySelectorAll('.combined-save-form').forEach(function(form) {
     });
 });
 
-// Save all columns via fetch, then reload
+// Save all judge columns + Messwerte via fetch, then reload
 function saveAllJudges() {
     var btn = document.getElementById('btn-save-all');
     if (btn) { btn.disabled = true; btn.textContent = 'Speichert...'; }
-    var forms = document.querySelectorAll('.combined-save-form');
     var promises = [];
-    forms.forEach(function(form) {
+
+    // Judge columns
+    document.querySelectorAll('.combined-save-form').forEach(function(form) {
         var data = prepareColData(parseInt(form.dataset.col));
         if (!data) return;
         promises.push(fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin' }));
     });
+
+    // Messwerte form
+    var messForm = document.getElementById('form_messwerte');
+    if (messForm) {
+        prepareMesswerte();
+        promises.push(fetch(messForm.action, { method: 'POST', body: new FormData(messForm), credentials: 'same-origin' }));
+    }
+
     Promise.all(promises).then(function() {
         window.location.reload();
     }).catch(function() {
@@ -384,13 +411,7 @@ function confirmSingleSave(ci, totalCols) {
     return true;
 }
 
-// Messwert selects (SEILZ, LANDGM, LANS) -> refresh all totals on change
 document.addEventListener('DOMContentLoaded', function() {
-    ['mess_score_SEILZ','mess_score_LANDGM','mess_score_LANS'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener('change', function() { colTotal(0); });
-    });
-
     for (var ci = 0; ci < {{ judges|length }}; ci++) {
         // Init quality points displays
         document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
@@ -404,7 +425,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (this.value.includes(',')) this.value = this.value.replace(',', '.');
             });
         });
-        // Init totals (picks up any pre-filled Messwerte too)
         colTotal(ci);
     }
 

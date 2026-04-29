@@ -7,7 +7,7 @@ Created: 2025-05-18
 Description: Utility functions for round status management
 """
 
-from app.models import db, Round, TeamRound, Event, Team, Score, ScoreValue, TaskType
+from app.models import db, Round, TeamRound, Event, Team, Score, ScoreValue, TaskType  # ScoreValue kept for exclusive group checks
 from app.utils.scoring_constants import get_scoring_constants
 import logging
 
@@ -81,9 +81,8 @@ def round_completion_status(round_id):
             return result
             
         # Build lookup maps for task types
-        MESSWERTUNG_CODES, ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
+        ALWAYS_MANDATORY, EXCLUSIVE_GROUPS = get_scoring_constants()
         all_types = {t.code: t.type_id for t in TaskType.query.filter_by(is_active=True).all()}
-        messwertung_type_ids = {all_types[c] for c in MESSWERTUNG_CODES if c in all_types}
         always_mandatory_ids = {all_types[c] for c in ALWAYS_MANDATORY if c in all_types}
         exclusive_group_ids = [
             {all_types[c] for c in group if c in all_types}
@@ -95,16 +94,13 @@ def round_completion_status(round_id):
             if len(scores) < 3:
                 continue
 
-            # Check 1: Messwerte present on at least one score
-            has_messwerte = False
-            for score in scores:
-                mess_count = ScoreValue.query.filter(
-                    ScoreValue.score_id == score.score_id,
-                    ScoreValue.task_type_id.in_(messwertung_type_ids)
-                ).count()
-                if mess_count >= len(MESSWERTUNG_CODES):
-                    has_messwerte = True
-                    break
+            # Check 1: Messwerte present on TeamRound
+            has_messwerte = (
+                team_round.mess_segzeit is not None and
+                team_round.mess_seilz is not None and
+                team_round.mess_landgm is not None and
+                team_round.mess_lans is not None
+            )
             if not has_messwerte:
                 continue
 

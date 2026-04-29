@@ -92,6 +92,19 @@ with app.app_context():
     except Exception:
         db.session.rollback()  # Column already exists — ignore
 
+    # Add Messwerte columns to team_rounds if not present (#210)
+    for col_def in [
+        "mess_segzeit FLOAT",
+        "mess_seilz INTEGER",
+        "mess_landgm INTEGER",
+        "mess_lans INTEGER",
+    ]:
+        try:
+            db.session.execute(db.text(f"ALTER TABLE team_rounds ADD COLUMN {col_def}"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     # Initialize drop-worst-round threshold if it doesn't exist
     drop_config = SystemConfig.query.filter_by(config_key='drop_worst_round_threshold').first()
     if not drop_config:

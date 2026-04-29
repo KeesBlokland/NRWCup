@@ -222,8 +222,6 @@ def generate():
         from app.services.services_scoring import ScoringService
         scoring_service = ScoringService()
 
-        MESSWERTUNG_CODES = {'SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'}
-
         rounds_created = 0
         scores_generated = 0
 
@@ -245,13 +243,11 @@ def generate():
 
                 chosen_variants = handle_mutually_exclusive_figures(task_types)
 
-                # Generate Messwerte once per team (same for all judges)
-                segzeit_value = random.randint(170, 230)
-                landing_values = {
-                    'LANDGM': generate_landing_score(),
-                    'LANS':   generate_landing_score(),
-                    'SEILZ':  generate_landing_score()
-                }
+                # Generate Messwerte once per team — store directly on TeamRound
+                team_round.mess_segzeit = float(random.randint(170, 230))
+                team_round.mess_landgm  = generate_landing_score()
+                team_round.mess_lans    = generate_landing_score()
+                team_round.mess_seilz   = generate_landing_score()
 
                 # Clear existing ScoreValues for this team_round to avoid duplicates
                 score_ids = [s.score_id for s in Score.query.filter_by(
@@ -278,16 +274,14 @@ def generate():
                     else:
                         score.entered_at = datetime.utcnow()
 
-                    # Build values for this judge
+                    # Build values for this judge (quality figures only — Messwerte on TeamRound)
                     for task_type in task_types:
+                        if task_type.is_messwertung:
+                            continue  # stored on TeamRound, not ScoreValue
                         code = task_type.code
                         value = None
 
-                        if code in MESSWERTUNG_CODES:
-                            # Messwerte: only on first judge (replicated below)
-                            if judge == judges[0]:
-                                value = segzeit_value if code == 'SEGZEIT' else landing_values[code]
-                        elif code in STEIGFLUG_CODES:
+                        if code in STEIGFLUG_CODES:
                             if 'platzrunde' in chosen_variants and task_type.type_id == chosen_variants['platzrunde']:
                                 value = generate_gaussian_score(std_dev=std_dev)
                         elif code in UEBERFLUG_CODES:
@@ -305,30 +299,6 @@ def generate():
                                 value=float(value)
                             ))
                     scores_generated += 1
-
-                # Replicate Messwerte from judge[0] to all other judges for this team_round
-                judge0_score = Score.query.filter_by(
-                    team_round_id=team_round.team_round_id,
-                    judge_id=judges[0].teilnehmer_id
-                ).first()
-                if judge0_score and len(judges) > 1:
-                    mess_type_ids = [t.type_id for t in task_types if t.code in MESSWERTUNG_CODES]
-                    mess_values = {sv.task_type_id: sv.value for sv in ScoreValue.query.filter(
-                        ScoreValue.score_id == judge0_score.score_id,
-                        ScoreValue.task_type_id.in_(mess_type_ids)
-                    ).all()}
-                    for judge in judges[1:]:
-                        other_score = Score.query.filter_by(
-                            team_round_id=team_round.team_round_id,
-                            judge_id=judge.teilnehmer_id
-                        ).first()
-                        if other_score:
-                            for type_id, val in mess_values.items():
-                                db.session.add(ScoreValue(
-                                    score_id=other_score.score_id,
-                                    task_type_id=type_id,
-                                    value=val
-                                ))
 
             # Single commit per round — all ScoreValues inserted at once
             db.session.commit()

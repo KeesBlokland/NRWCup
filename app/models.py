@@ -125,6 +125,12 @@ class TeamRound(db.Model):
     normalized_score = db.Column(db.Float)  # Normalized score (0-1000)
     rank = db.Column(db.Integer)  # Rank within this round
     is_dropped = db.Column(db.Boolean, default=False)  # If this round is dropped from final scoring
+
+    # Messwerte (objective measurements, independent of judges)
+    mess_segzeit = db.Column(db.Float, nullable=True)    # Segler Flugzeit in seconds
+    mess_seilz   = db.Column(db.Integer, nullable=True)  # Zielabwurf Schleppseil: 0/10/20/30
+    mess_landgm  = db.Column(db.Integer, nullable=True)  # Ziellandung Schleppflugmodell: 0/10/20/30
+    mess_lans    = db.Column(db.Integer, nullable=True)  # Ziellandung Segelflugmodell: 0/10/20/30
     
     # Relationships
     scores = db.relationship("Score", backref="team_round", cascade="all, delete-orphan")

@@ -26,7 +26,7 @@
             <h3 class="card-title">Wertungen generieren</h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('testdata.generate') }}">
+            <form id="generate-form" method="POST" action="{{ url_for('testdata.generate') }}">
                 <!-- Select Wettbewerb (Event) - REQUIRED -->
                 <div class="row mb-3">
                     <div class="col-md-12">
@@ -165,13 +165,15 @@
 
 </div>
 
+{% endblock %}
+
+{% block scripts %}
 <script>
     function updateVariabilityValue(value) {
         document.getElementById('variabilityValue').textContent = value;
     }
 
-    document.querySelector('form').addEventListener('submit', function(e) {
-        // Check judge count vs event setting before generating
+    document.getElementById('generate-form').addEventListener('submit', function(e) {
         var sel = document.getElementById('event_id');
         var opt = sel.options[sel.selectedIndex];
         if (opt && opt.value) {
@@ -181,8 +183,8 @@
                 var ok = confirm(
                     'Wettbewerb "' + opt.text.trim() + '" hat ' + eventJudges + ' Punktrichter.\n' +
                     'Du hast ' + selectedJudges + ' ausgewählt.\n\n' +
-                    'Die kombinierten Ansicht zeigt nur ' + eventJudges + ' Spalten — ' +
-                    'Wertungen für zusätzliche Richter werden generiert aber nicht angezeigt.\n\n' +
+                    'Die kombinierten Ansicht zeigt nur ' + eventJudges + ' Spalten -- ' +
+                    'Wertungen fuer zusaetzliche Richter werden generiert aber nicht angezeigt.\n\n' +
                     'Trotzdem fortfahren?'
                 );
                 if (!ok) { e.preventDefault(); return; }
@@ -194,32 +196,17 @@
         document.getElementById('generateProgress').classList.remove('d-none');
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Select/Deselect All Teams
-        document.querySelector('.select-all-teams').addEventListener('click', function() {
-            document.querySelectorAll('input[name="team_ids"]').forEach(checkbox => {
-                checkbox.checked = true;
-            });
-        });
-        
-        document.querySelector('.deselect-all-teams').addEventListener('click', function() {
-            document.querySelectorAll('input[name="team_ids"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        });
-        
-        // Select/Deselect All Judges
-        document.querySelector('.select-all-judges').addEventListener('click', function() {
-            document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
-                checkbox.checked = true;
-            });
-        });
-
-        document.querySelector('.deselect-all-judges').addEventListener('click', function() {
-            document.querySelectorAll('input[name="judge_ids"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        });
+    document.querySelector('.select-all-teams').addEventListener('click', function() {
+        document.querySelectorAll('input[name="team_ids"]').forEach(function(cb) { cb.checked = true; });
+    });
+    document.querySelector('.deselect-all-teams').addEventListener('click', function() {
+        document.querySelectorAll('input[name="team_ids"]').forEach(function(cb) { cb.checked = false; });
+    });
+    document.querySelector('.select-all-judges').addEventListener('click', function() {
+        document.querySelectorAll('input[name="judge_ids"]').forEach(function(cb) { cb.checked = true; });
+    });
+    document.querySelector('.deselect-all-judges').addEventListener('click', function() {
+        document.querySelectorAll('input[name="judge_ids"]').forEach(function(cb) { cb.checked = false; });
     });
 </script>
 {% endblock %}

@@ -1,7 +1,7 @@
-{# File: app/templates/scoring/combined_score_form.html | Last Updated: 2026-02-27 #}
+{# File: app/templates/scoring/combined_score_form.html | Last Updated: 2026-04-30 #}
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - {{ judges|length }} Richter{% endblock %}
+{% block title %}{{ active_event_name }} - {{ judges|length }} Richter{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -61,7 +61,7 @@
               <th style="width:28%">Figur</th>
               {% for ci in range(judges|length) %}
                 {% set jd = judge_data[ci] %}
-                <th class="text-center" style="width:{{ (72 // judges|length) }}%">
+                <th class="text-center" style="width:{{ (40 // judges|length) }}%">
                   {% if jd.score %}
                     {{ jd.score.judge.name if jd.score.judge else 'Richter ' ~ (ci+1) }}
                     {% if jd.score.locked %}&#128274;{% endif %}
@@ -70,18 +70,22 @@
                   {% endif %}
                 </th>
               {% endfor %}
+              <th class="text-end" style="width:10%">Roh</th>
+              <th class="text-center" style="width:6%">K</th>
+              <th class="text-end" style="width:10%">Bewertungspunkte</th>
             </tr>
           </thead>
 
           <tbody>
             <!-- Quality figures -->
             {% for figure in figures %}
+              {% set fi = loop.index0 %}
               {% set is_platzrunde   = figure.code in ['PLTZR','PLTZR-M'] %}
               {% set is_platzueber   = figure.code in ['PLTZU','PLTZU-OV'] %}
               <tr>
                 <td>
                   <div class="d-flex justify-content-between align-items-center">
-                    <span>{{ figure.name_de }}</span>
+                    <span>{{ figure.name_de }}{% if is_platzrunde or is_platzueber %} <span class="text-muted" style="cursor:help;font-size:0.8em;" data-bs-toggle="tooltip" data-bs-placement="right" title="Eintrag hier bestimmt welche Variante für alle Richter gilt">(?)</span>{% endif %}</span>
                     <span class="text-muted score-label-sm ms-1">x{{ figure.k_factor or 1 }}</span>
                   </div>
                   <input type="hidden" class="figure-max" id="max_{{ figure.code }}" value="{{ figure.max_value if figure.max_value is not none else 10 }}">
@@ -115,6 +119,7 @@
                              value="{{ val if val is not none else '' }}"
                              min="0" max="{{ figure.max_value if figure.max_value is not none else 10 }}"
                              step="0.5"
+                             tabindex="{{ ci * (figures|length) + fi + 1 }}"
                              {% if locked or kuer_dis %}readonly{% endif %}
                              oninput="colOnInput({{ ci }}, this)">
                     {% else %}
@@ -122,12 +127,15 @@
                     {% endif %}
                   </td>
                 {% endfor %}
+                <td class="text-end score-label-sm" id="roh_{{ figure.code }}">-</td>
+                <td class="text-center text-muted score-label-sm">{{ figure.k_factor or 1 }}</td>
+                <td class="text-end fw-bold score-label-sm" id="bp_{{ figure.code }}">-</td>
               </tr>
             {% endfor %}
 
             <!-- Messwerte: shared section, stored on TeamRound -->
             <tr class="table-secondary">
-              <td colspan="{{ 1 + judges|length }}" class="py-1">
+              <td colspan="{{ 1 + judges|length + 3 }}" class="py-1">
                 <small class="fw-bold text-muted">MESSWERTE</small>
                 <small class="text-muted ms-2">(einmalig -- gilt fuer alle {{ judges|length }} Richter)</small>
               </td>
@@ -136,7 +144,7 @@
             <!-- SEGZEIT row -->
             <tr>
               <td>Segelflugzeit (s)</td>
-              <td colspan="{{ judges|length }}">
+              <td colspan="{{ judges|length + 3 }}">
                 <div class="d-flex align-items-center gap-2">
                   <div class="input-group input-group-sm" style="max-width:12rem">
                     <input type="number"
@@ -145,13 +153,14 @@
                            value="{{ team_round.mess_segzeit if team_round and team_round.mess_segzeit is not none else '' }}"
                            min="0" max="600" step="1"
                            oninput="onSegzeitInput(this.value)">
-                    <span class="input-group-text score-label-sm" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
+                    <span class="input-group-text score-label-sm fw-bold text-dark" id="mess_pts_SEGZEIT" style="min-width:2.8rem">
                       {%- if team_round and team_round.mess_segzeit is not none -%}
                         {{ [0, 300 - (3 * ((team_round.mess_segzeit - 200)|abs|int))]|max }}
                       {%- endif -%}
                     </span>
                   </div>
                   <span class="text-muted score-label-sm">MAX(0, 300 - 3*CEIL(ABS(Zeit-200)))</span>
+                  <span id="segzeit_warning" class="text-warning fw-bold score-label-sm d-none">Achtung: Wert &gt;400s — Eingabefehler?</span>
                 </div>
               </td>
             </tr>
@@ -159,7 +168,7 @@
             <!-- SEILZ row -->
             <tr>
               <td>Seilzielabwurf</td>
-              <td colspan="{{ judges|length }}">
+              <td colspan="{{ judges|length + 3 }}">
                 <select class="form-select form-select-sm" id="mess_score_SEILZ" style="max-width:8rem">
                   <option value="">-</option>
                   {% for v in [0,10,20,30] %}
@@ -171,7 +180,7 @@
             <!-- LANDGM row -->
             <tr>
               <td>Ziellandung Schlepper</td>
-              <td colspan="{{ judges|length }}">
+              <td colspan="{{ judges|length + 3 }}">
                 <select class="form-select form-select-sm" id="mess_score_LANDGM" style="max-width:8rem">
                   <option value="">-</option>
                   {% for v in [0,10,20,30] %}
@@ -183,7 +192,7 @@
             <!-- LANS row -->
             <tr>
               <td>Ziellandung Segler</td>
-              <td colspan="{{ judges|length }}">
+              <td colspan="{{ judges|length + 3 }}">
                 <select class="form-select form-select-sm" id="mess_score_LANS" style="max-width:8rem">
                   <option value="">-</option>
                   {% for v in [0,10,20,30] %}
@@ -196,22 +205,26 @@
             <!-- Messwerte save button row -->
             <tr>
               <td></td>
-              <td colspan="{{ judges|length }}">
+              <td colspan="{{ judges|length + 3 }}">
                 {% if team_round %}
-                <form method="POST"
-                      action="{{ url_for('scoring.save_messwerte', team_round_id=team_round.team_round_id) }}"
-                      id="form_messwerte">
-                  <input type="hidden" name="next"
-                         value="{{ url_for('scoring.combined_view', round_id=round_obj.round_id, team_id=team.team_id) }}">
-                  <input type="hidden" name="mess_segzeit" id="h_mess_segzeit" value="">
-                  <input type="hidden" name="mess_seilz"   id="h_mess_seilz"   value="">
-                  <input type="hidden" name="mess_landgm"  id="h_mess_landgm"  value="">
-                  <input type="hidden" name="mess_lans"    id="h_mess_lans"    value="">
-                  <button type="submit" class="btn btn-info btn-sm"
-                          onclick="prepareMesswerte()">Messwerte speichern</button>
-                </form>
+                <button type="button" class="btn btn-info btn-sm"
+                        onclick="saveMesswerte('{{ url_for('scoring.save_messwerte', team_round_id=team_round.team_round_id) }}')">
+                  Messwerte speichern
+                </button>
+                <span id="messwerte-status" class="ms-2 small"></span>
                 {% endif %}
               </td>
+            </tr>
+
+            <!-- Total BP row -->
+            <tr class="table-light">
+              <td class="fw-bold">Gesamt Bewertungspunkte</td>
+              {% for ci in range(judges|length) %}
+                <td></td>
+              {% endfor %}
+              <td></td>
+              <td></td>
+              <td class="text-end fw-bold" id="total_bp">-</td>
             </tr>
 
             <!-- Save buttons row, aligned with judge columns -->
@@ -231,12 +244,13 @@
                          class="btn btn-warning btn-sm w-100">
                         Bogen ansehen / Entsperren
                       </a>
+                      <span class="small d-block text-center text-muted mt-1">Gesperrt</span>
                     {% else %}
-                      <button type="submit" form="form_col{{ ci }}"
-                              class="btn btn-primary btn-sm w-100 mb-1"
-                              onclick="return confirmSingleSave({{ ci }}, {{ judges|length }})">
+                      <button type="button" class="btn btn-primary btn-sm w-100 mb-1"
+                              onclick="saveJudgeCol({{ ci }})">
                         Speichern Richter {{ ci+1 }}
                       </button>
+                      <span id="col-status-{{ ci }}" class="small d-block text-center mb-1"></span>
                       <form method="POST"
                             action="{{ url_for('scoring.lock_score', score_id=jd.score.score_id) }}">
                         <input type="hidden" name="next"
@@ -249,6 +263,7 @@
                   {% endif %}
                 </td>
               {% endfor %}
+              <td colspan="3"></td>
             </tr>
           </tbody>
         </table>
@@ -273,6 +288,10 @@
           </form>
         {% endif %}
       {% endfor %}
+      {% if team_round %}
+        <input type="hidden" id="messwerte-url"
+               value="{{ url_for('scoring.save_messwerte', team_round_id=team_round.team_round_id) }}">
+      {% endif %}
 
     </div><!-- card-body -->
   </div><!-- card -->
@@ -281,121 +300,291 @@
 <script>
 // --- per-column quality helpers ---
 
-function colPoints(ci, figureCode, kfactor, rawVal) {
-    var pts = (rawVal === '' || rawVal === null || isNaN(parseFloat(rawVal)))
-              ? '' : (parseFloat(rawVal) * kfactor).toFixed(1);
-    var el = document.getElementById('c' + ci + '_pts_' + figureCode);
-    if (el) el.textContent = pts;
+var NUM_JUDGES = {{ judges|length }};
+
+// All figure codes (quality only, in order)
+var FIGURE_DATA = [
+  {% for figure in figures %}
+    { code: '{{ figure.code }}', kfactor: {{ figure.k_factor or 1 }} }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+function commercialRound(value, decimals) {
+    var factor = Math.pow(10, decimals);
+    return Math.round(value * factor) / factor;
 }
 
-// Segzeit input -> update display only
+function updateRowCalc(figureCode, kfactor) {
+    var vals = [];
+    var inputs = [];
+    for (var ci = 0; ci < NUM_JUDGES; ci++) {
+        var inp = document.getElementById('c' + ci + '_score_' + figureCode);
+        if (inp) {
+            inputs.push(inp);
+            if (inp.value !== '') vals.push({ v: parseFloat(inp.value), ci: ci });
+        }
+    }
+
+    // Clear drop styling
+    inputs.forEach(function(inp) { inp.classList.remove('dropped-score'); });
+
+    if (vals.length === 0) {
+        document.getElementById('roh_' + figureCode).textContent = '-';
+        document.getElementById('bp_' + figureCode).textContent = '-';
+        updateTotalBP();
+        return;
+    }
+
+    var used = vals.slice();
+    // Drop rule: 5+ judges -> drop highest+lowest; 4 judges -> drop highest only; 3 -> no drop
+    if (NUM_JUDGES >= 5 && used.length >= 3) {
+        var maxIdx = 0, minIdx = 0;
+        for (var i = 1; i < used.length; i++) {
+            if (used[i].v > used[maxIdx].v) maxIdx = i;
+            if (used[i].v < used[minIdx].v) minIdx = i;
+        }
+        inputs[used[maxIdx].ci].classList.add('dropped-score');
+        inputs[used[minIdx].ci].classList.add('dropped-score');
+        // Remove both (remove higher index first to not shift)
+        var removeIdxs = [maxIdx, minIdx].sort(function(a,b) { return b-a; });
+        removeIdxs.forEach(function(ri) { used.splice(ri, 1); });
+    } else if (NUM_JUDGES >= 4 && used.length >= 2) {
+        var maxIdx = 0;
+        for (var i = 1; i < used.length; i++) {
+            if (used[i].v > used[maxIdx].v) maxIdx = i;
+        }
+        inputs[used[maxIdx].ci].classList.add('dropped-score');
+        used.splice(maxIdx, 1);
+    }
+
+    var sum = used.reduce(function(a, b) { return a + b.v; }, 0);
+    var roh = commercialRound(sum / used.length, 3);
+    var bp = Math.round(roh * kfactor);
+
+    document.getElementById('roh_' + figureCode).textContent = roh.toFixed(3);
+    document.getElementById('bp_' + figureCode).textContent = bp;
+    updateTotalBP();
+}
+
+function updateTotalBP() {
+    var total = 0;
+    var hasAny = false;
+    FIGURE_DATA.forEach(function(fd) {
+        var el = document.getElementById('bp_' + fd.code);
+        if (el) {
+            var v = parseInt(el.textContent);
+            if (!isNaN(v)) { total += v; hasAny = true; }
+        }
+    });
+    // Include Messwerte
+    var segEl = document.getElementById('mess_pts_SEGZEIT');
+    if (segEl && segEl.textContent !== '') {
+        var v = parseInt(segEl.textContent);
+        if (!isNaN(v)) { total += v; hasAny = true; }
+    }
+    ['SEILZ', 'LANDGM', 'LANS'].forEach(function(code) {
+        var sel = document.getElementById('mess_score_' + code);
+        if (sel && sel.value !== '') {
+            var v = parseInt(sel.value);
+            if (!isNaN(v)) { total += v; hasAny = true; }
+        }
+    });
+    var totEl = document.getElementById('total_bp');
+    if (totEl) totEl.textContent = hasAny ? total : '-';
+}
+
+// Segzeit input -> update display and total
 function onSegzeitInput(rawVal) {
     var el = document.getElementById('mess_pts_SEGZEIT');
+    var warn = document.getElementById('segzeit_warning');
     if (!el) return;
     if (rawVal === '' || rawVal === null) {
         el.textContent = '';
+        if (warn) warn.classList.add('d-none');
     } else {
         var t = parseFloat(rawVal);
         el.textContent = isNaN(t) ? '' : Math.max(0, 300 - 3 * Math.ceil(Math.abs(t - 200))).toFixed(0);
+        if (warn) warn.classList.toggle('d-none', isNaN(t) || t <= 400);
+    }
+    updateTotalBP();
+}
+
+function setColStatus(ci, text, color) {
+    var el = document.getElementById('col-status-' + ci);
+    if (el) { el.textContent = text; el.style.color = color || ''; }
+}
+
+function applyMutexGroup(grp) {
+    // Determine which variant R1 (ci=0) has chosen
+    var chosenCode = null;
+    document.querySelectorAll('.c0-quality[data-group="' + grp + '"]').forEach(function(inp) {
+        if (inp.value !== '') chosenCode = inp.dataset.figureCode;
+    });
+
+    // Propagate to all judge columns
+    for (var c = 0; c < NUM_JUDGES; c++) {
+        document.querySelectorAll('.c' + c + '-quality[data-group="' + grp + '"]').forEach(function(other) {
+            var isChosen = (chosenCode === null || other.dataset.figureCode === chosenCode);
+            if (isChosen) {
+                // Release only if we mutex-locked it (leave score-locked inputs alone)
+                if (other.dataset.mutexLocked) {
+                    other.removeAttribute('readonly');
+                    other.classList.remove('score-input-readonly');
+                    delete other.dataset.mutexLocked;
+                }
+            } else {
+                // Lock the unchosen variant across all columns
+                if (!other.dataset.mutexLocked) {
+                    other.value = '';
+                    other.setAttribute('readonly', '');
+                    other.classList.add('score-input-readonly');
+                    other.dataset.mutexLocked = '1';
+                    updateRowCalc(other.dataset.figureCode, parseFloat(other.dataset.kfactor) || 1);
+                }
+            }
+        });
     }
 }
 
 function colOnInput(ci, inp) {
     var kf = parseFloat(inp.dataset.kfactor) || 1;
-    colPoints(ci, inp.dataset.figureCode, kf, inp.value);
     var grp = inp.dataset.group;
-    if (grp && inp.value !== '') {
-        document.querySelectorAll('.c' + ci + '-quality[data-group="' + grp + '"]').forEach(function(other) {
-            if (other !== inp) {
-                other.value = '';
-                colPoints(ci, other.dataset.figureCode, parseFloat(other.dataset.kfactor) || 1, '');
-            }
-        });
+    // Only R1 drives the mutex choice
+    if (ci === 0 && grp) {
+        applyMutexGroup(grp);
     }
+    updateRowCalc(inp.dataset.figureCode, kf);
+    setColStatus(ci, 'Geändert', 'darkorange');
 }
 
-// Copy visible quality inputs into a column's hidden form fields
-function prepareColData(ci) {
-    var form = document.getElementById('form_col' + ci);
-    if (!form) return null;
-    document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
-        var hid = document.getElementById('h' + ci + '_' + inp.dataset.figureCode);
-        if (hid) hid.value = inp.value;
-    });
-    return new FormData(form);
-}
+// Tab skips readonly inputs
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Tab') return;
+    var active = document.activeElement;
+    if (!active || !active.classList.contains('decimal-dot')) return;
 
-// Copy Messwerte visible inputs into the Messwerte form hidden fields
-function prepareMesswerte() {
-    ['SEGZEIT','SEILZ','LANDGM','LANS'].forEach(function(code) {
-        var src = document.getElementById('mess_score_' + code);
-        var hid = document.getElementById('h_mess_' + code.toLowerCase());
-        if (src && hid) hid.value = src.value;
-    });
-}
+    var inputs = Array.from(document.querySelectorAll('input.decimal-dot[tabindex]'))
+        .filter(function(i) { return parseInt(i.getAttribute('tabindex')) > 0; })
+        .sort(function(a, b) { return parseInt(a.getAttribute('tabindex')) - parseInt(b.getAttribute('tabindex')); });
 
-// On submit: use prepareColData to populate hidden fields
-document.querySelectorAll('.combined-save-form').forEach(function(form) {
-    form.addEventListener('submit', function(e) {
-        prepareColData(parseInt(form.dataset.col));
-    });
+    var idx = inputs.indexOf(active);
+    if (idx === -1) return;
+
+    var step = e.shiftKey ? -1 : 1;
+    var next = null;
+    var i = idx + step;
+    while (i >= 0 && i < inputs.length) {
+        if (!inputs[i].readOnly && !inputs[i].disabled) { next = inputs[i]; break; }
+        i += step;
+    }
+
+    if (next) { e.preventDefault(); next.focus(); next.select(); }
 });
 
-// Save all judge columns + Messwerte via fetch, then reload
+function buildColData(ci) {
+    var form = document.getElementById('form_col' + ci);
+    if (!form) return null;
+    var data = new FormData();
+    data.append('score_id', form.querySelector('input[name="score_id"]').value);
+    document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
+        data.append('score_' + inp.dataset.figureCode, inp.value);
+    });
+    var notesEl = document.getElementById('h' + ci + '_notes');
+    if (notesEl) data.append('notes', notesEl.value);
+    return { data: data, action: form.action };
+}
+
+function saveJudgeCol(ci) {
+    var col = buildColData(ci);
+    if (!col) return;
+    setColStatus(ci, '...');
+    fetch(col.action, { method: 'POST', body: col.data, credentials: 'same-origin' })
+        .then(function(r) {
+            setColStatus(ci, (r.ok || r.redirected) ? 'Gespeichert' : 'Fehler ' + r.status,
+                             (r.ok || r.redirected) ? 'green' : 'red');
+        })
+        .catch(function() { setColStatus(ci, 'Fehler', 'red'); });
+}
+
+// Save Messwerte via AJAX, show confirmation label
+function saveMesswerte(url) {
+    var data = new FormData();
+    ['SEGZEIT','SEILZ','LANDGM','LANS'].forEach(function(code) {
+        var src = document.getElementById('mess_score_' + code);
+        if (src) data.append('mess_' + code.toLowerCase(), src.value);
+    });
+    var statusEl = document.getElementById('messwerte-status');
+    if (statusEl) { statusEl.textContent = '...'; statusEl.style.color = ''; }
+    fetch(url, { method: 'POST', body: data, credentials: 'same-origin' })
+        .then(function(r) {
+            if (r.ok || r.redirected) {
+                if (statusEl) { statusEl.textContent = 'Gespeichert'; statusEl.style.color = 'green'; }
+                updateTotalBP();
+            } else {
+                if (statusEl) { statusEl.textContent = 'Fehler ' + r.status; statusEl.style.color = 'red'; }
+            }
+        })
+        .catch(function() {
+            if (statusEl) { statusEl.textContent = 'Fehler'; statusEl.style.color = 'red'; }
+        });
+}
+
+// Save all judge columns + Messwerte via AJAX — no page reload
 function saveAllJudges() {
     var btn = document.getElementById('btn-save-all');
     if (btn) { btn.disabled = true; btn.textContent = 'Speichert...'; }
     var promises = [];
 
-    // Judge columns
-    document.querySelectorAll('.combined-save-form').forEach(function(form) {
-        var data = prepareColData(parseInt(form.dataset.col));
-        if (!data) return;
-        promises.push(fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin' }));
-    });
+    for (var ci = 0; ci < NUM_JUDGES; ci++) {
+        (function(col) {
+            var colData = buildColData(col);
+            if (!colData) return;
+            setColStatus(col, '...');
+            promises.push(
+                fetch(colData.action, { method: 'POST', body: colData.data, credentials: 'same-origin' })
+                    .then(function(r) {
+                        setColStatus(col, (r.ok || r.redirected) ? 'Gespeichert' : 'Fehler ' + r.status,
+                                         (r.ok || r.redirected) ? 'green' : 'red');
+                    })
+                    .catch(function() { setColStatus(col, 'Fehler', 'red'); })
+            );
+        })(ci);
+    }
 
-    // Messwerte form
-    var messForm = document.getElementById('form_messwerte');
-    if (messForm) {
-        prepareMesswerte();
-        promises.push(fetch(messForm.action, { method: 'POST', body: new FormData(messForm), credentials: 'same-origin' }));
+    // Messwerte
+    var messUrlEl = document.getElementById('messwerte-url');
+    if (messUrlEl) {
+        var messData = new FormData();
+        ['SEGZEIT','SEILZ','LANDGM','LANS'].forEach(function(code) {
+            var src = document.getElementById('mess_score_' + code);
+            if (src) messData.append('mess_' + code.toLowerCase(), src.value);
+        });
+        var messStatusEl = document.getElementById('messwerte-status');
+        if (messStatusEl) { messStatusEl.textContent = '...'; messStatusEl.style.color = ''; }
+        promises.push(
+            fetch(messUrlEl.value, { method: 'POST', body: messData, credentials: 'same-origin' })
+                .then(function(r) {
+                    if (messStatusEl) {
+                        messStatusEl.textContent = (r.ok || r.redirected) ? 'Gespeichert' : 'Fehler ' + r.status;
+                        messStatusEl.style.color = (r.ok || r.redirected) ? 'green' : 'red';
+                    }
+                })
+                .catch(function() {
+                    if (messStatusEl) { messStatusEl.textContent = 'Fehler'; messStatusEl.style.color = 'red'; }
+                })
+        );
     }
 
     Promise.all(promises).then(function() {
-        window.location.reload();
+        if (btn) { btn.disabled = false; btn.textContent = 'Alle Richter speichern'; }
+        updateTotalBP();
     }).catch(function() {
         if (btn) { btn.disabled = false; btn.textContent = 'Alle Richter speichern'; }
-        alert('Fehler beim Speichern. Bitte erneut versuchen.');
     });
 }
 
-// Warn when saving a single judge if other columns have entered values
-function confirmSingleSave(ci, totalCols) {
-    for (var c = 0; c < totalCols; c++) {
-        if (c === ci) continue;
-        var inputs = document.querySelectorAll('.c' + c + '-quality:not([readonly])');
-        for (var i = 0; i < inputs.length; i++) {
-            if (inputs[i].value !== '') {
-                return confirm(
-                    'Achtung: Nur Richter ' + (ci + 1) + ' wird gespeichert.\n' +
-                    'Eingaben in anderen Spalten gehen verloren.\n\n' +
-                    'Tipp: "Alle Richter speichern" verwenden.\n\n' +
-                    'Trotzdem nur Richter ' + (ci + 1) + ' speichern?'
-                );
-            }
-        }
-    }
-    return true;
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    for (var ci = 0; ci < {{ judges|length }}; ci++) {
-        // Init quality points displays
-        document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
-            if (inp.value !== '') {
-                colPoints(ci, inp.dataset.figureCode, parseFloat(inp.dataset.kfactor) || 1, inp.value);
-            }
-        });
+    for (var ci = 0; ci < NUM_JUDGES; ci++) {
         // Comma -> dot
         document.querySelectorAll('.c' + ci + '-quality').forEach(function(inp) {
             inp.addEventListener('input', function() {
@@ -404,9 +593,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Init Rohpunkte/BP for all rows with existing data
+    FIGURE_DATA.forEach(function(fd) {
+        updateRowCalc(fd.code, fd.kfactor);
+    });
+
     // Init Segzeit display if pre-filled
     var segInp = document.getElementById('mess_score_SEGZEIT');
     if (segInp && segInp.value !== '') onSegzeitInput(segInp.value);
+
+    // Update total when Messwerte dropdowns change
+    ['SEILZ', 'LANDGM', 'LANS'].forEach(function(code) {
+        var sel = document.getElementById('mess_score_' + code);
+        if (sel) sel.addEventListener('change', updateTotalBP);
+    });
+
+    // Init Bootstrap tooltips
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+        new bootstrap.Tooltip(el);
+    });
 });
 </script>
 {% endblock %}

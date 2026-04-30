@@ -8,7 +8,7 @@ Description: Corrected raw score display and dropped rounds logic
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - Wettkampfstände{% endblock %}
+{% block title %}{{ active_event_name }} - Wettkampfstände{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -240,7 +240,7 @@ Description: Corrected raw score display and dropped rounds logic
 <div id="printable-start-list" class="d-none">
     <div class="print-container">
         <!-- Single line title with smaller font size, no date -->
-        <h2 class="print-title">NRW Cup {{ current_year }} - Startliste für Durchgang <span id="print-round-number"></span></h2>
+        <h2 class="print-title">{{ active_event_name }} - Startliste für Durchgang <span id="print-round-number"></span></h2>
         
         <!-- Table with no outer border -->
         <table id="print-table" class="print-table">

@@ -11,7 +11,7 @@
     <div class="card-body handbuch-content">
 <h1>NRW Cup — Benutzerhandbuch</h1>
 <p><strong>Verwaltungssystem für Seglerschlepp-Wettbewerbe</strong></p>
-<p>Version 1.4 — April 2026</p>
+<p>Version 1.5 — April 2026</p>
 <hr />
 <div class="alert alert-warning">
 <strong>Regeln 2026:</strong> Dieses Handbuch entspricht den BeMod-F-Schlepp Regeln 2026.
@@ -37,11 +37,10 @@ NRWCup Handbuch (PDF)</a>
 <li><a href="javascript:void(0)" onclick="jumpTo('s12')">Systemverwaltung</a></li>
 <li><a href="javascript:void(0)" onclick="jumpTo('s13')">Datenbereinigung</a></li>
 <li><a href="javascript:void(0)" onclick="jumpTo('s14')">Testdaten</a></li>
-<li><a href="javascript:void(0)" onclick="jumpTo('s15')">Typischer Wettbewerbs-Ablauf</a></li>
-<li><a href="javascript:void(0)" onclick="jumpTo('s16')">Sperrmechanismus</a></li>
-<li><a href="javascript:void(0)" onclick="jumpTo('s17')">Email-Funktionen</a></li>
-<li><a href="javascript:void(0)" onclick="jumpTo('s18')">Messwertung &amp; Qualitätswertung</a></li>
-<li><a href="javascript:void(0)" onclick="jumpTo('s19')">Häufige Fragen</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s15')">Sperrmechanismus</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s16')">Email-Funktionen</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s17')">Messwertung &amp; Qualitätswertung</a></li>
+<li><a href="javascript:void(0)" onclick="jumpTo('s18')">Häufige Fragen</a></li>
 </ol>
 <hr />
 <h2 id="s1">1. Überblick</h2>
@@ -257,7 +256,7 @@ NRWCup Handbuch (PDF)</a>
 </table>
 <h3>Sonderfunktionen</h3>
 <ul>
-<li><strong>Teams neu nummerieren</strong>: Nummeriert alle aktiven Teams lückenlos durch (mit Bestätigung)</li>
+<li><strong>Teams neu nummerieren</strong>: Nummeriert alle Teams lückenlos durch (aktive Teams 1..N, inaktive Teams N+1..M). Reihenfolge innerhalb jeder Gruppe bleibt erhalten. Bestätigung erforderlich.</li>
 <li><strong>Teamliste</strong>: Erzeugt eine druckbare PDF-Liste aller aktiven Teams</li>
 </ul>
 <hr />
@@ -365,7 +364,7 @@ NRWCup Handbuch (PDF)</a>
 </ul>
 <p>Klick auf den Button, um den Status zu wechseln (mit Bestätigung).</p>
 <blockquote>
-<p><strong>Wichtig:</strong> Ein gesperrtes Event blockiert Änderungen überall im System — Startliste, Wertung, Startreihenfolge. Siehe <a href="#s16">Sperrmechanismus</a>.</p>
+<p><strong>Wichtig:</strong> Ein gesperrtes Event blockiert Änderungen überall im System — Startliste, Wertung, Startreihenfolge. Siehe <a href="#s15">Sperrmechanismus</a>.</p>
 </blockquote>
 <h3>Weitere Aktionen</h3>
 <ul>
@@ -538,21 +537,24 @@ Mueller / Schmidt
 </blockquote>
 <h3>3-Richter-Ansicht (kombinierte Ansicht)</h3>
 <p>Neben den einzelnen Wertungsbögen gibt es eine <strong>kombinierte Ansicht</strong>, die alle Richter eines Teams auf einer einzigen Seite zeigt.</p>
-<p><strong>Aufrufen:</strong> In der Wertungsübersicht gibt es pro Team einen Button <strong>N Richter</strong> (N = Anzahl Punktrichter laut Wettbewerb-Einstellung).</p>
+<p><strong>Aufrufen:</strong> In der Wertungsübersicht gibt es pro Team einen Button <strong>N Richter</strong> (N = Anzahl Punktrichter laut Wettbewerb-Einstellung). Die Richter-Buttons in der Übersicht sind beschriftet mit <strong>R1, R2, R3</strong>.</p>
 <table>
 <thead>
 <tr><th>Bereich</th><th>Inhalt</th></tr>
 </thead>
 <tbody>
-<tr><td>Qualitätswertung</td><td>Eine Spalte pro Richter nebeneinander</td></tr>
-<tr><td>Messwerte</td><td>Einmalig unten -- ein gemeinsames Eingabefeld fuer alle Richter</td></tr>
-<tr><td>Totale</td><td>Richter 1: Qualität + Messwerte; weitere Richter: nur Qualität</td></tr>
-<tr><td>Speichern / Sperren</td><td>Separater Speichern- und Sperren-Button pro Richter-Spalte</td></tr>
+<tr><td>Qualitätswertung</td><td>Eine Spalte pro Richter (R1, R2, R3...) nebeneinander, mit Rohpunkte / K-Faktor / Bewertungspunkte pro Figur</td></tr>
+<tr><td>Messwerte</td><td>Einmalig unten — ein gemeinsames Eingabefeld für alle Richter</td></tr>
+<tr><td>Totale</td><td>Gesamt-Bewertungspunkte (Qualität + Messwerte) live berechnet</td></tr>
+<tr><td>Speichern</td><td>Separater Speichern-Button pro Richter-Spalte; Status zeigt <strong>Gespeichert</strong> (grün) oder <strong>Geändert</strong> (orange) an</td></tr>
 </tbody>
 </table>
 <p>Ist ein Bogen gesperrt, erscheint statt des Speichern-Buttons ein Link <strong>Bogen ansehen / Entsperren</strong>, der zum einzelnen Wertungsbogen führt.</p>
+<blockquote>
+<p><strong>Dateneingabe-Tipp:</strong> Mit <strong>TAB</strong> springst du in der kombinierten Ansicht von Figur zu Figur innerhalb der gleichen Richter-Spalte (nicht quer zu anderen Richtern). Gesperrte und deaktivierte Felder werden automatisch übersprungen.</p>
+</blockquote>
 <h3>Wertungsberechnung</h3>
-<p>Die Berechnung erfolgt automatisch und unterscheidet zwischen <strong>Qualitätswertung</strong> (subjektive Figuren, von Punktrichtern bewertet) und <strong>Messwertung</strong> (objektive Messwerte, vom Messteam erfasst). Siehe <a href="#s18">Messwertung &amp; Qualitätswertung</a> für eine ausführliche Erklärung.</p>
+<p>Die Berechnung erfolgt automatisch und unterscheidet zwischen <strong>Qualitätswertung</strong> (subjektive Figuren, von Punktrichtern bewertet) und <strong>Messwertung</strong> (objektive Messwerte, vom Messteam erfasst). Siehe <a href="#s17">Messwertung &amp; Qualitätswertung</a> für eine ausführliche Erklärung.</p>
 <p><strong>Kurzfassung:</strong></p>
 <ol>
 <li><strong>Qualitätswertung</strong> pro Punktrichter = Summe aller (Figurenpunkte × K-Faktor)</li>
@@ -660,7 +662,7 @@ Mueller / Schmidt
 </tbody>
 </table>
 <h3>Email-Versand</h3>
-<p>Alle Email-Funktionen prüfen zuerst, ob der Email-Server erreichbar ist. Siehe <a href="#s17">Email-Funktionen</a>.</p>
+<p>Alle Email-Funktionen prüfen zuerst, ob der Email-Server erreichbar ist. Siehe <a href="#s16">Email-Funktionen</a>.</p>
 <hr />
 <h2 id="s12">12. Systemverwaltung</h2>
 <p><strong>Pfad:</strong> <code>/system/</code> (Admin-Passwort erforderlich)</p>
@@ -754,54 +756,7 @@ MAIL_ENABLED=true
 <p><strong>Wichtig:</strong> Testdaten können ausschließlich für Events mit Status <strong>Geplant</strong> (Pending) generiert werden. Aktive oder abgeschlossene Wettbewerbe sind geschützt.</p>
 </blockquote>
 <hr />
-<h2 id="s15">15. Typischer Wettbewerbs-Ablauf</h2>
-<h3>Vorbereitung (Tage/Wochen vorher)</h3>
-<ol>
-<li><strong>Teilnehmer anlegen</strong>: Alle Piloten, Punktrichter und Wettkampfleitung</li>
-<li><strong>Flugzeuge anlegen</strong>: Motor- und Segelflugmodelle mit Zuordnung zu Piloten</li>
-<li><strong>Teams zusammenstellen</strong>: Schlepper + Segler Paare bilden</li>
-<li><strong>Event anlegen</strong>: Name, Datum, Ort, geschätzte Durchgänge</li>
-<li><strong>Figuren prüfen</strong>: Aktive Figuren und K-Faktoren kontrollieren</li>
-</ol>
-<h3>Wettbewerbstag</h3>
-<h4>Vor dem ersten Durchgang</h4>
-<ol>
-<li><strong>Backup erstellen</strong> (System → Backup)</li>
-<li><strong>Event auf &quot;Active&quot; setzen</strong> (Wettbewerb)</li>
-<li><strong>Startliste erstellen</strong> (Formular)
-<ul>
-<li>Teams in Reihenfolge bringen (Auslosung oder Zufällig)</li>
-<li>Startliste <strong>sperren</strong></li>
-<li>Startliste <strong>drucken</strong> und <strong>verteilen</strong></li>
-<li>Bewertungsbögen <strong>drucken</strong></li>
-</ul>
-</li>
-<li><strong>Labels drucken</strong> (optional, für Niimbot D11)</li>
-</ol>
-<h4>Während des Durchgangs</h4>
-<ol>
-<li>Punktrichter bewerten auf Papier-Bewertungsbögen</li>
-<li>Nach jedem Team: <strong>Punkte eingeben</strong> (Wertung)</li>
-<li>Alternativ: Alle Punkte gesammelt nach dem Durchgang eingeben</li>
-</ol>
-<h4>Nach dem Durchgang</h4>
-<ol>
-<li><strong>Ergebnisse prüfen</strong> (Rangliste kontrollieren)</li>
-<li><strong>Nächste Runde generieren</strong> — danach Startliste aufrufen und Reihenfolge generieren und drucken</li>
-<li>Neue Startliste <strong>drucken</strong></li>
-<li>Optional: Zwischenergebnisse per <strong>Email versenden</strong></li>
-</ol>
-<h4>Nach dem letzten Durchgang</h4>
-<ol>
-<li><strong>Endergebnisse prüfen</strong> und kontrollieren</li>
-<li><strong>Event sperren</strong> (Completed)</li>
-<li>Ergebnisse als <strong>PDF exportieren</strong></li>
-<li>Ergebnisse per <strong>Email versenden</strong></li>
-<li>Optional: Ergebnisse als <strong>Excel exportieren</strong></li>
-<li><strong>Backup erstellen</strong></li>
-</ol>
-<hr />
-<h2 id="s16">16. Sperrmechanismus</h2>
+<h2 id="s15">15. Sperrmechanismus</h2>
 <p>Das System hat einen globalen Sperrmechanismus, der abgeschlossene Wettbewerbe vor versehentlichen Änderungen schützt.</p>
 <h3>Wann ist ein Event gesperrt?</h3>
 <p>Ein Event ist gesperrt, wenn sein Status <strong>Completed</strong> oder <strong>Published</strong> ist.</p>
@@ -842,7 +797,7 @@ MAIL_ENABLED=true
 <li><strong>Wertung</strong>: Server gibt Fehlermeldung bei Änderungsversuchen</li>
 </ul>
 <hr />
-<h2 id="s17">17. Email-Funktionen</h2>
+<h2 id="s16">16. Email-Funktionen</h2>
 <h3>Verfügbarkeit</h3>
 <p>Das System prüft beim Laden jeder Seite, ob der Email-Server erreichbar ist. Falls nicht:</p>
 <ul>
@@ -893,7 +848,7 @@ MAIL_ENABLED=true
 <h3>Fallback bei fehlenden Email-Adressen</h3>
 <p>Wenn ein Team keine Email-Adressen eingetragen hat, wird die Email automatisch an die Admin-Adresse (<code>ADMIN_EMAIL</code> in der <code>.env</code>-Datei, Standard: <code>MAIL_USERNAME</code>) weitergeleitet. Die Erfolgsmeldung zeigt dann: <em>&quot;Keine Team-Adressen — gesendet an Admin: ...&quot;</em> — so ist klar, dass es ein Fallback war und keine echte Zustellung an die Piloten.</p>
 <hr />
-<h2 id="s18">18. Messwertung &amp; Qualitätswertung</h2>
+<h2 id="s17">17. Messwertung &amp; Qualitätswertung</h2>
 <p>Die BeMod F-Schlepp Regeln 2026 (Abschnitt J/K) unterscheiden zwei Bewertungsarten:</p>
 <h3>Qualitaetswertung (subjektiv)</h3>
 <p>Jeder Punktrichter bewertet diese Figuren unabhängig mit 0-10 Punkten. Der K-Faktor multipliziert die Punkte:</p>
@@ -1013,6 +968,7 @@ MAIL_ENABLED=true
 <td>MAX(0, 300 - 3 * CEIL(ABS(Zeit - 200)))</td>
 <td>300</td>
 </tr>
+<!-- Note: system shows a soft warning "Achtung: Wert >400s — Eingabefehler?" if SEGZEIT exceeds 400s -->
 <tr>
 <td>Seilabwurf Genauigkeit</td>
 <td>SEILZ</td>
@@ -1033,7 +989,7 @@ MAIL_ENABLED=true
 </tr>
 </tbody>
 </table>
-<p><strong>Flugzeitberechnung:</strong> Die Sollflugzeit betraegt 200 Sekunden. Formel: MAX(0, 300 - 3 * CEIL(|Zeit - 200|)). Pro angefangene Sekunde Abweichung werden 3 Punkte abgezogen, maximal 300 Punkte.</p>
+<p><strong>Flugzeitberechnung:</strong> Die Sollflugzeit betraegt 200 Sekunden. Formel: MAX(0, 300 - 3 * CEIL(|Zeit - 200|)). Pro angefangene Sekunde Abweichung werden 3 Punkte abgezogen, maximal 300 Punkte. Bei Eingabe über 400 Sekunden zeigt das System eine Hinweismeldung (kein Pflichtfeld — Wert wird trotzdem akzeptiert).</p>
 <p><strong>Landegenauigkeit:</strong> Aus der Skizze der Ausschreibung ergeben sich die Landefelder: 0, 10, 20, 30 Punkte je nach Auftreffpunkt (Erstkontakt Hauptfahrwerk).</p>
 <h3>Gesamtwertung eines Durchgangs</h3>
 <blockquote>
@@ -1041,51 +997,36 @@ MAIL_ENABLED=true
 </blockquote>
 <p><strong>Rohwert</strong> = Durchschnitt Qualitätswertung + Messwertung</p>
 <p>Maximal erreichbar: 1740 Punkte (Standard-Programm) / 1790 Punkte (Varianten-Programm) — gemaess Regeln 2026.</p>
-<h3>Automatische Messwert-Übernahme im System</h3>
-<p>Da die Messwerte objektive Fakten sind, die nicht pro Punktrichter variieren, überträgt das System sie automatisch:</p>
-<p><strong>Ablauf:</strong></p>
-<ol>
-<li>Ein Punktrichter (oder der Messteam-Eingeber) gibt die Messwerte auf seinem Bewertungsbogen ein und speichert</li>
-<li>Das System kopiert SEGZEIT, LANDGM, LANS und SEILZ automatisch auf alle anderen Bewertungsbögen desselben Teams im selben Durchgang</li>
-<li>Wird ein Messwert korrigiert und erneut gespeichert, wird die Korrektur ebenfalls auf alle Bögen übertragen</li>
-</ol>
-<p><strong>Anzeige auf dem Bewertungsbogen:</strong></p>
+<h3>Messwert-Eingabe im System</h3>
+<p>Messwerte (SEGZEIT, SEILZ, LANDGM, LANS) werden <strong>einmalig pro Team und Durchgang</strong> gespeichert — sie gehören nicht zu einem einzelnen Punktrichter-Bogen, sondern zum Durchgang des Teams.</p>
+<p><strong>Eingabewege:</strong></p>
+<ul>
+<li><strong>Kombinierte Ansicht</strong>: Im gemeinsamen Messwerte-Bereich unten auf der Seite — empfohlener Weg</li>
+<li><strong>Einzelbogen Richter 1</strong>: Messwerte können auch auf dem Richter-1-Bogen eingegeben werden</li>
+</ul>
+<p><strong>Anzeige auf den Einzelbögen:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Situation</th>
-<th>Wert-Feld</th>
-<th>Punkte-Spalte</th>
+<th>Bogen</th>
+<th>Anzeige</th>
 <th>Im Total</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Messwert-Inhaber</strong> (erster Bogen)</td>
-<td>Normal</td>
-<td>Punkte berechnet</td>
+<td><strong>Richter 1</strong></td>
+<td>Normal, editierbar, Punkte berechnet</td>
 <td>Ja</td>
 </tr>
 <tr>
-<td><strong>Alle anderen Bögen</strong></td>
-<td>Hellblau hinterlegt</td>
-<td><code>-</code> (leer)</td>
+<td><strong>Richter 2, 3...</strong></td>
+<td>Hellblau hinterlegt, schreibgeschützt (Referenz)</td>
 <td>Nein</td>
-</tr>
-<tr>
-<td><strong>Neuer Bogen (Eingabe)</strong></td>
-<td>Normal (editierbar)</td>
-<td>Punkte berechnet</td>
-<td>Ja</td>
 </tr>
 </tbody>
 </table>
-<ul>
-<li>Der <strong>erste Bewertungsbogen</strong> (Messwert-Inhaber) zeigt die Messwerte normal an — mit berechneten Punkten und im Gesamttotal enthalten</li>
-<li><strong>Alle weiteren Bögen</strong> zeigen die Messwerte mit hellblauem Hintergrund als Referenz — die Punkte werden dort <em>nicht</em> angezeigt und <em>nicht</em> zum Einzeltotal addiert, da sie bereits über den Inhaber-Bogen in die Gesamtwertung einfließen</li>
-<li>Unter der Tabelle erscheint der Hinweis: <em>„Messwerte werden automatisch auf alle Punktwerter übertragen&quot;</em></li>
-</ul>
-<p><strong>Warum?</strong> Ohne die automatische Übernahme können Messwerte verloren gehen, wenn sie versehentlich auf dem falschen Bewertungsbogen eingetragen werden. Durch die Replikation sind die Werte auf allen Bögen sichtbar und fließen genau einmal in die Gesamtwertung ein.</p>
+<p>Messwerte fließen genau einmal in die Gesamtwertung ein. Auf den Bögen von Richter 2/3 erscheinen sie nur zur Information.</p>
 <h3>Streichwertung (Durchgänge)</h3>
 <blockquote>
 <p>Zur Berechnung des Gesamtergebnisses wird der schlechteste Durchgang gestrichen (ab 3 vollstaendig geflogenen Durchgaengen). Die Promille-Punkte der verbleibenden Durchgaenge werden addiert.</p>
@@ -1120,7 +1061,7 @@ MAIL_ENABLED=true
 <p>Die vollständige Ausschreibung (BeMod-F-Schlepp 2026) ist hier verfügbar:
 <a href="{{ url_for('static', filename='hilfe/BeMod-F-Schlepp.pdf') }}" target="_blank">BeMod-F-Schlepp.pdf</a></p>
 <hr />
-<h2 id="s19">19. Häufige Fragen</h2>
+<h2 id="s18">18. Häufige Fragen</h2>
 <h3>&quot;Ich kann einen Teilnehmer nicht löschen&quot;</h3>
 <p>Der Teilnehmer ist noch einem Team zugeordnet. Bearbeite zuerst das Team und entferne die Zuordnung, oder lösche das Team.</p>
 <h3>&quot;Die Flugzeug-Auswahl im Team ist leer&quot;</h3>
@@ -1145,11 +1086,11 @@ MAIL_ENABLED=true
 <h3>&quot;Wie mache ich ein Backup?&quot;</h3>
 <p>System → Backup → <strong>Neues Backup erstellen</strong>. Die ZIP-Datei enthält die komplette Datenbank und alle Anwendungsdateien.</p>
 <h3>&quot;Streichwertung — wie funktioniert das?&quot;</h3>
-<p>Ab 3 Durchgängen wird automatisch der schlechteste Durchgang gestrichen. Bei 2 Durchgängen zählen beide. Die Streichwertung ist immer der niedrigste Promille-Wert. Siehe <a href="#s18">Messwertung &amp; Qualitätswertung</a> für Details.</p>
+<p>Ab 3 Durchgängen wird automatisch der schlechteste Durchgang gestrichen. Bei 2 Durchgängen zählen beide. Die Streichwertung ist immer der niedrigste Promille-Wert. Siehe <a href="#s17">Messwertung &amp; Qualitätswertung</a> für Details.</p>
 <h3>&quot;Warum zeigt mein Bewertungsbogen hellblaue Felder?&quot;</h3>
-<p>Hellblau hinterlegte Felder sind <strong>Messwerte</strong> (Flugzeit, Landegenauigkeit, Seilabwurf), die automatisch vom ersten Bewertungsbogen übernommen wurden. Sie dienen als Referenz und werden nicht erneut zum Total addiert. Siehe <a href="#s18">Messwertung &amp; Qualitätswertung</a>.</p>
+<p>Hellblau hinterlegte Felder sind <strong>Messwerte</strong> (Flugzeit, Landegenauigkeit, Seilabwurf), die automatisch vom ersten Bewertungsbogen übernommen wurden. Sie dienen als Referenz und werden nicht erneut zum Total addiert. Siehe <a href="#s17">Messwertung &amp; Qualitätswertung</a>.</p>
 <h3>&quot;Warum unterscheiden sich die Totale der Punktrichter?&quot;</h3>
-<p>Der <strong>erste Punktrichter</strong> (Messwert-Inhaber) zeigt ein höheres Total, weil die Messwertpunkte (Flugzeit, Landegenauigkeit, Seilabwurf) dort eingerechnet sind. Bei den anderen Punktrichtern werden die Messwerte als hellblau angezeigt und nicht im Total gezählt, da sie nur einmal in die Gesamtwertung einfließen.</p>
+<p>Das Total auf <strong>Richter-1-Bogen</strong> enthält Qualität + Messwerte. Die Bögen von Richter 2/3 zeigen nur die Qualitätspunkte — Messwerte erscheinen hellblau als Referenz und werden dort nicht gezählt, da sie bereits einmal über Richter 1 in die Gesamtwertung einfließen.</p>
 <h3>&quot;Kann ich ein gelöschtes Team wiederherstellen?&quot;</h3>
 <p>Nein. Gelöschte Daten können nur über ein Backup wiederhergestellt werden.</p>
 <h3>Notfall-Schnellhilfe</h3>
@@ -1169,8 +1110,8 @@ MAIL_ENABLED=true
 <hr />
 <hr />
 <p class="text-muted small"><em>Dieses Handbuch bezieht sich auf die BeMod-F-Schlepp Ausschreibung 2026.</em><br>
-<em>Version 1.4 — Zuletzt aktualisiert: April 2026</em><br>
-<em>Änderungen v1.4: SEGZEIT-Formel korrigiert (300 Punkte max, -3 Punkte pro angefangene Sekunde). v1.3: informelle Sprache (du statt Sie). v1.2: Promille-Punkte, Figuren 2026, Sperren ohne Admin, E-Mail-Sichtbarkeit, Alle-Null-Button.</em></p>
+<em>Version 1.5 — Zuletzt aktualisiert: April 2026</em><br>
+<em>Änderungen v1.5: Kombinierte Ansicht: Rohpunkte/K/Bewertungspunkte-Spalten, AJAX-Speichern mit Status, TAB springt innerhalb Richter-Spalte und überspringt gesperrte Felder, SEGZEIT-Warnung über 400s, Richter-Buttons R1/R2/R3, Messwert-Modell vereinfacht (TeamRound statt Inhaber-Bogen), Umnummerierung auf aktive + inaktive Teams erweitert. v1.4: SEGZEIT-Formel korrigiert. v1.3: informelle Sprache. v1.2: Promille-Punkte, Figuren 2026, Sperren ohne Admin, E-Mail-Sichtbarkeit, Alle-Null-Button.</em></p>
     </div>
 </div>
 

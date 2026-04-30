@@ -2,7 +2,7 @@
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - Wertung & Ergebnisse{% endblock %}
+{% block title %}{{ active_event_name }} - Wertung & Ergebnisse{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -175,17 +175,12 @@
                                                     <a href="{{ url_for('scoring.view_score', score_id=score.score_id) }}"
                                                         class="btn {% if score.locked %}btn-warning{% elif key in fully_complete_scores %}btn-success{% elif key in has_quality_scores %}btn-info{% else %}btn-secondary{% endif %} judge-btn"
                                                         title="Bewertung von {{ judge.name }} {% if score.locked %}(Gesperrt am {{ score.locked_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}">
-                                                            {{ judge.name[:3] }}:
-                                                            <span class="raw-score">
-                                                                {% set raw_value = getRawScore(score) %}
-                                                                {{ "%.1f"|format(raw_value) if raw_value != None else "-" }}
-                                                            </span>
-                                                            {% if score.locked %}[L]{% endif %}
+                                                            R{{ loop.index }}{% if score.locked %} [L]{% endif %}
                                                     </a>
                                                 {% else %}
                                                     <a href="{{ url_for('scoring.scoresheet', round_id=round_obj.round_id, team_id=team.team_id, judge_id=judge.teilnehmer_id) }}"
                                                     class="btn btn-secondary" title="Neue Bewertung von {{ judge.name }}">
-                                                        {{ judge.name[:3] }}
+                                                        R{{ loop.index }}
                                                     </a>
                                                 {% endif %}
                                             {% endif %}

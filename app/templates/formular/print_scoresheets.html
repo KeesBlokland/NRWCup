@@ -1,7 +1,7 @@
 {# File: app/templates/formular/print_scoresheets.html | Last Updated: 2026-02-18 #}
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - Bewertungsbögen Drucken{% endblock %}
+{% block title %}{{ active_event_name }} - Bewertungsbögen Drucken{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -28,7 +28,7 @@
                 <!-- First scoresheet on the page -->
                 <div class="scoresheet">
                     <div class="scoresheet-header">
-                        <h3>NRW Cup {{ current_year }} - Bewertungsbogen</h3><br>
+                        <h3>{{ active_event_name }} - Bewertungsbogen</h3><br>
                         <div class="scoresheet-meta">
                             <div class="meta-row">
                                 <span class="meta-label">Durchgang:</span>
@@ -70,7 +70,7 @@
                 {% if i+1 < scoresheets|length %}
                     <div class="scoresheet">
                         <div class="scoresheet-header">
-                            <h3>NRW Cup {{ current_year }} - Bewertungsbogen</h3><br>
+                            <h3>{{ active_event_name }} - Bewertungsbogen</h3><br>
                             <div class="scoresheet-meta">
                                 <div class="meta-row">
                                     <span class="meta-label">Durchgang:</span>

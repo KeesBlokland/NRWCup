@@ -59,17 +59,17 @@ def process_form_data(form):
 
 def renumber_teams():
     """
-    Renumber all active teams to maintain sequential numbering without gaps.
-    This function is now optional and only used when explicitly requested.
+    Renumber all teams: active first (1..N), then inactive (N+1..M), each group ordered by current number.
     """
     try:
-        # Get all active teams ordered by current number
         active_teams = Team.query.filter_by(status='active').order_by(Team.team_nummer).all()
-        
-        # Renumber from 1
+        inactive_teams = Team.query.filter(Team.status != 'active').order_by(Team.team_nummer).all()
+
         for i, team in enumerate(active_teams, 1):
             team.team_nummer = i
-        
+        for i, team in enumerate(inactive_teams, len(active_teams) + 1):
+            team.team_nummer = i
+
         db.session.commit()
         return True
     except Exception as e:

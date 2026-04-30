@@ -93,7 +93,7 @@ The Pi runs a WiFi hotspot. Judges and organisers connect to it and open the app
 - Average remaining, round to 3 decimal places, multiply by K-factor
 
 ### Messwertung
-- SEGZEIT: MAX(0, 300 - 3 * CEIL(|time - 200|)) -- target 200s, max 300 pts, -3pts per started second
+- SEGZEIT: MAX(0, 200 - |200 - time|) -- target 200s, max 200 pts
 - SEILZ, LANDGM, LANS: 0 / 10 / 20 / 30 pts
 
 ### Normalization

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - Bewertungen{% endblock %}
+{% block title %}{{ active_event_name }} - Bewertungen{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -74,8 +74,8 @@
                                                                 {% if key in completed_scores %}
                                                                     <!-- Scoresheet exists -->
                                                                     <div class="col-auto">
-                                                                        <a href="{{ url_for('scoring.view_score', score_id=completed_scores[key].score_id) }}" 
-                                                                           class="btn btn-success judge-btn" 
+                                                                        <a href="{{ url_for('scoring.view_score', score_id=completed_scores[key].score_id) }}"
+                                                                           class="btn btn-success judge-btn"
                                                                            title="Bewertung von {{ judge.name }} anzeigen"
                                                                            data-score-id="{{ completed_scores[key].score_id }}">
                                                                             {{ judge.name[:2] }}
@@ -86,7 +86,7 @@
                                                                     {% set team_round_key = round.round_id|string + '_' + team.team_id|string %}
                                                                     {% set team_round_id = team_rounds[team_round_key].team_round_id if team_round_key in team_rounds else none %}
                                                                     <div class="col-auto">
-                                                                        <a href="{{ url_for('scoring.scoresheet') }}?round_id={{ round.round_id }}&team_id={{ team.team_id }}&judge_id={{ judge.teilnehmer_id }}" 
+                                                                        <a href="{{ url_for('scoring.scoresheet') }}?round_id={{ round.round_id }}&team_id={{ team.team_id }}&judge_id={{ judge.teilnehmer_id }}"
                                                                            class="btn btn-outline-secondary" title="Neue Bewertung von {{ judge.name }}">
                                                                             {{ judge.name[:2] }}
                                                                         </a>

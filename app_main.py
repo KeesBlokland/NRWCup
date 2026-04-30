@@ -19,7 +19,7 @@ import importlib
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-from app.models import db, SystemConfig
+from app.models import db, SystemConfig, Event
 from datetime import datetime
 from app.utils.logger import DBLogger
 
@@ -119,10 +119,18 @@ with app.app_context():
 
 DBLogger.info("Application starting")
 
-# Make current year available in all templates
+# Make current year and active event name available in all templates
 @app.context_processor
-def inject_year():
-    return {'current_year': datetime.now().year}
+def inject_globals():
+    year = datetime.now().year
+    try:
+        event = Event.query.filter_by(status='Active').first()
+        if not event:
+            event = Event.query.filter_by(is_hidden=False).order_by(Event.event_date.desc()).first()
+        active_event_name = event.name if event else f'NRW Cup {year}'
+    except Exception:
+        active_event_name = f'NRW Cup {year}'
+    return {'current_year': year, 'active_event_name': active_event_name}
 
 # Error handlers
 @app.errorhandler(404)

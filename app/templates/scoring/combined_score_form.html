@@ -85,7 +85,7 @@
               <tr>
                 <td>
                   <div class="d-flex justify-content-between align-items-center">
-                    <span>{{ figure.name_de }}{% if is_platzrunde or is_platzueber %} <span class="text-muted" style="cursor:help;font-size:0.8em;" data-bs-toggle="tooltip" data-bs-placement="right" title="Eintrag hier bestimmt welche Variante für alle Richter gilt">(?)</span>{% endif %}</span>
+                    <span>{{ figure.name_de }}{% if is_platzrunde or is_platzueber %} <button type="button" class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1" data-bs-toggle="tooltip" data-bs-placement="right" title="Eintrag hier bestimmt welche Variante für alle Richter gilt">?</button>{% endif %}</span>
                     <span class="text-muted score-label-sm ms-1">x{{ figure.k_factor or 1 }}</span>
                   </div>
                   <input type="hidden" class="figure-max" id="max_{{ figure.code }}" value="{{ figure.max_value if figure.max_value is not none else 10 }}">

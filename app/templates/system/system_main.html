@@ -7,7 +7,7 @@ Last Updated: 2024-12-04
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - System{% endblock %}
+{% block title %}{{ active_event_name }} - System{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -135,7 +135,7 @@ Last Updated: 2024-12-04
                     <table class="table table-borderless">
                         <tr>
                             <td width="200"><strong>Anwendung:</strong></td>
-                            <td>NRW Cup {{ current_year }} Scoring System</td>
+                            <td>{{ active_event_name }} Scoring System</td>
                         </tr>
                         <tr>
                             <td><strong>Version:</strong></td>

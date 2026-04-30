@@ -47,7 +47,6 @@
     {% if team_data %}
         {% set current_event = events|selectattr('event_id', 'equalto', selected_event_id)|first %}
         {% set current_round = rounds|selectattr('round_id', 'equalto', selected_round_id)|first %}
-        {% set MESS_CODES = ['SEGZEIT', 'LANDGM', 'LANS', 'SEILZ'] %}
 
         <div class="card">
             <div class="card-header">
@@ -75,105 +74,107 @@
                     <thead>
                         <tr>
                             <th>Figur</th>
-                            <th class="text-center">K</th>
                             {% for score in team_data.scores %}
-                                <th class="text-center">{{ score.judge.name if score.judge else 'R' + loop.index|string }}</th>
+                                <th class="text-center">{{ score.judge.name if score.judge else 'R' ~ loop.index }}</th>
                             {% endfor %}
+                            <th class="text-end">Roh</th>
+                            <th class="text-center">K</th>
+                            <th class="text-end">Punkte</th>
                         </tr>
                     </thead>
                     <tbody>
+                        {# Quality figures #}
                         {% for figure in team_data.figures %}
-                          {% if figure.code not in unchosen_codes %}
+                          {% if not figure.is_messwertung and figure.code not in unchosen_codes %}
+                            {% set fc = team_data.figure_calcs.get(figure.code) %}
                             <tr>
                                 <td class="py-0">{{ figure.name_de }}</td>
-                                <td class="text-center py-0">{{ figure.k_factor or 1 }}</td>
                                 {% for score in team_data.scores %}
-                                    {% set is_first_judge = loop.first %}
-                                    <td class="text-center py-0">
-                                        {% for sv in score.values %}
-                                            {% if sv.task_type and sv.task_type.code == figure.code %}
-                                                {% if sv.value is not none %}
-                                                    {% if sv.task_type.code == 'SEGZEIT' %}
-                                                        {# Messwert: show only in judge #1 column (first score = lowest score_id) #}
-                                                        {% if is_first_judge %}
-                                                            {% set pts = [0, 200 - (200 - sv.value)|abs]|max %}
-                                                            {% if sv.value == 0 %}<span class="text-muted">0s (0)</span>{% else %}{{ sv.value }}s ({{ pts|round(0)|int }}){% endif %}
-                                                        {% else %}—{% endif %}
-                                                    {% elif sv.task_type.code in MESS_CODES %}
-                                                        {# Other Messwerte: show only in judge #1 column #}
-                                                        {% if is_first_judge %}
-                                                            {{ sv.value|int }} ({{ sv.value|int }})
-                                                        {% else %}—{% endif %}
-                                                    {% else %}
-                                                        {# Quality figure: show value (value × K) #}
-                                                        {% set pts = (sv.value * (sv.task_type.k_factor or 1))|round(0)|int %}
-                                                        {% if sv.value == 0 %}<span class="text-muted">0 (0)</span>{% else %}{{ sv.value }} ({{ pts }}){% endif %}
-                                                    {% endif %}
-                                                {% else %}-{% endif %}
-                                            {% endif %}
-                                        {% endfor %}
+                                    {% set ji = loop.index0 %}
+                                    {% set val = fc.vals[ji] if fc else none %}
+                                    <td class="text-center py-0{% if fc and ji in fc.dropped %} dropped-score{% endif %}">
+                                        {% if val is not none %}{{ val }}{% else %}-{% endif %}
                                     </td>
                                 {% endfor %}
+                                <td class="text-end py-0">{{ "%.3f"|format(fc.roh) if fc and fc.roh is not none else '-' }}</td>
+                                <td class="text-center py-0 text-muted">{{ figure.k_factor or 1 }}</td>
+                                <td class="text-end py-0 fw-bold">{{ fc.bp if fc and fc.bp is not none else '-' }}</td>
                             </tr>
                           {% endif %}
                         {% endfor %}
 
-                        {# Quality subtotals per judge #}
-                        {% set quality_totals = [] %}
+                        {# Quality total #}
                         <tr class="table-warning fw-bold">
-                            <td class="py-0">Qualität (×K)</td>
+                            <td class="py-0">Qualität Punkte</td>
+                            {% for score in team_data.scores %}<td class="py-0"></td>{% endfor %}
                             <td class="py-0"></td>
-                            {% for score in team_data.scores %}
-                                <td class="text-center py-0">
-                                    {% set qtotal = [] %}
-                                    {% for sv in score.values %}
-                                        {% if sv.value is not none and sv.task_type.code not in MESS_CODES %}
-                                            {% set _ = qtotal.append(sv.value * (sv.task_type.k_factor or 1)) %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    {{ qtotal|sum|round(1) }}
-                                    {% set _ = quality_totals.append(qtotal|sum) %}
-                                </td>
-                            {% endfor %}
+                            <td class="py-0"></td>
+                            <td class="text-end py-0">{{ team_data.total_quality_bp }}</td>
                         </tr>
 
-                        {# Messwerte — once #}
-                        {% set mess_total = [] %}
-                        {% for sv in team_data.scores[0].values %}
-                            {% if sv.value is not none and sv.task_type.code in MESS_CODES %}
-                                {% if sv.task_type.code == 'SEGZEIT' %}
-                                    {% set _ = mess_total.append([0, 200 - (200 - sv.value)|abs]|max) %}
-                                {% else %}
-                                    {% set _ = mess_total.append(sv.value) %}
-                                {% endif %}
-                            {% endif %}
-                        {% endfor %}
-                        <tr class="table-secondary fw-bold">
-                            <td class="py-0">Messwerte</td>
-                            <td class="py-0"></td>
-                            <td class="text-center py-0" colspan="{{ team_data.scores|length }}">{{ mess_total|sum|round(1) }}</td>
-                        </tr>
-
-                        {# Ergebnis = avg(quality) + Messwerte #}
-                        {% if quality_totals|length > 0 %}
-                        {% set avg_quality = quality_totals|sum / quality_totals|length %}
-                        <tr class="table-success fw-bold">
-                            <td>Ergebnis</td>
-                            <td></td>
-                            <td class="text-center" colspan="{{ team_data.scores|length }}">
-                                {{ (avg_quality + mess_total|sum)|round(1) }}
-                                <small class="text-muted">(Ø {{ avg_quality|round(1) }} + {{ mess_total|sum|round(1) }})</small>
+                        {# Messwerte #}
+                        <tr class="table-secondary">
+                            <td colspan="{{ 1 + team_data.scores|length + 3 }}" class="py-1">
+                                <small class="fw-bold text-muted">MESSWERTE</small>
                             </td>
                         </tr>
+                        {% set tr = team_data.team_round %}
+                        {% if tr %}
+                        <tr>
+                            <td class="py-0">Segelflugzeit</td>
+                            <td class="py-0" colspan="{{ team_data.scores|length + 2 }}">
+                                {% if tr.mess_segzeit is not none %}{{ tr.mess_segzeit }}s{% else %}-{% endif %}
+                            </td>
+                            <td class="text-end py-0 fw-bold">{{ team_data.mess_bp.get('SEGZEIT', '-') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-0">Seilzielabwurf</td>
+                            <td class="py-0" colspan="{{ team_data.scores|length + 2 }}">
+                                {% if tr.mess_seilz is not none %}{{ tr.mess_seilz }}{% else %}-{% endif %}
+                            </td>
+                            <td class="text-end py-0 fw-bold">{{ team_data.mess_bp.get('SEILZ', '-') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-0">Ziellandung Schlepper</td>
+                            <td class="py-0" colspan="{{ team_data.scores|length + 2 }}">
+                                {% if tr.mess_landgm is not none %}{{ tr.mess_landgm }}{% else %}-{% endif %}
+                            </td>
+                            <td class="text-end py-0 fw-bold">{{ team_data.mess_bp.get('LANDGM', '-') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-0">Ziellandung Segler</td>
+                            <td class="py-0" colspan="{{ team_data.scores|length + 2 }}">
+                                {% if tr.mess_lans is not none %}{{ tr.mess_lans }}{% else %}-{% endif %}
+                            </td>
+                            <td class="text-end py-0 fw-bold">{{ team_data.mess_bp.get('LANS', '-') }}</td>
+                        </tr>
                         {% endif %}
+
+                        {# Messwerte total #}
+                        <tr class="table-secondary fw-bold">
+                            <td class="py-0">Messwerte Punkte</td>
+                            {% for score in team_data.scores %}<td class="py-0"></td>{% endfor %}
+                            <td class="py-0"></td>
+                            <td class="py-0"></td>
+                            <td class="text-end py-0">{{ team_data.total_mess_bp }}</td>
+                        </tr>
+
+                        {# Ergebnis #}
+                        <tr class="table-success fw-bold">
+                            <td>Ergebnis</td>
+                            {% for score in team_data.scores %}<td></td>{% endfor %}
+                            <td></td>
+                            <td></td>
+                            <td class="text-end">{{ team_data.total_bp }}</td>
+                        </tr>
 
                         {% if team_data.team_round and team_data.team_round.normalized_score is not none %}
                         <tr class="table-info fw-bold">
                             <td>Normalisiert</td>
+                            {% for score in team_data.scores %}<td></td>{% endfor %}
                             <td></td>
-                            <td class="text-center" colspan="{{ team_data.scores|length }}">
-                                {{ "%.1f"|format(team_data.team_round.normalized_score) }} Pkt
-                            </td>
+                            <td></td>
+                            <td class="text-end">{{ "%.1f"|format(team_data.team_round.normalized_score) }} Pkt</td>
                         </tr>
                         {% endif %}
                     </tbody>

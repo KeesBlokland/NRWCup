@@ -13,6 +13,7 @@ from app.utils.auth import admin_required
 from app.config import Config
 
 import logging
+import math
 
 from app.routes.bp_scoring import scoring_bp, scoring_service
 
@@ -88,6 +89,61 @@ def team_results():
                         'scores': scores,
                         'team_round': team_round
                     }
+
+                    # Per-figure Rohpunkte/BP with drop rules
+                    quality_figures = [f for f in figures if not f.is_messwertung]
+                    num_judges = len(scores)
+                    figure_calcs = {}
+
+                    for figure in quality_figures:
+                        if figure.code in unchosen_codes:
+                            continue
+                        vals = []
+                        for score in scores:
+                            val = next((sv.value for sv in score.values
+                                        if sv.task_type and sv.task_type.code == figure.code), None)
+                            vals.append(val)
+
+                        numeric = [(i, v) for i, v in enumerate(vals) if v is not None]
+                        dropped = set()
+                        if len(numeric) >= 2:
+                            if num_judges >= 5:
+                                dropped.add(max(numeric, key=lambda x: x[1])[0])
+                                dropped.add(min(numeric, key=lambda x: x[1])[0])
+                            elif num_judges >= 4:
+                                dropped.add(max(numeric, key=lambda x: x[1])[0])
+
+                        used = [v for i, v in numeric if i not in dropped]
+                        if used:
+                            roh = round(sum(used) / len(used), 3)
+                            bp = math.floor(roh * (figure.k_factor or 1) + 0.5)
+                        else:
+                            roh = None
+                            bp = None
+
+                        figure_calcs[figure.code] = {
+                            'vals': vals, 'dropped': dropped, 'roh': roh, 'bp': bp
+                        }
+
+                    # Messwerte from TeamRound
+                    mess_bp = {}
+                    if team_round.mess_segzeit is not None:
+                        mess_bp['SEGZEIT'] = max(0, 300 - 3 * math.ceil(abs(team_round.mess_segzeit - 200)))
+                    if team_round.mess_seilz is not None:
+                        mess_bp['SEILZ'] = team_round.mess_seilz
+                    if team_round.mess_landgm is not None:
+                        mess_bp['LANDGM'] = team_round.mess_landgm
+                    if team_round.mess_lans is not None:
+                        mess_bp['LANS'] = team_round.mess_lans
+
+                    total_quality_bp = sum(fc['bp'] for fc in figure_calcs.values() if fc['bp'] is not None)
+                    total_mess_bp = sum(mess_bp.values())
+
+                    team_data['figure_calcs'] = figure_calcs
+                    team_data['mess_bp'] = mess_bp
+                    team_data['total_quality_bp'] = total_quality_bp
+                    team_data['total_mess_bp'] = total_mess_bp
+                    team_data['total_bp'] = total_quality_bp + total_mess_bp
 
         wkl_users = Teilnehmer.query.filter_by(is_wettkampfleitung=True).order_by(Teilnehmer.name).all()
 

@@ -7,7 +7,7 @@ Last Updated: 2026-02-18
 
 {% extends "base.html" %}
 
-{% block title %}NRW Cup {{ current_year }} - {{ 'Figur Bearbeiten' if task else 'Neue Figur' }}{% endblock %}
+{% block title %}{{ active_event_name }} - {{ 'Figur Bearbeiten' if task else 'Neue Figur' }}{% endblock %}
 
 {% block content %}
 <div class="container">

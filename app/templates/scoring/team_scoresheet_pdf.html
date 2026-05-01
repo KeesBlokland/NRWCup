@@ -7,10 +7,10 @@
         body { font-family: Arial, sans-serif; font-size: 10pt; margin: 20px; background: white; }
         h3 { margin: 0 0 4px 0; font-size: 12pt; }
         .subheader { font-size: 10pt; color: #333; margin-bottom: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 9pt; }
-        th, td { border: 1px solid #999; padding: 3px 5px; text-align: center; }
+        table { border-collapse: collapse; margin-bottom: 12px; font-size: 9pt; }
+        th, td { border: 1px solid #999; padding: 3px 8px; text-align: center; white-space: nowrap; }
         th { background-color: #6c757d; color: white; font-weight: bold; }
-        td.fig { text-align: left; }
+        td.fig { text-align: left; white-space: normal; min-width: 160px; max-width: 220px; }
         .row-quality-total td { background-color: #fff3cd; font-weight: bold; }
         .row-mess         td { background-color: #e2e3e5; font-weight: bold; }
         .row-result       td { background-color: #d1e7dd; font-weight: bold; }
@@ -56,8 +56,8 @@
 <table>
     <thead>
         <tr>
-            <th style="width:38%; text-align:left;">Figur</th>
-            <th style="width:5%;">K</th>
+            <th style="text-align:left;">Figur</th>
+            <th>K</th>
             {% for score in team_data.scores %}
                 <th>{{ score.judge.name if score.judge else 'R' + loop.index|string }}</th>
             {% endfor %}

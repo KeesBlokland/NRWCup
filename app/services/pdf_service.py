@@ -28,7 +28,11 @@ class PdfService:
         
         # Add title and header
         styles = getSampleStyleSheet()
-        elements.append(Paragraph(f"NRW Cup {datetime.now().year} - Bewertungsbogen", styles['Title']))
+        # Fetch round and event early so we can use event.name in the title
+        _round_early = Round.query.get(round_id)
+        _event_early = Event.query.get(_round_early.event_id) if _round_early else None
+        _title = f"{_event_early.name} - Bewertungsbogen" if _event_early else f"NRW Cup {datetime.now().year} - Bewertungsbogen"
+        elements.append(Paragraph(_title, styles['Title']))
         
         # Get teams for this round
         query = TeamRound.query.filter_by(round_id=round_id)
@@ -44,7 +48,8 @@ class PdfService:
         round_obj = Round.query.get(round_id)
         if round_obj:
             elements.append(Paragraph(f"Durchgang: {round_obj.round_number}", styles['Heading2']))
-            elements.append(Paragraph(f"Datum: {datetime.now().strftime('%d.%m.%Y')}", styles['Normal']))
+            _date_str = _event_early.event_date.strftime('%d.%m.%Y') if _event_early and _event_early.event_date else datetime.now().strftime('%d.%m.%Y')
+            elements.append(Paragraph(f"Datum: {_date_str}", styles['Normal']))
             elements.append(Spacer(1, 12))  # Add 12 points (equivalent to 1 line) of space
         
         # Create scoresheets
@@ -119,7 +124,7 @@ class PdfService:
 
         # Title + Date
         event_year = event.event_date.year if event.event_date else datetime.now().year
-        elements.append(Paragraph(f"NRW Cup {event_year} - Ergebnisse", styles['Heading2']))
+        elements.append(Paragraph(f"{event.name} - Ergebnisse", styles['Heading2']))
         elements.append(Paragraph(event.event_date.strftime('%d.%m.%Y'), styles['Normal']))
 
         # Get scoring service and standings - we'll use this data directly 

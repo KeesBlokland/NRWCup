@@ -326,11 +326,13 @@ def score_list():
         # Get all teams
         # teams = Team.query.filter_by(status='active').order_by(Team.team_nummer).all()
         if round_id:
-            # Get teams ordered by start_order for this round
-            teams = Team.query.join(TeamRound, Team.team_id == TeamRound.team_id)\
-                .filter(Team.status == 'active')\
-                .filter(TeamRound.round_id == round_id)\
-                .order_by(TeamRound.start_order)\
+            # Get all active teams, ordered by start_order for this round where available.
+            # outerjoin so teams added after round creation still appear (no TeamRound yet).
+            teams = Team.query.outerjoin(
+                TeamRound,
+                db.and_(Team.team_id == TeamRound.team_id, TeamRound.round_id == round_id)
+            ).filter(Team.status == 'active')\
+                .order_by(db.nullslast(TeamRound.start_order), Team.team_nummer)\
                 .all()
         else:
             # Fall back to team number order if no round is selected
@@ -903,6 +905,30 @@ def combined_view(round_id, team_id):
         logger.error(f"Traceback: {traceback.format_exc()}")
         flash('Fehler beim Laden der kombinierten Ansicht', 'error')
         return redirect(url_for('scoring.score_list'))
+
+
+@scoring_bp.route('/reset_kuer/<int:team_round_id>/<group>', methods=['POST'])
+def reset_kuer(team_round_id, group):
+    """Zero out all ScoreValues for both variants in a Kur group, releasing the mutex lock."""
+    KUER_GROUPS = {
+        'platzrunde': ['PLTZR', 'PLTZR-M'],
+        'platzueberflug': ['PLTZU', 'PLTZU-OV'],
+    }
+    if group not in KUER_GROUPS:
+        flash('Unbekannte Kur-Gruppe', 'error')
+        return redirect(request.referrer or url_for('scoring.score_list'))
+    codes = KUER_GROUPS[group]
+    team_round = TeamRound.query.get_or_404(team_round_id)
+    scores = Score.query.filter_by(team_round_id=team_round_id).all()
+    for score in scores:
+        for sv in score.values:
+            if sv.task_type and sv.task_type.code in codes:
+                sv.value = None
+    db.session.commit()
+    flash(f'Kur-Variante zuruckgesetzt', 'success')
+    return redirect(url_for('scoring.combined_view',
+                            round_id=team_round.round_id,
+                            team_id=team_round.team_id))
 
 
 @scoring_bp.route('/messwerte/<int:team_round_id>', methods=['POST'])

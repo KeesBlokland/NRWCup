@@ -137,7 +137,7 @@
                             <th>Team</th>
                             <th>Piloten</th>
                             <th>Punktrichter Rohwerte</th>
-                            <th class="text-center">Punkte</th>
+                            <th class="text-center" style="border-left: 3px solid #6c757d;">Punkte</th>
                             <th class="text-center">Normalisiert</th>
                         </tr>
                     </thead>
@@ -194,27 +194,22 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                                <td class="text-center">
+                                <td class="text-center" style="border-left: 3px solid #dee2e6;">
                                     {% if selected_round %}
                                         {% set team_round_key = selected_round|string + '_' + team.team_id|string %}
                                         {% if team_round_key in team_rounds %}
                                             {% set team_round = team_rounds[team_round_key] %}
                                             {% if team_round.raw_score is not none %}
-                                                {% set judge_count = 0 %}
-                                                {% set total_raw = 0 %}
+                                                {% set incomplete = [] %}
                                                 {% for judge in filtered_judges %}
                                                     {% set key = selected_round|string + '_' + team.team_id|string + '_' + judge.teilnehmer_id|string %}
-                                                    {% if key in completed_scores %}
-                                                        {% set score = completed_scores[key] %}
-                                                        {% set raw_value = getRawScore(score) %}
-                                                        {% if raw_value is not none %}
-                                                            {% set total_raw = total_raw + raw_value %}
-                                                            {% set judge_count = judge_count + 1 %}
-                                                        {% endif %}
+                                                    {% if key not in fully_complete_scores %}
+                                                        {% set _ = incomplete.append(1) %}
                                                     {% endif %}
                                                 {% endfor %}
                                                 <a href="{{ url_for('scoring.team_results', event_id=event.event_id, round_id=selected_round, team_id=team.team_id) }}"
-                                                   class="badge bg-info fs-6 text-decoration-none" title="Ergebnisse anzeigen">{{ "%.1f"|format(total_raw if judge_count > 0 else team_round.raw_score) }}</a>
+                                                   class="badge {% if incomplete|length == 0 %}bg-info{% else %}bg-secondary{% endif %} fs-6 text-decoration-none"
+                                                   title="{% if incomplete|length == 0 %}Ergebnisse anzeigen{% else %}Noch nicht alle Punktrichter fertig{% endif %}">{{ "%.1f"|format(team_round.raw_score) }}</a>
                                             {% else %}
                                                 -
                                             {% endif %}

@@ -207,9 +207,10 @@
                                                         {% set _ = incomplete.append(1) %}
                                                     {% endif %}
                                                 {% endfor %}
+                                                {% set mess_ok = team_round.mess_segzeit is not none %}
                                                 <a href="{{ url_for('scoring.team_results', event_id=event.event_id, round_id=selected_round, team_id=team.team_id) }}"
-                                                   class="badge {% if incomplete|length == 0 %}bg-info{% else %}bg-secondary{% endif %} fs-6 text-decoration-none"
-                                                   title="{% if incomplete|length == 0 %}Ergebnisse anzeigen{% else %}Noch nicht alle Punktrichter fertig{% endif %}">{{ "%.1f"|format(team_round.raw_score) }}</a>
+                                                   class="badge {% if incomplete|length == 0 and mess_ok %}bg-info{% else %}bg-warning text-dark{% endif %} fs-6 text-decoration-none"
+                                                   title="{% if incomplete|length == 0 and mess_ok %}Ergebnisse anzeigen{% elif incomplete|length == 0 %}Messwerte fehlen noch{% else %}Punktrichter noch nicht vollst&auml;ndig{% endif %}">{{ "%.1f"|format(team_round.raw_score) }}</a>
                                             {% else %}
                                                 -
                                             {% endif %}

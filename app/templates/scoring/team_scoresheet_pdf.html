@@ -65,29 +65,17 @@
     </thead>
     <tbody>
         {% for figure in team_data.figures %}
-          {% if figure.code not in unchosen %}
+          {% if figure.code not in unchosen and figure.code not in MESS_CODES %}
             <tr>
                 <td class="fig">{{ figure.name_de }}</td>
                 <td>{{ figure.k_factor or 1 }}</td>
                 {% for score in team_data.scores %}
-                    {% set is_first_judge = loop.first %}
                     <td>
                         {% for sv in score.values %}
                             {% if sv.task_type and sv.task_type.code == figure.code %}
                                 {% if sv.value is not none %}
-                                    {% if sv.task_type.code == 'SEGZEIT' %}
-                                        {% if is_first_judge %}
-                                            {% set pts = [0, 200 - (200 - sv.value)|abs]|max %}
-                                            {% if sv.value == 0 %}<span class="text-muted">0s (0)</span>{% else %}{{ sv.value }}s ({{ pts|round(0)|int }}){% endif %}
-                                        {% else %}—{% endif %}
-                                    {% elif sv.task_type.code in MESS_CODES %}
-                                        {% if is_first_judge %}
-                                            {{ sv.value|int }} ({{ sv.value|int }})
-                                        {% else %}—{% endif %}
-                                    {% else %}
-                                        {% set pts = (sv.value * (sv.task_type.k_factor or 1))|round(0)|int %}
-                                        {% if sv.value == 0 %}<span class="text-muted">0 (0)</span>{% else %}{{ sv.value }} ({{ pts }}){% endif %}
-                                    {% endif %}
+                                    {% set pts = (sv.value * (sv.task_type.k_factor or 1))|round(0)|int %}
+                                    {% if sv.value == 0 %}<span class="text-muted">0 (0)</span>{% else %}{{ sv.value }} ({{ pts }}){% endif %}
                                 {% else %}-{% endif %}
                             {% endif %}
                         {% endfor %}
@@ -116,33 +104,27 @@
             {% endfor %}
         </tr>
 
-        {# Messwerte — judge #1 only #}
-        {% set mess_total = [] %}
-        {% for sv in team_data.scores[0].values %}
-            {% if sv.value is not none and sv.task_type.code in MESS_CODES %}
-                {% if sv.task_type.code == 'SEGZEIT' %}
-                    {% set _ = mess_total.append([0, 200 - (200 - sv.value)|abs]|max) %}
-                {% else %}
-                    {% set _ = mess_total.append(sv.value) %}
-                {% endif %}
-            {% endif %}
-        {% endfor %}
+        {# Messwerte — from TeamRound (moved there in #210) #}
+        {% set tr = team_data.team_round %}
         <tr class="row-mess">
             <td class="fig">Messwerte</td>
             <td></td>
-            <td colspan="{{ team_data.scores|length }}">{{ mess_total|sum|round(1) }}</td>
+            <td colspan="{{ team_data.scores|length }}">
+                {% set mess_parts = [] %}
+                {% if tr.mess_segzeit is not none %}{% set _ = mess_parts.append('Flugzeit: ' ~ tr.mess_segzeit|int ~ 's') %}{% endif %}
+                {% if tr.mess_seilz is not none %}{% set _ = mess_parts.append('Seilabwurf: ' ~ tr.mess_seilz|int) %}{% endif %}
+                {% if tr.mess_landgm is not none %}{% set _ = mess_parts.append('Landung M: ' ~ tr.mess_landgm|int) %}{% endif %}
+                {% if tr.mess_lans is not none %}{% set _ = mess_parts.append('Landung S: ' ~ tr.mess_lans|int) %}{% endif %}
+                {{ mess_parts|join(' | ') if mess_parts else '-' }}
+            </td>
         </tr>
 
-        {# Ergebnis #}
-        {% if quality_totals|length > 0 %}
-        {% set avg_quality = quality_totals|sum / quality_totals|length %}
+        {# Ergebnis — use stored raw_score (correct drop-rule calculation) #}
+        {% if tr.raw_score is not none %}
         <tr class="row-result">
             <td class="fig">Ergebnis</td>
             <td></td>
-            <td colspan="{{ team_data.scores|length }}">
-                {{ (avg_quality + mess_total|sum)|round(1) }}
-                <small class="text-muted">(Ø {{ avg_quality|round(1) }} + {{ mess_total|sum|round(1) }})</small>
-            </td>
+            <td colspan="{{ team_data.scores|length }}">{{ tr.raw_score|round(1) }}</td>
         </tr>
         {% endif %}
 

@@ -34,3 +34,4 @@ logs/*
 # Dev-only scripts
 restart_flask.sh
 scripts/migrate_2026.py
+HANDOVER.md

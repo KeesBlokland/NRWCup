@@ -5,7 +5,7 @@ Runs offline on a Raspberry Pi or any Linux server.
 
 Built with assistance from Claude and Coffee. 
 
-**This is not quite the latest version, so if anybody want to use this, contact me.
+**This is not quite the latest version, so if anybody want to use this, contact me.**
 
 
 ---
